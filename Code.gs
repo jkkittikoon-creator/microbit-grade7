@@ -37,6 +37,12 @@ const APP_CONFIG = Object.freeze({
     lessonPlan: '1gJxPTOLSqb4WXNe4hO9L9Q5ML7bIH38H',
     slides: '1RLaPakb15hYNBRv0Pd81PSwf9Zz_1tSp'
   }),
+  quizQuestionCount: 6,
+  quizPassPercent: 70,
+  quizMaxAttempts: 3,
+  xpPerSection: 10,
+  xpQuizPass: 30,
+  xpPerfectQuiz: 20,
   spreadsheetProperty: 'TILT_LAB_SPREADSHEET_ID',
   driveFolderProperty: 'TILT_LAB_DRIVE_FOLDER_ID',
   initialPasswordProperty: 'INITIAL_STUDENT_PASSWORD'
@@ -56,8 +62,18 @@ const LESSON_SECTIONS = Object.freeze([
   Object.freeze({ order: 5, id: 'tilt-simulator', title: 'Tilt Simulator', required: true }),
   Object.freeze({ order: 6, id: 'debug-case', title: 'Debug Case Study', required: true }),
   Object.freeze({ order: 7, id: 'glossary', title: 'Glossary', required: true }),
-  Object.freeze({ order: 8, id: 'quiz', title: 'Self-check Quiz', required: true })
+  Object.freeze({ order: 8, id: 'quiz', title: 'Self-check Quiz', required: true }),
+  Object.freeze({ order: 9, id: 'reflection', title: 'สะท้อนผลการเรียนรู้', required: true })
 ]);
+
+/** ลำดับของขั้นแบบทดสอบ ใช้เป็นเงื่อนไขก่อนรับคำตอบ แทนการอิงจำนวนขั้นทั้งหมด */
+const QUIZ_SECTION_ORDER = LESSON_SECTIONS.filter(function (section) {
+  return section.id === 'quiz';
+})[0].order;
+
+const QUIZ_PASS_MARK = Math.ceil(
+  APP_CONFIG.quizQuestionCount * APP_CONFIG.quizPassPercent / 100
+);
 
 const LESSON_SECTION_COUNT = LESSON_SECTIONS.length;
 
@@ -110,6 +126,9 @@ function getPublicConfig() {
     semester: APP_CONFIG.semester,
     teacherName: APP_CONFIG.teacherName,
     schoolName: APP_CONFIG.schoolName,
+    quizQuestionCount: APP_CONFIG.quizQuestionCount,
+    quizPassPercent: APP_CONFIG.quizPassPercent,
+    quizMaxAttempts: APP_CONFIG.quizMaxAttempts,
     sections: LESSON_SECTIONS.map(function (section) {
       return {
         order: section.order,
@@ -293,7 +312,8 @@ function getProgress(token) {
     return {
       ok: true,
       state: createDefaultProgress_(session),
-      updatedAt: null
+      updatedAt: null,
+      rewards: computeRewards_(createDefaultProgress_(session))
     };
   }
 
@@ -305,7 +325,12 @@ function getProgress(token) {
     throw new Error('ข้อมูลความก้าวหน้าเสียหาย กรุณาแจ้งครูผู้สอน');
   }
 
-  return { ok: true, state: state, updatedAt: row.updatedAt };
+  return {
+    ok: true,
+    state: state,
+    updatedAt: row.updatedAt,
+    rewards: computeRewards_(state)
+  };
 }
 
 /** Validates and upserts the current student's progress. */
@@ -342,7 +367,11 @@ function saveProgress(token, state) {
     }
 
     appendAudit_(session.username, 'progress_save', 'success', 'Section ' + cleanState.currentSection);
-    return { ok: true, updatedAt: now.toISOString() };
+    return {
+      ok: true,
+      updatedAt: now.toISOString(),
+      rewards: computeRewards_(cleanState)
+    };
   } finally {
     lock.releaseLock();
   }
@@ -360,8 +389,10 @@ function recordQuizAttempt(token, attempt) {
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
     throw new Error('คำตอบแบบทดสอบไม่ครบ');
   }
-  if (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 20) {
-    throw new Error('จำนวนข้อไม่ถูกต้อง');
+  if (questionCount !== APP_CONFIG.quizQuestionCount) {
+    throw new Error(
+      'จำนวนข้อไม่ตรงกับที่ระบบกำหนด (' + APP_CONFIG.quizQuestionCount + ' ข้อ)'
+    );
   }
   if (Object.keys(answers).length !== questionCount) {
     throw new Error('ต้องตอบให้ครบทุกข้อก่อนส่ง');
@@ -369,7 +400,11 @@ function recordQuizAttempt(token, attempt) {
   if (!Number.isInteger(score) || score < 0 || score > questionCount) {
     throw new Error('คะแนนไม่ถูกต้อง');
   }
-  if (!Number.isInteger(attemptNumber) || attemptNumber < 1 || attemptNumber > 3) {
+  if (
+    !Number.isInteger(attemptNumber) ||
+    attemptNumber < 1 ||
+    attemptNumber > APP_CONFIG.quizMaxAttempts
+  ) {
     throw new Error('จำนวนครั้งที่ทำไม่ถูกต้อง');
   }
 
@@ -387,7 +422,7 @@ function recordQuizAttempt(token, attempt) {
   const doneBeforeQuiz = contiguousCompleted_(
     savedState ? savedState.completedSections : []
   ).length;
-  const requiredBeforeQuiz = LESSON_SECTION_COUNT - 1;
+  const requiredBeforeQuiz = QUIZ_SECTION_ORDER - 1;
 
   if (doneBeforeQuiz < requiredBeforeQuiz) {
     appendAudit_(
@@ -435,6 +470,79 @@ function getAdminDashboard(token) {
     spreadsheetUrl: setup.spreadsheetUrl,
     driveFolderUrl: setup.driveFolderUrl,
     students: students
+  };
+}
+
+/**
+ * Administrator-only item analysis — Blueprint #76 Learning Analytics และ #196
+ * รวมคำตอบครั้งล่าสุดของนักเรียนแต่ละคน แล้วนับว่าแต่ละตัวเลือกถูกเลือกกี่ครั้ง
+ * ไม่ส่งเฉลยกลับไป เพราะหน้าเว็บมีชุดคำถามและเฉลยอยู่แล้ว
+ * จึงไม่เพิ่มที่เก็บเฉลยเป็นแหล่งที่สองให้ไม่ตรงกันภายหลัง
+ */
+function getQuizItemStats(token) {
+  const session = requireRole_(token, 'admin');
+
+  const latestByStudent = {};
+  readDataObjects_(getSpreadsheet_().getSheetByName('Attempts')).forEach(
+    function (row) {
+      const username = String(row.username || '');
+      if (!username) return;
+      const attemptNumber = Number(row.attemptNumber) || 0;
+      const current = latestByStudent[username];
+      if (!current || attemptNumber >= current.attemptNumber) {
+        latestByStudent[username] = {
+          attemptNumber: attemptNumber,
+          answersJson: String(row.answersJson || '{}'),
+          score: Number(row.score) || 0
+        };
+      }
+    }
+  );
+
+  const choiceCounts = {};
+  const scores = [];
+  let respondents = 0;
+
+  Object.keys(latestByStudent).forEach(function (username) {
+    const entry = latestByStudent[username];
+    let answers = {};
+    try {
+      const parsed = JSON.parse(entry.answersJson);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        answers = parsed;
+      }
+    } catch (error) {
+      answers = {};
+    }
+
+    respondents += 1;
+    scores.push(entry.score);
+
+    Object.keys(answers).forEach(function (questionId) {
+      const choice = String(answers[questionId]);
+      if (!choiceCounts[questionId]) choiceCounts[questionId] = {};
+      choiceCounts[questionId][choice] =
+        (choiceCounts[questionId][choice] || 0) + 1;
+    });
+  });
+
+  const averageScore = scores.length
+    ? scores.reduce(function (sum, value) { return sum + value; }, 0) / scores.length
+    : 0;
+
+  appendAudit_(
+    session.username,
+    'item_analysis',
+    'success',
+    'วิเคราะห์รายข้อจากนักเรียน ' + respondents + ' คน'
+  );
+
+  return {
+    ok: true,
+    respondents: respondents,
+    averageScore: Math.round(averageScore * 100) / 100,
+    maximumScore: APP_CONFIG.quizQuestionCount,
+    choiceCounts: choiceCounts
   };
 }
 
@@ -490,6 +598,7 @@ function getStudentDetail(token, username) {
   }
 
   const completed = contiguousCompleted_(state ? state.completedSections : []);
+  const reflection = state && state.reflection ? state.reflection : {};
 
   appendAudit_(
     session.username,
@@ -513,6 +622,11 @@ function getStudentDetail(token, username) {
       };
     }),
     attempts: attempts,
+    reflection: {
+      summary: sanitizePlainText_(reflection.summary, 500),
+      confidence: sanitizePlainText_(reflection.confidence, 40)
+    },
+    rewards: computeRewards_(state),
     updatedAt: progressRow ? progressRow.updatedAt : null
   };
 }
@@ -996,6 +1110,58 @@ function unlockedSection_(completedSections) {
   );
 }
 
+/**
+ * Reward Engine — Blueprint #88
+ * XP และ Badge คำนวณใหม่จากความก้าวหน้าจริงทุกครั้งที่เรียก
+ * ไม่ได้สะสมจากค่าที่ผู้ใช้ส่งมา จึงฟาร์มด้วยการ refresh ไม่ได้ ตาม #89
+ */
+function computeRewards_(state) {
+  const completed = contiguousCompleted_(state ? state.completedSections : []);
+  const quiz = (state && state.quiz) || {};
+  const bestScore = Number(quiz.bestScore) || 0;
+  const attempts = Number(quiz.attempts) || 0;
+  const passed = bestScore >= QUIZ_PASS_MARK;
+  const perfect = bestScore >= APP_CONFIG.quizQuestionCount;
+
+  let xp = completed.length * APP_CONFIG.xpPerSection;
+  if (passed) xp += APP_CONFIG.xpQuizPass;
+  if (perfect) xp += APP_CONFIG.xpPerfectQuiz;
+
+  const badges = [];
+  if (completed.length >= 1) {
+    badges.push({ id: 'starter', label: 'เริ่มต้นแล้ว', detail: 'ทำกิจกรรมแรกสำเร็จ' });
+  }
+  if (completed.length >= Math.ceil(LESSON_SECTION_COUNT / 2)) {
+    badges.push({ id: 'halfway', label: 'ครึ่งทางแล้ว', detail: 'ทำกิจกรรมผ่านครึ่งบทเรียน' });
+  }
+  if (passed) {
+    badges.push({
+      id: 'quiz-pass',
+      label: 'ผ่านแบบทดสอบ',
+      detail: 'ได้ ' + bestScore + '/' + APP_CONFIG.quizQuestionCount
+    });
+  }
+  if (passed && attempts === 1) {
+    badges.push({ id: 'first-try', label: 'ผ่านครั้งแรก', detail: 'ทำครั้งเดียวก็ผ่าน' });
+  }
+  if (perfect) {
+    badges.push({ id: 'perfect', label: 'เต็มทุกข้อ', detail: 'ตอบถูกครบทุกข้อ' });
+  }
+  if (completed.length >= LESSON_SECTION_COUNT) {
+    badges.push({ id: 'complete', label: 'จบบทเรียน', detail: 'ทำครบทุกขั้นตอน' });
+  }
+
+  return {
+    xp: xp,
+    badges: badges,
+    completedCount: completed.length,
+    totalSections: LESSON_SECTION_COUNT,
+    bestScore: bestScore,
+    passMark: QUIZ_PASS_MARK,
+    passed: passed
+  };
+}
+
 function createDefaultProgress_(session) {
   return {
     version: APP_CONFIG.stateVersion,
@@ -1034,9 +1200,11 @@ function validateProgressState_(state, session) {
   }
 
   const quiz = state.quiz || {};
-  const latestScore = clampInteger_(quiz.latestScore, 0, 6);
-  const bestScore = clampInteger_(quiz.bestScore, latestScore, 6);
-  const attempts = clampInteger_(quiz.attempts, 0, 3);
+  const latestScore = clampInteger_(quiz.latestScore, 0, APP_CONFIG.quizQuestionCount);
+  const bestScore = clampInteger_(
+    quiz.bestScore, latestScore, APP_CONFIG.quizQuestionCount
+  );
+  const attempts = clampInteger_(quiz.attempts, 0, APP_CONFIG.quizMaxAttempts);
   const rawCompleted = Array.isArray(state.completedSections)
     ? state.completedSections
         .map(Number)

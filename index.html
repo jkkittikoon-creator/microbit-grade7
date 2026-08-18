@@ -338,6 +338,124 @@
       border-radius: 999px;
     }
 
+    .reward-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      background: var(--yellow-400);
+      color: var(--purple-900);
+      font-size: 0.85rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge-shelf {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .badge-shelf li {
+      display: flex;
+      flex-direction: column;
+      padding: 0.45rem 0.8rem;
+      border: 2px solid var(--yellow-400);
+      border-radius: 0.8rem;
+      background: #fffbeb;
+      color: var(--purple-900);
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+
+    .badge-shelf li small {
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .quiz-remediation {
+      margin-top: 1rem;
+      padding: 0.9rem 1rem;
+      border: 2px solid var(--yellow-400);
+      border-radius: 0.9rem;
+      background: #fffbeb;
+    }
+
+    .quiz-remediation[hidden] {
+      display: none;
+    }
+
+    .quiz-remediation h4 {
+      margin: 0 0 0.5rem;
+      color: var(--purple-900);
+      font-size: 1rem;
+    }
+
+    .hint-card {
+      margin-top: 0.6rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.7rem;
+      background: #fff;
+    }
+
+    .hint-card p {
+      margin: 0.3rem 0;
+      font-size: 0.9rem;
+    }
+
+    .hint-more {
+      min-height: 40px;
+      margin-top: 0.35rem;
+      padding: 0.35rem 0.8rem;
+      border: 2px solid var(--purple-900);
+      border-radius: 0.7rem;
+      background: #fff;
+      color: var(--purple-900);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+
+    .confidence-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
+    }
+
+    .confidence-options label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.8rem;
+      border: 2px solid var(--border);
+      border-radius: 0.8rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .confidence-options input:checked + span {
+      color: var(--purple-900);
+    }
+
+    .reflection-input {
+      width: 100%;
+      min-height: 7rem;
+      padding: 0.7rem;
+      border: 2px solid var(--border);
+      border-radius: 0.8rem;
+      font: inherit;
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+
     .next-step-bar {
       position: sticky;
       top: 0;
@@ -2116,6 +2234,44 @@
       opacity: 0.55;
     }
 
+    .admin-item-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.4rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-item-row:last-child {
+      border-bottom: none;
+    }
+
+    .admin-item-bar {
+      grid-column: 1 / -1;
+      height: 10px;
+      border-radius: 999px;
+      background: #eef0f4;
+      overflow: hidden;
+    }
+
+    .admin-item-bar span {
+      display: block;
+      height: 100%;
+      background: #16a34a;
+    }
+
+    .admin-item-bar span.is-weak {
+      background: #dc2626;
+    }
+
+    .admin-item-action {
+      grid-column: 1 / -1;
+      margin: 0.2rem 0 0;
+      color: #8a1c1c;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
     .admin-detail {
       margin-top: 1.25rem;
       padding: 1rem;
@@ -2507,6 +2663,10 @@
             target="_blank" rel="noopener noreferrer">เปิด Google Sheets</a>
           <a class="admin-link" id="admin-drive-link" href="#"
             target="_blank" rel="noopener noreferrer">เปิดโฟลเดอร์ Google Drive</a>
+          <button class="admin-action" id="admin-item-analysis" type="button"
+                  style="color: var(--purple-900); background: #fff; border-color: var(--border)">
+            วิเคราะห์รายข้อ
+          </button>
         </div>
 
         <div class="admin-table-wrap">
@@ -2530,6 +2690,13 @@
         </div>
         <p class="admin-status" id="admin-status" role="status" aria-live="polite"></p>
 
+        <div class="admin-detail" id="admin-items" hidden>
+          <h3 id="admin-items-title" tabindex="-1">ข้อที่นักเรียนพลาดมากที่สุด</h3>
+          <p id="admin-items-summary"></p>
+          <div id="admin-items-list"></div>
+          <button class="admin-reset" id="admin-items-close" type="button">ปิด</button>
+        </div>
+
         <div class="admin-detail" id="admin-detail" hidden>
           <h3 id="admin-detail-title" tabindex="-1"></h3>
           <p id="admin-detail-summary"></p>
@@ -2550,6 +2717,7 @@
         <strong id="student-name">นักเรียน</strong>
         <span id="student-id">กำลังโหลดข้อมูล...</span>
       </div>
+      <span class="reward-chip" id="xp-chip" hidden>⭐ <span id="xp-value">0</span> XP</span>
       <div class="progress-wrap" id="progress-wrap" aria-label="ความก้าวหน้าในบทเรียน">
         <span id="progress-label">กำลังโหลด...</span>
         <div class="progress-track" aria-hidden="true">
@@ -3258,8 +3426,49 @@
           เลือกคำตอบให้ครบทุกข้อก่อนกดสรุปคะแนน
         </p>
       </div>
+      <div class="quiz-remediation" id="quiz-remediation" hidden>
+        <h4>ทบทวนก่อนลองใหม่</h4>
+        <div id="quiz-remediation-list"></div>
+      </div>
+
       <p class="quiz-sync" id="quiz-sync"
          role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="lesson-section" id="reflection"
+             aria-labelledby="reflection-title">
+      <div class="section-heading">
+        <p class="section-kicker">Section 9 · สะท้อนผลการเรียนรู้</p>
+        <h2 id="reflection-title">วันนี้เราได้อะไรกลับไปบ้าง</h2>
+        <p class="section-intro">
+          เขียนสรุปสั้น ๆ 2 ประโยค แล้วเลือกระดับความมั่นใจของตัวเอง
+          ครูจะใช้คำตอบนี้ช่วยเหลือในคาบถัดไป ไม่มีถูกไม่มีผิด
+        </p>
+      </div>
+
+      <label for="reflection-summary">
+        ข้อผิดพลาดใดวันนี้ที่ช่วยให้เข้าใจระบบมากที่สุด และเพราะอะไร
+      </label>
+      <textarea class="reflection-input" id="reflection-summary"
+                maxlength="500" rows="4"
+                placeholder="เขียนอย่างน้อย 2 ประโยค"></textarea>
+
+      <fieldset>
+        <legend>ตอนนี้มั่นใจแค่ไหน</legend>
+        <div class="confidence-options" id="confidence-options">
+          <label><input type="radio" name="confidence" value="high"><span>มั่นใจมาก</span></label>
+          <label><input type="radio" name="confidence" value="ok"><span>เข้าใจ</span></label>
+          <label><input type="radio" name="confidence" value="unsure"><span>ยังไม่แน่ใจ</span></label>
+          <label><input type="radio" name="confidence" value="help"><span>ต้องการครูช่วย</span></label>
+        </div>
+      </fieldset>
+
+      <button class="submit-button" id="reflection-save" type="button">
+        บันทึกการสะท้อนผล
+      </button>
+      <p class="quiz-sync" id="reflection-sync" role="status" aria-live="polite"></p>
+
+      <ul class="badge-shelf" id="badge-shelf"></ul>
     </section>
 
     <section class="lesson-section" id="downloads"
@@ -3390,10 +3599,125 @@
         try {
           const config = await callServer("getPublicConfig");
           lessonSections = Array.isArray(config.sections) ? config.sections : [];
+
+          // เกณฑ์แบบทดสอบถูกกำหนดไว้ทั้งที่นี่และที่เซิร์ฟเวอร์
+          // ถ้าวันหนึ่งแก้ที่เดียวแล้วลืมอีกที่ ให้เห็นทันทีแทนที่จะเงียบไป
+          if (
+            config.quizQuestionCount !== QUIZ_QUESTIONS.length ||
+            config.quizPassPercent !== QUIZ_PASS_PERCENT ||
+            config.quizMaxAttempts !== QUIZ_MAX_ATTEMPTS
+          ) {
+            console.warn(
+              "เกณฑ์แบบทดสอบไม่ตรงกันระหว่างหน้าเว็บกับเซิร์ฟเวอร์",
+              {
+                หน้าเว็บ: {
+                  ข้อ: QUIZ_QUESTIONS.length,
+                  เกณฑ์ผ่าน: QUIZ_PASS_PERCENT,
+                  ครั้งสูงสุด: QUIZ_MAX_ATTEMPTS
+                },
+                เซิร์ฟเวอร์: {
+                  ข้อ: config.quizQuestionCount,
+                  เกณฑ์ผ่าน: config.quizPassPercent,
+                  ครั้งสูงสุด: config.quizMaxAttempts
+                }
+              }
+            );
+          }
         } catch (error) {
           lessonSections = [];
         }
         return lessonSections;
+      }
+
+      const reflectionSummary = document.querySelector("#reflection-summary");
+      const reflectionSave = document.querySelector("#reflection-save");
+      const reflectionSync = document.querySelector("#reflection-sync");
+
+      function selectedConfidence() {
+        const picked = document.querySelector(
+          "#confidence-options input:checked"
+        );
+        return picked ? picked.value : "";
+      }
+
+      async function restoreReflection() {
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const saved = (result.state && result.state.reflection) || {};
+          if (saved.summary) reflectionSummary.value = saved.summary;
+          if (saved.confidence) {
+            const option = document.querySelector(
+              `#confidence-options input[value="${saved.confidence}"]`
+            );
+            if (option) option.checked = true;
+          }
+          renderRewards(result.rewards);
+        } catch (error) {
+          // ไม่ต้องแจ้งเตือน ปล่อยให้กรอกใหม่ได้
+        }
+      }
+
+      if (reflectionSave) {
+        reflectionSave.addEventListener("click", async () => {
+          const summary = reflectionSummary.value.trim();
+          const confidence = selectedConfidence();
+
+          if (summary.length < 10) {
+            reflectionSync.textContent =
+              "เขียนอีกนิดนะ อย่างน้อย 2 ประโยคสั้น ๆ ก็พอ";
+            reflectionSummary.focus();
+            return;
+          }
+          if (!confidence) {
+            reflectionSync.textContent = "เลือกระดับความมั่นใจด้วยนะ";
+            return;
+          }
+
+          reflectionSave.disabled = true;
+          reflectionSync.textContent = "กำลังบันทึก...";
+
+          try {
+            const result = await callServer("getProgress", sessionToken);
+            const state = result.state;
+            state.reflection = { summary: summary, confidence: confidence };
+            state.currentSection = 9;
+            state.completedSections = Array.from(
+              new Set([...(state.completedSections || []), 1, 2, 3, 4, 5, 6, 7, 8, 9])
+            );
+            const saved = await callServer("saveProgress", sessionToken, state);
+            renderRewards(saved.rewards);
+            reflectionSync.textContent =
+              "บันทึกแล้ว ขอบคุณที่ตั้งใจสะท้อนผลนะ 🎉";
+          } catch (error) {
+            reflectionSync.textContent = `บันทึกไม่สำเร็จ: ${error.message}`;
+          } finally {
+            reflectionSave.disabled = false;
+          }
+        });
+      }
+
+      function renderRewards(rewards) {
+        if (!rewards) return;
+
+        const chip = document.querySelector("#xp-chip");
+        const value = document.querySelector("#xp-value");
+        if (chip && value) {
+          value.textContent = String(rewards.xp || 0);
+          chip.hidden = false;
+        }
+
+        const shelf = document.querySelector("#badge-shelf");
+        if (!shelf) return;
+        shelf.replaceChildren();
+        (rewards.badges || []).forEach((badge) => {
+          const item = document.createElement("li");
+          const label = document.createElement("span");
+          label.textContent = `🏅 ${badge.label}`;
+          const detail = document.createElement("small");
+          detail.textContent = badge.detail;
+          item.append(label, detail);
+          shelf.appendChild(item);
+        });
       }
 
       function contiguousCompleted(list) {
@@ -3498,6 +3822,7 @@
             unlocked: Math.min(completed.length + 1, lessonSections.length)
           };
           applyLessonLocks();
+          renderRewards(result.rewards);
         } catch (error) {
           // ถ้าดึงไม่ได้ ปล่อยสถานะเดิมไว้ ดีกว่าล็อกผิดจนเรียนต่อไม่ได้
         }
@@ -3523,6 +3848,7 @@
           user.role === "teacher" ? "บัญชีครู" : `ชื่อผู้ใช้ ${user.username}`;
         document.querySelector("#lesson-title").focus({ preventScroll: true });
         void refreshLessonNavigation();
+        void restoreReflection();
         void restorePredictAnswer();
         void restoreUnpluggedActivity();
         void restoreMgCheck();
@@ -3765,6 +4091,105 @@
         });
       }
 
+      const adminItems = document.querySelector("#admin-items");
+      const adminItemsSummary = document.querySelector("#admin-items-summary");
+      const adminItemsList = document.querySelector("#admin-items-list");
+      const adminItemsClose = document.querySelector("#admin-items-close");
+      const adminItemsButton = document.querySelector("#admin-item-analysis");
+
+      if (adminItemsClose) {
+        adminItemsClose.addEventListener("click", () => {
+          adminItems.hidden = true;
+        });
+      }
+
+      /**
+       * Item Analysis ตาม Blueprint #76 พร้อมข้อเสนอการช่วยเหลือตาม #196
+       * เซิร์ฟเวอร์ส่งเฉพาะจำนวนครั้งที่แต่ละตัวเลือกถูกเลือก
+       * หน้าเว็บเทียบกับเฉลยเอง จึงไม่มีเฉลยเก็บซ้ำสองที่
+       */
+      async function showItemAnalysis() {
+        adminItemsButton.disabled = true;
+        adminStatus.textContent = "กำลังวิเคราะห์คำตอบรายข้อ...";
+
+        try {
+          const result = await callServer("getQuizItemStats", sessionToken);
+
+          if (!result.respondents) {
+            adminItemsSummary.textContent =
+              "ยังไม่มีนักเรียนส่งแบบทดสอบ จึงยังวิเคราะห์ไม่ได้";
+            adminItemsList.replaceChildren();
+            adminItems.hidden = false;
+            adminStatus.textContent = "ยังไม่มีข้อมูลให้วิเคราะห์";
+            return;
+          }
+
+          adminItemsSummary.textContent =
+            `อ้างอิงจากการส่งครั้งล่าสุดของนักเรียน ${result.respondents} คน · ` +
+            `คะแนนเฉลี่ย ${result.averageScore}/${result.maximumScore}`;
+
+          const rows = QUIZ_QUESTIONS.map((question, index) => {
+            const counts = result.choiceCounts[question.id] || {};
+            const answered = Object.values(counts).reduce((a, b) => a + b, 0);
+            const correct = counts[question.answer] || 0;
+            const percent = answered ? Math.round((correct / answered) * 100) : 0;
+            return { question, index, counts, answered, correct, percent };
+          }).sort((a, b) => a.percent - b.percent);
+
+          adminItemsList.replaceChildren();
+          rows.forEach((row) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "admin-item-row";
+
+            const label = document.createElement("span");
+            label.textContent = `ข้อ ${row.index + 1} · ${row.question.question}`;
+
+            const score = document.createElement("strong");
+            score.textContent = `${row.correct}/${row.answered} ถูก (${row.percent}%)`;
+
+            const bar = document.createElement("div");
+            bar.className = "admin-item-bar";
+            const fill = document.createElement("span");
+            fill.style.width = `${row.percent}%`;
+            if (row.percent < 60) fill.classList.add("is-weak");
+            bar.appendChild(fill);
+
+            wrapper.append(label, score, bar);
+
+            if (row.percent < 60) {
+              const wrongChoices = row.question.choices
+                .filter(([value]) => value !== row.question.answer)
+                .map(([value, text]) => ({ text, count: row.counts[value] || 0 }))
+                .filter((item) => item.count > 0)
+                .sort((a, b) => b.count - a.count);
+
+              const action = document.createElement("p");
+              action.className = "admin-item-action";
+              action.textContent = wrongChoices.length
+                ? `ควรสอนซ้ำ · ตอบผิดมากที่สุดคือ "${wrongChoices[0].text}" จำนวน ${wrongChoices[0].count} คน`
+                : "ควรสอนซ้ำ";
+              wrapper.appendChild(action);
+            }
+
+            adminItemsList.appendChild(wrapper);
+          });
+
+          adminItems.hidden = false;
+          document.querySelector("#admin-items-title").focus({ preventScroll: true });
+          adminStatus.textContent = "วิเคราะห์รายข้อเรียบร้อย เรียงจากข้อที่พลาดมากที่สุด";
+        } catch (error) {
+          adminStatus.textContent = `วิเคราะห์ไม่สำเร็จ: ${error.message}`;
+        } finally {
+          adminItemsButton.disabled = false;
+        }
+      }
+
+      if (adminItemsButton) {
+        adminItemsButton.addEventListener("click", () => {
+          void showItemAnalysis();
+        });
+      }
+
       function renderAttemptCard(attempt) {
         const card = document.createElement("div");
         card.className = "admin-attempt";
@@ -3828,7 +4253,35 @@
             adminDetailSteps.appendChild(item);
           });
 
+          const confidenceLabel = {
+            high: "มั่นใจมาก",
+            ok: "เข้าใจ",
+            unsure: "ยังไม่แน่ใจ",
+            help: "ต้องการครูช่วย"
+          };
+
           adminDetailAttempts.replaceChildren();
+
+          if (result.rewards) {
+            const reward = document.createElement("p");
+            reward.textContent =
+              `⭐ ${result.rewards.xp} XP · 🏅 ${result.rewards.badges.length} Badge`;
+            adminDetailAttempts.appendChild(reward);
+          }
+
+          const reflection = result.reflection || {};
+          if (reflection.summary || reflection.confidence) {
+            const card = document.createElement("div");
+            card.className = "admin-attempt";
+            const heading = document.createElement("h4");
+            heading.textContent =
+              `สะท้อนผล · ความมั่นใจ: ${confidenceLabel[reflection.confidence] || "ไม่ได้เลือก"}`;
+            const text = document.createElement("p");
+            text.textContent = reflection.summary || "ไม่ได้เขียนสรุป";
+            card.append(heading, text);
+            adminDetailAttempts.appendChild(card);
+          }
+
           if (!result.attempts.length) {
             const empty = document.createElement("p");
             empty.textContent = "ยังไม่มีประวัติการส่งแบบทดสอบ";
@@ -5196,6 +5649,8 @@
             ["sound", "ระดับเสียง"]
           ],
           answer: "acceleration",
+          hint:
+            "หลายคนเข้าใจว่า accelerometer เป็นเซนเซอร์วัดองศาโดยตรง ลองทบทวนว่าจริง ๆ แล้วมันวัดอะไร แล้วเราเอาค่านั้นมาบอกการเอียงได้อย่างไร",
           explanation:
             "accelerometer คือเซนเซอร์วัดความเร่ง และช่วยให้โปรแกรมรับรู้การเอียง"
         },
@@ -5208,6 +5663,8 @@
             ["equal", "1 mg = 1000 g"]
           ],
           answer: "one",
+          hint:
+            "ระวังสับสน mg ในบทนี้ไม่ใช่มิลลิกรัมที่ใช้ชั่งน้ำหนัก ลองนึกว่าบอร์ดวางราบอ่านได้ 0 mg และเอียง 90° อ่านได้ประมาณ 1000 mg",
           explanation:
             "milli หมายถึงหนึ่งในพัน ดังนั้น 1000 mg จึงเท่ากับ 1 g"
         },
@@ -5220,6 +5677,8 @@
             ["four", "เกรด 4"]
           ],
           answer: "two",
+          hint:
+            "ลองนึกถึงจุดกึ่งกลาง ถ้า 0 คะแนนได้เกรด 0 และ 100 คะแนนได้เกรด 4 แล้วคะแนนที่อยู่ตรงกลางพอดีควรได้เท่าไร",
           explanation:
             "50 อยู่กึ่งกลางของช่วง 0–100 จึงตรงกับ 2 ซึ่งอยู่กึ่งกลางของ 0–4"
         },
@@ -5232,6 +5691,8 @@
             ["both-two", "ทั้งสองสูตรได้ประมาณ 2"]
           ],
           answer: "map-four",
+          hint:
+            "ลองแทนค่า 600 ลงในทั้งสองสูตรจริง ๆ แล้วเทียบดูว่าค่าไหนยังอยู่ในช่วง 0–4 และค่าไหนหลุดขอบออกไป",
           explanation:
             "map(600, −600, 600, 0, 4) ได้ 4.00 แต่ (600 + 1023) / 400 ได้ประมาณ 4.06"
         },
@@ -5244,6 +5705,8 @@
             ["lights", "เพื่อเพิ่มจำนวน LED เป็น 600 จุด"]
           ],
           answer: "limit",
+          hint:
+            "หลายคนคิดว่า constrain() ใช้เฉพาะตอนที่สูตรผิด ลองทบทวนว่า map() ตรวจขอบเขตปลายทางให้เราเองหรือเปล่า",
           explanation:
             "map() ไม่จำกัดขอบเขตให้อัตโนมัติ constrain() จึงช่วยกันค่าหลุดจากพิกัด 0–4"
         },
@@ -5256,6 +5719,8 @@
             ["pace", "เว้นจังหวะไม่ให้ลูปสั่งจอถี่ต่อเนื่องเกินไป"]
           ],
           answer: "pace",
+          hint:
+            "ลองนึกว่าถ้าไม่มี pause ลูป forever จะสั่งจอถี่แค่ไหนในหนึ่งวินาที แล้วผลที่เห็นบนจอกับการทำงานของระบบจะเป็นอย่างไร",
           explanation:
             "pause ทำให้ forever มีจังหวะพัก ลดการสั่งงานจอซ้ำถี่เกินไป"
         }
@@ -5407,11 +5872,70 @@
         quizResultTitle.textContent = passed
           ? "ผ่านแบบทดสอบแล้ว!"
           : "ยังไม่ผ่าน ลองทบทวนอีกครั้ง";
+        const total = QUIZ_QUESTIONS.length;
         quizResultMessage.textContent = passed
-          ? `ได้ ${quizLatest}/6 ผ่านเกณฑ์ 5/6`
+          ? `ได้ ${quizLatest}/${total} ผ่านเกณฑ์ ${QUIZ_PASSING_SCORE}/${total}`
           : quizAttemptCount < QUIZ_MAX_ATTEMPTS
-            ? `ได้ ${quizLatest}/6 ต้องได้อย่างน้อย 5/6 จึงจะผ่าน`
-            : `ได้ ${quizLatest}/6 ใช้ครบ 3 ครั้งแล้ว กรุณาขอคำแนะนำจากครูเจม`;
+            ? `ได้ ${quizLatest}/${total} ต้องได้อย่างน้อย ${QUIZ_PASSING_SCORE}/${total} จึงจะผ่าน`
+            : `ได้ ${quizLatest}/${total} ใช้ครบ ${QUIZ_MAX_ATTEMPTS} ครั้งแล้ว กรุณาขอคำแนะนำจากครูเจม`;
+
+        renderQuizRemediation(passed);
+      }
+
+      /**
+       * Hint 2 ระดับ ตาม Blueprint #45 และ Remediation ตาม #47
+       * แสดงหลังทำไม่ผ่านเท่านั้น เพื่อไม่กระทบความน่าเชื่อถือของการวัดครั้งแรก (#188)
+       * Hint 1 คือจุดที่มักเข้าใจผิดซึ่งครูระบุไว้ในแผนการสอนข้อ 4
+       * Hint 2 คือคำอธิบายเฉลยที่มีอยู่เดิมของแต่ละข้อ
+       */
+      function renderQuizRemediation(passed) {
+        const panel = document.querySelector("#quiz-remediation");
+        const list = document.querySelector("#quiz-remediation-list");
+        if (!panel || !list) return;
+
+        if (passed || quizAttemptCount === 0) {
+          panel.hidden = true;
+          return;
+        }
+
+        const wrong = QUIZ_QUESTIONS.filter(
+          (question) => quizAnswers[question.id] !== question.answer
+        );
+        if (!wrong.length) {
+          panel.hidden = true;
+          return;
+        }
+
+        list.replaceChildren();
+        wrong.forEach((question, index) => {
+          const card = document.createElement("div");
+          card.className = "hint-card";
+
+          const title = document.createElement("p");
+          title.innerHTML = `<strong>ข้อ ${QUIZ_QUESTIONS.indexOf(question) + 1}</strong> ${question.question}`;
+
+          const hintOne = document.createElement("p");
+          hintOne.textContent = `💡 ${question.hint}`;
+
+          const more = document.createElement("button");
+          more.type = "button";
+          more.className = "hint-more";
+          more.textContent = "ยังไม่เข้าใจ ขอคำใบ้เพิ่ม";
+
+          const hintTwo = document.createElement("p");
+          hintTwo.textContent = `📘 ${question.explanation}`;
+          hintTwo.hidden = true;
+
+          more.addEventListener("click", () => {
+            hintTwo.hidden = false;
+            more.hidden = true;
+          });
+
+          card.append(title, hintOne, more, hintTwo);
+          list.appendChild(card);
+        });
+
+        panel.hidden = false;
       }
 
       function scheduleQuizDraftSave() {
