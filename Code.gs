@@ -612,15 +612,13 @@ function getQuizItemStats(token) {
     function (row) {
       const username = String(row.username || '');
       if (!username) return;
-      const attemptNumber = Number(row.attemptNumber) || 0;
-      const current = latestByStudent[username];
-      if (!current || attemptNumber >= current.attemptNumber) {
-        latestByStudent[username] = {
-          attemptNumber: attemptNumber,
-          answersJson: String(row.answersJson || '{}'),
-          score: Number(row.score) || 0
-        };
-      }
+      // แถวท้ายสุดของแต่ละคนคือครั้งล่าสุดเสมอ เพราะชีตต่อแถวตามเวลา
+      // ห้ามเทียบด้วย attemptNumber เพราะค่าจะเริ่มนับใหม่หลังครูรีเซ็ตคะแนน
+      latestByStudent[username] = {
+        attemptNumber: Number(row.attemptNumber) || 0,
+        answersJson: String(row.answersJson || '{}'),
+        score: Number(row.score) || 0
+      };
     }
   );
 

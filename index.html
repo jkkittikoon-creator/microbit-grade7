@@ -6293,13 +6293,17 @@
             score
           );
           const passed = score >= QUIZ_PASSING_SCORE;
+          // ถือว่าทำแบบทดสอบครบเมื่อผ่าน หรือใช้สิทธิ์ครบแล้ว
+          // เพื่อไม่ให้นักเรียนที่ยังไม่ผ่านถูกกันออกจากขั้นสะท้อนผล
+          // การผ่านหรือไม่ผ่านยังแยกเก็บใน quiz.bestScore ตามเดิม
+          const quizStepDone = passed || attemptNumber >= QUIZ_MAX_ATTEMPTS;
 
           state.currentSection = 8;
           state.completedSections = Array.from(
             new Set([
               ...(state.completedSections || []),
               1, 2, 3, 4, 5, 6, 7,
-              ...(passed ? [8] : [])
+              ...(quizStepDone ? [8] : [])
             ])
           );
           state.quiz = {
