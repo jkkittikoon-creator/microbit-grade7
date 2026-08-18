@@ -797,10 +797,18 @@ function resetStudentQuiz(token, username, reason) {
     } catch (error) {
       state = null;
     }
-    const beforeQuiz = state && state.quiz ? state.quiz : null;
+    // สำเนาต้องครอบคลุมทั้งคะแนนและความก้าวหน้ารายขั้น
+    // ไม่เช่นนั้นกู้คืนแล้วจะได้คะแนนกลับมาแต่ขั้นที่ทำไปแล้วหายไป
+    const snapshot = {
+      quiz: state && state.quiz ? state.quiz : null,
+      completedSections: state && Array.isArray(state.completedSections)
+        ? state.completedSections
+        : [],
+      currentSection: state ? Number(state.currentSection) || 1 : 1
+    };
 
     // Soft Delete — เก็บสำเนาก่อนเขียนทับเสมอ
-    appendQuizArchive_(session.username, target, note, before, beforeQuiz);
+    appendQuizArchive_(session.username, target, note, before, snapshot);
 
     if (state && typeof state === 'object' && !Array.isArray(state)) {
       state.quiz = {
@@ -810,6 +818,15 @@ function resetStudentQuiz(token, username, reason) {
         attempts: 0,
         locked: false
       };
+      // ถอยขั้นแบบทดสอบเป็นต้นไป เพื่อให้ระบบพานักเรียนกลับมาทำใหม่
+      state.completedSections = contiguousCompleted_(snapshot.completedSections)
+        .filter(function (order) {
+          return order < QUIZ_SECTION_ORDER;
+        });
+      state.currentSection = Math.min(
+        snapshot.currentSection,
+        unlockedSection_(state.completedSections)
+      );
       sheet.getRange(row, 3).setValue(JSON.stringify(state));
     }
 
@@ -879,12 +896,20 @@ function restoreStudentQuiz(token, username) {
       state = null;
     }
 
-    let beforeQuiz = null;
+    let snapshot = null;
     try {
-      beforeQuiz = JSON.parse(String(entry.beforeQuizJson || 'null'));
+      snapshot = JSON.parse(String(entry.beforeQuizJson || 'null'));
     } catch (error) {
-      beforeQuiz = null;
+      snapshot = null;
     }
+
+    const isSnapshot = snapshot &&
+      typeof snapshot === 'object' &&
+      !Array.isArray(snapshot) &&
+      Array.isArray(snapshot.completedSections);
+
+    // สำเนารุ่นแรกเก็บเฉพาะก้อน quiz จึงต้องรองรับทั้งสองรูปแบบ
+    const beforeQuiz = isSnapshot ? snapshot.quiz : snapshot;
 
     if (state && typeof state === 'object' && !Array.isArray(state)) {
       state.quiz = beforeQuiz && typeof beforeQuiz === 'object' && !Array.isArray(beforeQuiz)
@@ -896,6 +921,13 @@ function restoreStudentQuiz(token, username) {
             attempts: restored.attempts,
             locked: false
           };
+      if (isSnapshot) {
+        state.completedSections = contiguousCompleted_(snapshot.completedSections);
+        state.currentSection = Math.min(
+          Number(snapshot.currentSection) || 1,
+          unlockedSection_(state.completedSections)
+        );
+      }
       sheet.getRange(row, 3).setValue(JSON.stringify(state));
     }
 
@@ -940,7 +972,7 @@ function ensureQuizArchiveSheet_() {
   return sheet;
 }
 
-function appendQuizArchive_(actor, username, reason, before, beforeQuiz) {
+function appendQuizArchive_(actor, username, reason, before, snapshot) {
   ensureQuizArchiveSheet_().appendRow([
     new Date(),
     actor,
@@ -949,7 +981,7 @@ function appendQuizArchive_(actor, username, reason, before, beforeQuiz) {
     before.latestScore,
     before.bestScore,
     before.attempts,
-    JSON.stringify(beforeQuiz),
+    JSON.stringify(snapshot),
     '',
     ''
   ]);

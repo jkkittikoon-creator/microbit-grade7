@@ -3732,6 +3732,7 @@
       }
 
       function showLogin(message = "") {
+        clearPreviewState();
         currentUser = null;
         loginScreen.hidden = false;
         adminScreen.hidden = true;
@@ -3835,7 +3836,7 @@
             state.reflection = { summary: summary, confidence: confidence };
             state.currentSection = 9;
             state.completedSections = Array.from(
-              new Set([...(state.completedSections || []), 1, 2, 3, 4, 5, 6, 7, 8, 9])
+              new Set([...(state.completedSections || []), 9])
             );
             const saved = await callServer("saveProgress", sessionToken, state);
             renderRewards(saved.rewards);
@@ -4044,23 +4045,34 @@
         }
       }
 
-      function exitTeacherPreview() {
-        if (!previewSession) return;
-        sessionToken = adminToken;
-        const teacher = adminUser;
+      /** ล้างร่องรอยโหมดทดลองทุกอย่าง ใช้ร่วมกันทั้งตอนออกจากโหมดและตอนจบเซสชัน */
+      function clearPreviewState() {
         previewSession = null;
         adminToken = "";
         adminUser = null;
-        previewBar.hidden = true;
+        if (previewBar) previewBar.hidden = true;
+      }
+
+      function exitTeacherPreview() {
+        if (!previewSession) return;
+        const teacher = adminUser;
+        sessionToken = adminToken;
+        clearPreviewState();
         appShell.hidden = true;
         void showAdminDashboard(teacher);
       }
 
-      document.querySelector("#preview-exit").addEventListener("click", () => {
-        exitTeacherPreview();
-      });
+      const previewExitButton = document.querySelector("#preview-exit");
+      const previewResetButton = document.querySelector("#preview-reset");
 
-      document.querySelector("#preview-reset").addEventListener("click", async () => {
+      if (previewExitButton) {
+        previewExitButton.addEventListener("click", () => {
+          exitTeacherPreview();
+        });
+      }
+
+      if (previewResetButton) {
+        previewResetButton.addEventListener("click", async () => {
         if (!previewSession) return;
         try {
           await callServer("resetTeacherPreview", sessionToken);
@@ -4069,7 +4081,8 @@
         } catch (error) {
           previewBarText.textContent = `ล้างข้อมูลไม่สำเร็จ: ${error.message}`;
         }
-      });
+        });
+      }
 
       function showApp(user) {
         currentUser = user;
@@ -4424,13 +4437,20 @@
         });
       }
 
-      document.querySelector("#admin-preview-normal").addEventListener("click", () => {
-        void enterTeacherPreview("normal");
-      });
+      const previewNormalButton = document.querySelector("#admin-preview-normal");
+      const previewFreeButton = document.querySelector("#admin-preview-free");
 
-      document.querySelector("#admin-preview-free").addEventListener("click", () => {
-        void enterTeacherPreview("free");
-      });
+      if (previewNormalButton) {
+        previewNormalButton.addEventListener("click", () => {
+          void enterTeacherPreview("normal");
+        });
+      }
+
+      if (previewFreeButton) {
+        previewFreeButton.addEventListener("click", () => {
+          void enterTeacherPreview("free");
+        });
+      }
 
       function renderAttemptCard(attempt) {
         const card = document.createElement("div");
