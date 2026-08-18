@@ -244,6 +244,38 @@
       color: var(--green-700);
     }
 
+    .login-mode {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .login-mode button {
+      flex: 1 1 0;
+      min-height: 44px;
+      padding: 0.5rem 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 0.8rem;
+      background: #fff;
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .login-mode button:hover,
+    .login-mode button:focus-visible {
+      border-color: var(--purple-700);
+      color: var(--purple-900);
+    }
+
+    .login-mode button[aria-pressed="true"] {
+      border-color: var(--purple-900);
+      background: var(--purple-900);
+      color: #fff;
+    }
+
     .privacy-note {
       margin: 1.5rem 0 0;
       color: var(--muted);
@@ -2689,9 +2721,19 @@
       </div>
 
       <div class="auth-panel">
-        <p class="section-kicker">Student Login</p>
+        <p class="section-kicker" id="login-kicker">Student Login</p>
         <h2 id="login-title">เข้าสู่ห้องเรียน</h2>
-        <p class="auth-panel-lead">ใช้ชื่อผู้ใช้ที่ครูมอบให้ เช่น std001</p>
+        <p class="auth-panel-lead" id="login-lead">ใช้ชื่อผู้ใช้ที่ครูมอบให้ เช่น std001</p>
+
+        <div class="login-mode" role="group" aria-label="เลือกประเภทผู้ใช้">
+          <button type="button" id="login-as-student" aria-pressed="true">
+            นักเรียน
+          </button>
+          <button type="button" id="login-as-admin" aria-pressed="false">
+            ครู / ผู้ดูแลระบบ
+          </button>
+        </div>
+
         <form id="login-form" novalidate>
           <div class="form-field">
             <label for="login-username">ชื่อผู้ใช้</label>
@@ -4647,6 +4689,42 @@
         adminStatus.textContent = `ส่งออกข้อมูล ${students.length} คนแล้ว`;
       }
 
+      /**
+       * ปุ่มสลับโหมดเข้าสู่ระบบ เป็นตัวช่วยกรอกให้สะดวกเท่านั้น
+       * ไม่ได้ให้สิทธิ์ใด ๆ เพิ่ม สิทธิ์จริงตัดสินจาก role ในฐานข้อมูลฝั่งเซิร์ฟเวอร์
+       * ครูจึงยังต้องกรอกรหัสผ่านของบัญชี admin ตามปกติ
+       */
+      const loginAsStudent = document.querySelector("#login-as-student");
+      const loginAsAdmin = document.querySelector("#login-as-admin");
+      const loginKicker = document.querySelector("#login-kicker");
+      const loginLead = document.querySelector("#login-lead");
+      const loginUsername = document.querySelector("#login-username");
+
+      function setLoginMode(mode) {
+        const isAdmin = mode === "admin";
+        loginAsStudent.setAttribute("aria-pressed", String(!isAdmin));
+        loginAsAdmin.setAttribute("aria-pressed", String(isAdmin));
+
+        loginKicker.textContent = isAdmin ? "Teacher Login" : "Student Login";
+        loginLead.textContent = isAdmin
+          ? "สำหรับครูผู้สอน เพื่อดูแดชบอร์ดและทดลองบทเรียน"
+          : "ใช้ชื่อผู้ใช้ที่ครูมอบให้ เช่น std001";
+        loginSubmit.textContent = isAdmin ? "เข้าสู่แดชบอร์ด" : "เข้าสู่บทเรียน";
+        loginUsername.placeholder = isAdmin ? "admin" : "std001";
+
+        if (isAdmin) {
+          if (!loginUsername.value.trim()) loginUsername.value = "admin";
+        } else if (loginUsername.value.trim().toLowerCase() === "admin") {
+          loginUsername.value = "";
+        }
+
+        loginMessage.textContent = "";
+        loginUsername.focus();
+      }
+
+      loginAsStudent.addEventListener("click", () => setLoginMode("student"));
+      loginAsAdmin.addEventListener("click", () => setLoginMode("admin"));
+
       loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const username = document.querySelector("#login-username").value.trim().toLowerCase();
@@ -4658,7 +4736,11 @@
           return;
         }
 
-        setBusy(loginSubmit, true, "กำลังตรวจสอบ...", "เข้าสู่บทเรียน");
+        const submitLabel =
+          loginAsAdmin.getAttribute("aria-pressed") === "true"
+            ? "เข้าสู่แดชบอร์ด"
+            : "เข้าสู่บทเรียน";
+        setBusy(loginSubmit, true, "กำลังตรวจสอบ...", submitLabel);
         loginMessage.textContent = "";
         try {
           const result = await callServer("login", { username, password });
@@ -4675,7 +4757,7 @@
         } catch (error) {
           loginMessage.textContent = error.message;
         } finally {
-          setBusy(loginSubmit, false, "กำลังตรวจสอบ...", "เข้าสู่บทเรียน");
+          setBusy(loginSubmit, false, "กำลังตรวจสอบ...", submitLabel);
         }
       });
 
