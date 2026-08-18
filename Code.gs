@@ -26,6 +26,7 @@ const APP_CONFIG = Object.freeze({
   teacherName: 'นายกิตติคุณ จันทะคุณ',
   schoolName: 'โรงเรียนบ้านเขาธรรมบท',
   adminUsername: 'admin',
+  previewUsername: '__preview__',
   adminPasswordProperty: 'INITIAL_ADMIN_PASSWORD',
   stateVersion: 1,
   sessionTtlSeconds: 6 * 60 * 60,
@@ -306,6 +307,19 @@ function getCurrentUser(token) {
 /** Reads only the current student's own saved progress. */
 function getProgress(token) {
   const session = requireSession_(token);
+
+  if (session.preview) {
+    const previewState = readPreviewState_(token, session);
+    return {
+      ok: true,
+      state: previewState,
+      updatedAt: null,
+      preview: true,
+      previewMode: session.previewMode,
+      rewards: computeRewards_(previewState)
+    };
+  }
+
   const row = findProgressRow_(session.username);
 
   if (!row) {
@@ -341,6 +355,18 @@ function saveProgress(token, state) {
   }
 
   const cleanState = validateProgressState_(state, session);
+
+  // โหมดทดลองไม่เขียนลงชีตใด ๆ ตาม Blueprint #113
+  if (session.preview) {
+    writePreviewState_(token, cleanState);
+    return {
+      ok: true,
+      updatedAt: new Date().toISOString(),
+      preview: true,
+      rewards: computeRewards_(cleanState)
+    };
+  }
+
   const json = JSON.stringify(cleanState);
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -410,18 +436,24 @@ function recordQuizAttempt(token, attempt) {
 
   // Prerequisite ฝั่งเซิร์ฟเวอร์ตาม Blueprint #16 และ #141
   // เดิมตรวจเงื่อนไขนี้ที่หน้าเว็บเท่านั้น จึงข้ามได้ด้วยการเรียก API ตรง
-  const progressRow = findProgressRow_(session.username);
   let savedState = null;
-  if (progressRow) {
-    try {
-      savedState = JSON.parse(progressRow.progressJson);
-    } catch (error) {
-      savedState = null;
+  if (session.preview) {
+    savedState = readPreviewState_(token, session);
+  } else {
+    const progressRow = findProgressRow_(session.username);
+    if (progressRow) {
+      try {
+        savedState = JSON.parse(progressRow.progressJson);
+      } catch (error) {
+        savedState = null;
+      }
     }
   }
-  const doneBeforeQuiz = contiguousCompleted_(
-    savedState ? savedState.completedSections : []
-  ).length;
+
+  // โหมดทดลองแบบ free ให้ครูลองทำแบบทดสอบได้เลยโดยไม่ต้องไล่ทำครบทุกขั้น
+  const doneBeforeQuiz = session.previewMode === 'free'
+    ? QUIZ_SECTION_ORDER - 1
+    : contiguousCompleted_(savedState ? savedState.completedSections : []).length;
   const requiredBeforeQuiz = QUIZ_SECTION_ORDER - 1;
 
   if (doneBeforeQuiz < requiredBeforeQuiz) {
@@ -435,6 +467,11 @@ function recordQuizAttempt(token, attempt) {
       'กรุณาทำกิจกรรม Section 1–' + requiredBeforeQuiz +
         ' ให้ครบก่อนส่งแบบทดสอบ (ตอนนี้ครบ ' + doneBeforeQuiz + ' ขั้น)'
     );
+  }
+
+  if (session.preview) {
+    // ไม่เขียนประวัติการส่งของโหมดทดลองลงชีตของนักเรียนจริง
+    return { ok: true, preview: true };
   }
 
   getSpreadsheet_().getSheetByName('Attempts').appendRow([
@@ -471,6 +508,94 @@ function getAdminDashboard(token) {
     driveFolderUrl: setup.driveFolderUrl,
     students: students
   };
+}
+
+/**
+ * Teacher Preview Mode — Blueprint #78 และ #113
+ * สร้าง Synthetic Session ที่แยกขาดจากข้อมูลนักเรียนจริง
+ * ความก้าวหน้าของโหมดนี้เก็บใน CacheService ไม่เขียนลงชีตใด ๆ
+ * จึงไม่มีทางไปปนกับ Progress, Attempts หรือคะแนนของนักเรียน
+ *
+ * mode 'normal' คือเดินตามลำดับเหมือนนักเรียนจริง
+ * mode 'free' คือเปิดทุกขั้นให้ครูกระโดดไปดูจุดใดก็ได้ ตาม #79
+ */
+function startTeacherPreview(token, mode) {
+  const session = requireRole_(token, 'admin');
+  const previewMode = String(mode) === 'free' ? 'free' : 'normal';
+  const previewToken = createPreviewSession_(session.username, previewMode);
+
+  appendAudit_(
+    session.username,
+    'preview_start',
+    'success',
+    'เปิดโหมดทดลองแบบ ' + previewMode
+  );
+
+  return {
+    ok: true,
+    token: previewToken,
+    mode: previewMode,
+    user: {
+      username: APP_CONFIG.previewUsername,
+      role: 'student',
+      studentNumber: '—',
+      displayName: 'โหมดทดลองของครู'
+    }
+  };
+}
+
+/** ล้างความก้าวหน้าของโหมดทดลอง ตาม Blueprint #80 Reset Preview */
+function resetTeacherPreview(token) {
+  const session = requireSession_(token);
+  if (!session.preview) {
+    throw new Error('ใช้ได้เฉพาะในโหมดทดลอง');
+  }
+  CacheService.getScriptCache().remove(previewStateKey_(token));
+  appendAudit_(session.actor || 'admin', 'preview_reset', 'success', 'ล้างข้อมูลโหมดทดลอง');
+  return { ok: true };
+}
+
+function createPreviewSession_(actor, previewMode) {
+  const token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  const session = {
+    username: APP_CONFIG.previewUsername,
+    role: 'student',
+    studentNumber: '—',
+    displayName: 'โหมดทดลองของครู',
+    mustChangePassword: false,
+    preview: true,
+    previewMode: previewMode,
+    actor: actor,
+    issuedAt: new Date().toISOString()
+  };
+  CacheService.getScriptCache().put(
+    'session:' + token,
+    JSON.stringify(session),
+    APP_CONFIG.sessionTtlSeconds
+  );
+  return token;
+}
+
+function previewStateKey_(token) {
+  return 'previewState:' + validateTokenFormat_(token);
+}
+
+function readPreviewState_(token, session) {
+  const cached = CacheService.getScriptCache().get(previewStateKey_(token));
+  if (!cached) return createDefaultProgress_(session);
+  try {
+    return JSON.parse(cached);
+  } catch (error) {
+    return createDefaultProgress_(session);
+  }
+}
+
+function writePreviewState_(token, state) {
+  CacheService.getScriptCache().put(
+    previewStateKey_(token),
+    JSON.stringify(state),
+    APP_CONFIG.sessionTtlSeconds
+  );
 }
 
 /**
@@ -1158,7 +1283,79 @@ function computeRewards_(state) {
     totalSections: LESSON_SECTION_COUNT,
     bestScore: bestScore,
     passMark: QUIZ_PASS_MARK,
-    passed: passed
+    passed: passed,
+    encouragement: buildEncouragement_(completed.length, quiz, passed, perfect)
+  };
+}
+
+/**
+ * Encouragement Engine — Blueprint #58 และ #69 Celebration
+ * ทุกข้อความต้องอ้างตัวเลขจริงจากงานที่ผู้เรียนทำ ไม่ใช่คำชมลอย ๆ
+ * ตาม #59 ที่ห้ามชมมั่ว และ #72 ที่ห้ามเปรียบเทียบกับคนอื่น
+ * tone ใช้บอกหน้าเว็บว่าจะฉลองหรือแค่ให้กำลังใจ
+ */
+function buildEncouragement_(doneCount, quiz, passed, perfect) {
+  const total = LESSON_SECTION_COUNT;
+  const attempts = Number(quiz.attempts) || 0;
+  const latest = Number(quiz.latestScore) || 0;
+  const best = Number(quiz.bestScore) || 0;
+  const maximum = APP_CONFIG.quizQuestionCount;
+  const remaining = Math.max(total - doneCount, 0);
+
+  if (doneCount >= total) {
+    return {
+      tone: 'celebrate',
+      title: 'จบบทเรียนครบทุกขั้นแล้ว',
+      message: perfect
+        ? 'ทำครบ ' + total + ' ขั้น และตอบถูกทั้ง ' + maximum + ' ข้อ'
+        : 'ทำครบ ' + total + ' ขั้น และคะแนนสูงสุดคือ ' + best + '/' + maximum
+    };
+  }
+
+  if (passed) {
+    return {
+      tone: 'celebrate',
+      title: 'ผ่านแบบทดสอบแล้ว',
+      message: 'ได้ ' + best + '/' + maximum + ' จากเกณฑ์ ' + QUIZ_PASS_MARK +
+        ' เหลืออีก ' + remaining + ' ขั้นก็ครบบทเรียน'
+    };
+  }
+
+  if (attempts > 0 && !passed) {
+    const missing = Math.max(QUIZ_PASS_MARK - best, 0);
+    return {
+      tone: 'support',
+      title: attempts >= APP_CONFIG.quizMaxAttempts
+        ? 'ใช้สิทธิ์ครบแล้ว ไปคุยกับครูกันนะ'
+        : 'ใกล้แล้ว ขาดอีกนิดเดียว',
+      message: 'คะแนนสูงสุดตอนนี้ ' + best + '/' + maximum +
+        ' ขาดอีก ' + missing + ' ข้อจะถึงเกณฑ์ ' +
+        (attempts >= APP_CONFIG.quizMaxAttempts
+          ? 'ใช้ครบ ' + attempts + ' ครั้งแล้ว'
+          : 'เหลือสิทธิ์อีก ' + (APP_CONFIG.quizMaxAttempts - attempts) + ' ครั้ง')
+    };
+  }
+
+  if (doneCount === 0) {
+    return {
+      tone: 'start',
+      title: 'เริ่มกันเลย',
+      message: 'บทเรียนนี้มี ' + total + ' ขั้น ทำทีละขั้นไม่ต้องรีบ'
+    };
+  }
+
+  if (doneCount >= Math.ceil(total / 2)) {
+    return {
+      tone: 'progress',
+      title: 'ผ่านครึ่งทางแล้ว',
+      message: 'ทำไปแล้ว ' + doneCount + ' จาก ' + total + ' ขั้น เหลืออีก ' + remaining
+    };
+  }
+
+  return {
+    tone: 'progress',
+    title: 'กำลังไปได้ดี',
+    message: 'ทำไปแล้ว ' + doneCount + ' จาก ' + total + ' ขั้น เหลืออีก ' + remaining
   };
 }
 
@@ -1218,8 +1415,13 @@ function validateProgressState_(state, session) {
     : [];
 
   // ตัดขั้นที่ข้ามลำดับทิ้ง แล้วบันทึกไว้ใน Audit เพื่อให้ครูตรวจสอบย้อนหลังได้
-  const completedSections = contiguousCompleted_(rawCompleted);
-  if (new Set(rawCompleted).size !== completedSections.length) {
+  const uniqueCompleted = Array.from(new Set(rawCompleted)).sort(function (a, b) {
+    return a - b;
+  });
+  const completedSections = session.previewMode === 'free'
+    ? uniqueCompleted
+    : contiguousCompleted_(rawCompleted);
+  if (!session.preview && new Set(rawCompleted).size !== completedSections.length) {
     appendAudit_(
       session.username,
       'progress_guard',
@@ -1229,10 +1431,10 @@ function validateProgressState_(state, session) {
     );
   }
 
-  const currentSection = Math.min(
-    requestedSection,
-    unlockedSection_(completedSections)
-  );
+  // โหมด free ของครูข้ามลำดับได้ เพราะเป็นข้อมูลจำลองที่ไม่กระทบใคร
+  const currentSection = session.previewMode === 'free'
+    ? requestedSection
+    : Math.min(requestedSection, unlockedSection_(completedSections));
 
   return {
     version: APP_CONFIG.stateVersion,

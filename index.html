@@ -338,6 +338,98 @@
       border-radius: 999px;
     }
 
+    .preview-bar {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.6rem clamp(1rem, 4vw, 2rem);
+      background: repeating-linear-gradient(
+        45deg, #92400e, #92400e 14px, #b45309 14px, #b45309 28px
+      );
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .preview-bar[hidden] {
+      display: none;
+    }
+
+    .preview-bar p {
+      flex: 1 1 14rem;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .preview-bar button {
+      min-height: 40px;
+      padding: 0.4rem 0.9rem;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-radius: 0.7rem;
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .preview-bar button:hover,
+    .preview-bar button:focus-visible {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .encourage-card {
+      margin: 1rem 0 0;
+      padding: 0.8rem 1rem;
+      border-left: 6px solid var(--purple-700);
+      border-radius: 0.7rem;
+      background: #f6eff9;
+    }
+
+    .encourage-card[hidden] {
+      display: none;
+    }
+
+    .encourage-card strong {
+      display: block;
+      color: var(--purple-900);
+      font-size: 1rem;
+    }
+
+    .encourage-card span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .encourage-card[data-tone="celebrate"] {
+      border-left-color: var(--yellow-400);
+      background: #fffbeb;
+    }
+
+    .encourage-card[data-tone="support"] {
+      border-left-color: #f97316;
+      background: #fff7ed;
+    }
+
+    .celebrate-pop {
+      animation: celebrate-pop 620ms ease-out;
+    }
+
+    @keyframes celebrate-pop {
+      0% { transform: scale(0.94); }
+      45% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .celebrate-pop {
+        animation: none;
+      }
+    }
+
     .reward-chip {
       display: inline-flex;
       align-items: center;
@@ -2663,6 +2755,14 @@
             target="_blank" rel="noopener noreferrer">เปิด Google Sheets</a>
           <a class="admin-link" id="admin-drive-link" href="#"
             target="_blank" rel="noopener noreferrer">เปิดโฟลเดอร์ Google Drive</a>
+          <button class="admin-action" id="admin-preview-normal" type="button"
+                  style="color: var(--purple-900); background: #fff; border-color: var(--border)">
+            ดูมุมมองนักเรียน
+          </button>
+          <button class="admin-action" id="admin-preview-free" type="button"
+                  style="color: var(--purple-900); background: #fff; border-color: var(--border)">
+            ดูแบบข้ามขั้นได้
+          </button>
           <button class="admin-action" id="admin-item-analysis" type="button"
                   style="color: var(--purple-900); background: #fff; border-color: var(--border)">
             วิเคราะห์รายข้อ
@@ -2727,6 +2827,12 @@
       <button class="logout-button" id="logout-button" type="button">ออกจากระบบ</button>
     </div>
   </header>
+
+  <div class="preview-bar" id="preview-bar" role="status" hidden>
+    <p id="preview-bar-text">โหมดทดลองของครู — ข้อมูลไม่ถูกบันทึกลงชีตนักเรียน</p>
+    <button type="button" id="preview-reset">เริ่มทดลองใหม่</button>
+    <button type="button" id="preview-exit">กลับไปแดชบอร์ด</button>
+  </div>
 
   <div class="next-step-bar" id="next-step-bar" role="status" aria-live="polite" hidden>
     <p class="next-step-text" id="next-step-text"></p>
@@ -3468,6 +3574,11 @@
       </button>
       <p class="quiz-sync" id="reflection-sync" role="status" aria-live="polite"></p>
 
+      <div class="encourage-card" id="encourage-card" role="status" aria-live="polite" hidden>
+        <strong id="encourage-title"></strong>
+        <span id="encourage-message"></span>
+      </div>
+
       <ul class="badge-shelf" id="badge-shelf"></ul>
     </section>
 
@@ -3706,6 +3817,23 @@
           chip.hidden = false;
         }
 
+        const card = document.querySelector("#encourage-card");
+        const note = rewards.encouragement;
+        if (card && note) {
+          const changed = card.dataset.signature !== note.title + note.message;
+          card.dataset.tone = note.tone;
+          card.dataset.signature = note.title + note.message;
+          document.querySelector("#encourage-title").textContent = note.title;
+          document.querySelector("#encourage-message").textContent = note.message;
+          card.hidden = false;
+
+          if (note.tone === "celebrate" && changed) {
+            card.classList.remove("celebrate-pop");
+            void card.offsetWidth;
+            card.classList.add("celebrate-pop");
+          }
+        }
+
         const shelf = document.querySelector("#badge-shelf");
         if (!shelf) return;
         shelf.replaceChildren();
@@ -3737,7 +3865,11 @@
 
       function applyLessonLocks() {
         const total = lessonSections.length;
-        const unlocked = lessonNavState.unlocked;
+        // โหมดทดลองแบบข้ามขั้นเปิดทุก Section ให้ครูกระโดดไปดูจุดใดก็ได้ ตาม Blueprint #79
+        const unlocked =
+          previewSession && previewSession.mode === "free"
+            ? total
+            : lessonNavState.unlocked;
 
         lessonSections.forEach((section) => {
           const element = sectionElement(section.order);
@@ -3837,6 +3969,65 @@
           if (heading) heading.focus({ preventScroll: true });
         });
       }
+
+      let previewSession = null;
+      let adminToken = "";
+      let adminUser = null;
+      const previewBar = document.querySelector("#preview-bar");
+      const previewBarText = document.querySelector("#preview-bar-text");
+
+      /**
+       * Teacher Preview ตาม Blueprint #78 และ #113
+       * ใช้ token คนละใบกับเซสชันครู ความก้าวหน้าเก็บฝั่งเซิร์ฟเวอร์ในหน่วยความจำชั่วคราว
+       * จึงไม่แตะข้อมูลนักเรียนจริงเลย
+       */
+      async function enterTeacherPreview(mode) {
+        try {
+          const result = await callServer("startTeacherPreview", sessionToken, mode);
+          adminToken = sessionToken;
+          adminUser = currentUser;
+          previewSession = { mode: result.mode };
+          sessionToken = result.token;
+
+          previewBarText.textContent =
+            result.mode === "free"
+              ? "โหมดทดลองของครู · ข้ามขั้นได้ · ข้อมูลไม่ถูกบันทึกลงชีตนักเรียน"
+              : "โหมดทดลองของครู · เดินตามลำดับเหมือนนักเรียน · ข้อมูลไม่ถูกบันทึกลงชีตนักเรียน";
+          previewBar.hidden = false;
+
+          adminScreen.hidden = true;
+          showApp(result.user);
+        } catch (error) {
+          adminStatus.textContent = `เปิดโหมดทดลองไม่สำเร็จ: ${error.message}`;
+        }
+      }
+
+      function exitTeacherPreview() {
+        if (!previewSession) return;
+        sessionToken = adminToken;
+        const teacher = adminUser;
+        previewSession = null;
+        adminToken = "";
+        adminUser = null;
+        previewBar.hidden = true;
+        appShell.hidden = true;
+        void showAdminDashboard(teacher);
+      }
+
+      document.querySelector("#preview-exit").addEventListener("click", () => {
+        exitTeacherPreview();
+      });
+
+      document.querySelector("#preview-reset").addEventListener("click", async () => {
+        if (!previewSession) return;
+        try {
+          await callServer("resetTeacherPreview", sessionToken);
+          await refreshLessonNavigation();
+          previewBarText.textContent = "ล้างข้อมูลทดลองแล้ว เริ่มดูใหม่ได้ตั้งแต่ต้น";
+        } catch (error) {
+          previewBarText.textContent = `ล้างข้อมูลไม่สำเร็จ: ${error.message}`;
+        }
+      });
 
       function showApp(user) {
         currentUser = user;
@@ -4189,6 +4380,14 @@
           void showItemAnalysis();
         });
       }
+
+      document.querySelector("#admin-preview-normal").addEventListener("click", () => {
+        void enterTeacherPreview("normal");
+      });
+
+      document.querySelector("#admin-preview-free").addEventListener("click", () => {
+        void enterTeacherPreview("free");
+      });
 
       function renderAttemptCard(attempt) {
         const card = document.createElement("div");
