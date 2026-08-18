@@ -370,6 +370,56 @@
       border-radius: 999px;
     }
 
+    .offline-bar {
+      position: sticky;
+      top: 0;
+      z-index: 70;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem clamp(1rem, 4vw, 2rem);
+      background: #b45309;
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .offline-bar[hidden] {
+      display: none;
+    }
+
+    .offline-bar p {
+      flex: 1 1 16rem;
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .offline-bar button {
+      min-height: 44px;
+      padding: 0.45rem 0.9rem;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-radius: 0.7rem;
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .offline-bar button:hover,
+    .offline-bar button:focus-visible {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .offline-bar button[hidden] {
+      display: none;
+    }
+
+    .offline-bar.is-saved {
+      background: var(--green-700);
+    }
+
     .preview-bar {
       position: sticky;
       top: 0;
@@ -2870,6 +2920,13 @@
     </div>
   </header>
 
+  <div class="offline-bar" id="offline-bar" role="alert" aria-live="assertive" hidden>
+    <p id="offline-text"></p>
+    <button class="offline-retry" id="offline-retry" type="button">
+      ลองบันทึกเดี๋ยวนี้
+    </button>
+  </div>
+
   <div class="preview-bar" id="preview-bar" role="status" hidden>
     <p id="preview-bar-text">โหมดทดลองของครู — ข้อมูลไม่ถูกบันทึกลงชีตนักเรียน</p>
     <button type="button" id="preview-reset">เริ่มทดลองใหม่</button>
@@ -3703,6 +3760,241 @@
         );
       }
 
+      /* ────────────────────────────────────────────────────────────
+         ชั้นกันเน็ตหลุด — Blueprint #102 #103 #194 #195
+         โรงเรียนใช้ Wi-Fi ที่หลุดบ่อย ถ้าบันทึกพลาดแล้วปล่อยผ่าน
+         คำตอบที่นักเรียนตั้งใจทำจะหายไปทั้งคาบ ชั้นนี้จึงเก็บความก้าวหน้า
+         ลงเครื่องไว้ก่อนเสมอ แล้วส่งขึ้นระบบให้เองเมื่อเน็ตกลับมา
+         ──────────────────────────────────────────────────────────── */
+      const OFFLINE_STATE_KEY = "tiltLabState";
+      const OFFLINE_OUTBOX_KEY = "tiltLabOutbox";
+      const OFFLINE_RETRY_MS = 20000;
+      const SYNC_QUEUED_TEXT =
+        "เก็บคำตอบไว้ในเครื่องแล้ว รอเน็ตกลับมาระบบจะบันทึกให้เอง";
+
+      const offlineBar = document.querySelector("#offline-bar");
+      const offlineBarText = document.querySelector("#offline-text");
+      const offlineRetryButton = document.querySelector("#offline-retry");
+      let offlineOwner = "";
+      let offlineEnabled = false;
+      let offlineRetryTimer = 0;
+      let flushingOutbox = false;
+
+      /**
+       * ผูกที่เก็บในเครื่องกับผู้เรียนคนที่ล็อกอินอยู่
+       * โหมดทดลองของครูและบัญชี admin ไม่ใช้ที่เก็บนี้
+       * เพราะข้อมูลทดลองต้องไม่ปนกับของนักเรียนจริงตาม Blueprint #113
+       */
+      function setOfflineOwner(username, enabled) {
+        offlineOwner = String(username || "");
+        offlineEnabled = Boolean(enabled);
+      }
+
+      function offlineKey(base) {
+        return base + "." + (offlineOwner || "guest");
+      }
+
+      function readLocal(base) {
+        if (!offlineEnabled) return null;
+        try {
+          const raw = window.localStorage.getItem(offlineKey(base));
+          return raw ? JSON.parse(raw) : null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function writeLocal(base, value) {
+        if (!offlineEnabled) return false;
+        try {
+          window.localStorage.setItem(offlineKey(base), JSON.stringify(value));
+          return true;
+        } catch (error) {
+          // โหมดไม่ระบุตัวตนหรือพื้นที่เต็ม ให้บทเรียนทำงานต่อได้ตามปกติ
+          return false;
+        }
+      }
+
+      function clearLocal(base) {
+        try {
+          window.localStorage.removeItem(offlineKey(base));
+        } catch (error) {
+          /* ลบไม่ได้ก็ไม่มีอะไรต้องทำต่อ */
+        }
+      }
+
+      /**
+       * รวมความก้าวหน้าสองฝั่งตาม Blueprint #195 ห้ามเขียนทับแบบสุ่ม
+       * ขั้นที่ทำเสร็จรวมกันทั้งสองฝั่ง เพราะทำเสร็จแล้วย้อนกลับไม่ได้
+       * คะแนนสอบเชื่อเซิร์ฟเวอร์ เพราะ recordQuizAttempt เป็นผู้ตัดสิน
+       * คำตอบกิจกรรมเชื่อฝั่งเครื่อง เพราะเป็นสิ่งที่นักเรียนเพิ่งทำ
+       */
+      function mergeProgress(serverState, localState) {
+        const remote = serverState && typeof serverState === "object" ? serverState : {};
+        const local = localState && typeof localState === "object" ? localState : {};
+        const remoteQuiz = remote.quiz || {};
+        const localQuiz = local.quiz || {};
+
+        return {
+          ...remote,
+          ...local,
+          currentSection: Math.max(
+            Number(remote.currentSection) || 1,
+            Number(local.currentSection) || 1
+          ),
+          completedSections: Array.from(
+            new Set([
+              ...(Array.isArray(remote.completedSections) ? remote.completedSections : []),
+              ...(Array.isArray(local.completedSections) ? local.completedSections : [])
+            ].map(Number))
+          )
+            .filter((order) => Number.isInteger(order) && order >= 1)
+            .sort((a, b) => a - b),
+          hookAnswers: { ...(remote.hookAnswers || {}), ...(local.hookAnswers || {}) },
+          worksheet: { ...(remote.worksheet || {}), ...(local.worksheet || {}) },
+          reflection: local.reflection || remote.reflection || null,
+          quiz: {
+            ...localQuiz,
+            ...remoteQuiz,
+            attempts: Math.max(
+              Number(remoteQuiz.attempts) || 0,
+              Number(localQuiz.attempts) || 0
+            ),
+            bestScore: Math.max(
+              Number(remoteQuiz.bestScore) || 0,
+              Number(localQuiz.bestScore) || 0
+            ),
+            latestScore: Number(remoteQuiz.latestScore) || Number(localQuiz.latestScore) || 0
+          }
+        };
+      }
+
+      function showOfflineBar(message, tone) {
+        if (!offlineBar || !offlineBarText) return;
+        offlineBarText.textContent = message;
+        offlineBar.classList.toggle("is-saved", tone === "saved");
+        if (offlineRetryButton) offlineRetryButton.hidden = tone === "saved";
+        offlineBar.hidden = false;
+      }
+
+      function hideOfflineBar() {
+        if (!offlineBar) return;
+        offlineBar.hidden = true;
+        offlineBar.classList.remove("is-saved");
+      }
+
+      /** บอกนักเรียนตรง ๆ ว่างานไม่หาย ตามถ้อยคำที่ Blueprint #102 กำหนดไว้ */
+      function announceOutbox() {
+        if (!readLocal(OFFLINE_OUTBOX_KEY)) return;
+        showOfflineBar(
+          "📡 อินเทอร์เน็ตสะดุด — คำตอบของหนูยังอยู่ครบ ระบบเก็บไว้ในเครื่องนี้แล้ว " +
+            "และจะบันทึกขึ้นระบบให้เองเมื่อเน็ตกลับมา ไม่ต้องทำใหม่",
+          "queued"
+        );
+        scheduleFlush();
+      }
+
+      function scheduleFlush() {
+        if (offlineRetryTimer) return;
+        offlineRetryTimer = window.setTimeout(() => {
+          offlineRetryTimer = 0;
+          void flushOutbox();
+        }, OFFLINE_RETRY_MS);
+      }
+
+      function rememberState(state) {
+        if (!state || typeof state !== "object") return;
+        writeLocal(OFFLINE_STATE_KEY, { state: state, at: new Date().toISOString() });
+      }
+
+      /**
+       * จุดบันทึกแต่ละส่วนเขียนข้อความว่า "บันทึกลง Google Sheets แล้ว"
+       * ทันทีหลัง await ซึ่งไม่จริงเมื่อยังส่งขึ้นระบบไม่ได้
+       * จึงจดข้อความเดิมไว้ก่อน แล้วแก้เฉพาะป้ายที่เพิ่งเปลี่ยนให้ตรงความจริง
+       */
+      function markPendingSyncLabels() {
+        const labels = Array.from(document.querySelectorAll("[id$='-sync']"));
+        const before = labels.map((label) => label.textContent);
+        window.setTimeout(() => {
+          labels.forEach((label, index) => {
+            if (label.textContent !== before[index]) {
+              label.textContent = SYNC_QUEUED_TEXT;
+            }
+          });
+        }, 0);
+      }
+
+      /** เก็บงานที่ส่งไม่สำเร็จไว้ในเครื่อง คืน false ถ้าเครื่องเก็บให้ไม่ได้ */
+      function queueState(state) {
+        if (!state || typeof state !== "object") return false;
+        const pending = readLocal(OFFLINE_OUTBOX_KEY);
+        const merged =
+          pending && pending.state ? mergeProgress(pending.state, state) : state;
+        if (!writeLocal(OFFLINE_OUTBOX_KEY, { state: merged, at: new Date().toISOString() })) {
+          return false;
+        }
+        rememberState(merged);
+        announceOutbox();
+        markPendingSyncLabels();
+        return true;
+      }
+
+      /** เก็บผลจากเซิร์ฟเวอร์ลงเครื่อง และพางานที่ค้างติดไปกับทุกครั้งที่อ่าน */
+      function rememberServerResult(functionName, args, result) {
+        if (functionName === "saveProgress") {
+          rememberState(args[1]);
+          clearLocal(OFFLINE_OUTBOX_KEY);
+          hideOfflineBar();
+          window.setTimeout(() => {
+            void refreshLessonNavigation();
+          }, 0);
+          return;
+        }
+        if (functionName === "getProgress" && result && result.state) {
+          const pending = readLocal(OFFLINE_OUTBOX_KEY);
+          if (pending && pending.state) {
+            // งานที่ค้างต้องติดไปกับทุกการอ่าน ไม่อย่างนั้นการบันทึกครั้งถัดไป
+            // จะทับความก้าวหน้าที่ยังส่งขึ้นระบบไม่สำเร็จ
+            result.state = mergeProgress(result.state, pending.state);
+          }
+          rememberState(result.state);
+        }
+      }
+
+      /**
+       * ส่งงานที่ค้างขึ้นระบบ อ่านของจริงมารวมก่อนเสมอ
+       * เพื่อไม่ให้ทับความก้าวหน้าที่บันทึกไว้แล้ว ตาม Blueprint #195
+       */
+      async function flushOutbox() {
+        if (!offlineEnabled || flushingOutbox || !sessionToken) return false;
+        const pending = readLocal(OFFLINE_OUTBOX_KEY);
+        if (!pending || !pending.state) {
+          hideOfflineBar();
+          return true;
+        }
+        if (!window.navigator.onLine) {
+          announceOutbox();
+          return false;
+        }
+
+        flushingOutbox = true;
+        try {
+          const fresh = await callServer("getProgress", sessionToken);
+          const merged = mergeProgress(fresh && fresh.state, pending.state);
+          const saved = await callServer("saveProgress", sessionToken, merged);
+          if (saved && saved.queued) return false;
+
+          showOfflineBar("✅ เน็ตกลับมาแล้ว บันทึกงานที่ค้างขึ้นระบบเรียบร้อย", "saved");
+          window.setTimeout(hideOfflineBar, 6000);
+          return true;
+        } catch (error) {
+          scheduleFlush();
+          return false;
+        } finally {
+          flushingOutbox = false;
+        }
+      }
+
       function callServer(functionName, ...args) {
         return new Promise((resolve, reject) => {
           if (!window.google || !google.script || !google.script.run) {
@@ -3711,11 +4003,37 @@
           }
 
           let settled = false;
-          const timeoutId = window.setTimeout(() => {
-            if (!settled) {
-              settled = true;
-              reject(new Error("การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองอีกครั้ง"));
+
+          /**
+           * เน็ตสะดุดกับข้อมูลผิดกติกาไม่ควรจบเหมือนกัน
+           * ถ้าเป็นเรื่องการเชื่อมต่อ ต้องเก็บงานของนักเรียนไว้ก่อน
+           * ไม่ใช่โยนข้อความผิดพลาดใส่แล้วปล่อยให้คำตอบหาย
+           */
+          function fail(detail, transport) {
+            if (detail === "SESSION_EXPIRED") {
+              handleSessionExpired();
+              reject(new Error("เซสชันหมดอายุแล้ว"));
+              return;
             }
+            if (transport && functionName === "getProgress") {
+              const cached = readLocal(OFFLINE_STATE_KEY);
+              if (cached && cached.state) {
+                announceOutbox();
+                resolve({ ok: true, state: cached.state, offline: true });
+                return;
+              }
+            }
+            if (transport && functionName === "saveProgress" && queueState(args[1])) {
+              resolve({ ok: true, queued: true, offline: true });
+              return;
+            }
+            reject(new Error(detail));
+          }
+
+          const timeoutId = window.setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            fail("การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองอีกครั้ง", true);
           }, 15000);
 
           google.script.run
@@ -3723,11 +4041,7 @@
               if (settled) return;
               settled = true;
               window.clearTimeout(timeoutId);
-              if (functionName === "saveProgress") {
-                window.setTimeout(() => {
-                  void refreshLessonNavigation();
-                }, 0);
-              }
+              rememberServerResult(functionName, args, result);
               resolve(result);
             })
             .withFailureHandler((error) => {
@@ -3736,12 +4050,8 @@
               window.clearTimeout(timeoutId);
               const detail =
                 error && error.message ? error.message : "ไม่สามารถเชื่อมต่อระบบได้";
-              if (detail === "SESSION_EXPIRED") {
-                handleSessionExpired();
-                reject(new Error("เซสชันหมดอายุแล้ว"));
-                return;
-              }
-              reject(new Error(detail));
+              // ไม่มีข้อความหรือเครื่องออฟไลน์อยู่ คือปัญหาการเชื่อมต่อ ไม่ใช่ข้อมูลผิดกติกา
+              fail(detail, !window.navigator.onLine || !error || !error.message);
             })[functionName](...args);
         });
       }
@@ -3753,6 +4063,9 @@
 
       function showLogin(message = "") {
         clearPreviewState();
+        // ปิดที่เก็บแต่ไม่ลบทิ้ง งานที่ยังค้างต้องรอส่งตอนล็อกอินรอบหน้า
+        setOfflineOwner("", false);
+        hideOfflineBar();
         currentUser = null;
         loginScreen.hidden = false;
         adminScreen.hidden = true;
@@ -4025,6 +4338,8 @@
 
       if (nextStepGo) {
         nextStepGo.addEventListener("click", () => {
+          // Blueprint #103 ก่อนพาไปขั้นถัดไป ลองส่งงานที่ค้างขึ้นระบบก่อน
+          void flushOutbox();
           const target = sectionElement(lessonNavState.unlocked);
           if (!target) return;
           target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -4059,7 +4374,7 @@
           previewBar.hidden = false;
 
           adminScreen.hidden = true;
-          showApp(result.user);
+          showApp(result.user, true);
         } catch (error) {
           adminStatus.textContent = `เปิดโหมดทดลองไม่สำเร็จ: ${error.message}`;
         }
@@ -4104,8 +4419,11 @@
         });
       }
 
-      function showApp(user) {
+      function showApp(user, isPreview) {
         currentUser = user;
+        // โหมดทดลองของครูห้ามเขียนลงที่เก็บในเครื่องของนักเรียน
+        setOfflineOwner(user.username, !isPreview);
+        void flushOutbox();
         loginScreen.hidden = true;
         adminScreen.hidden = true;
         appShell.hidden = false;
@@ -4929,7 +5247,8 @@
           predictSync.textContent = "บันทึกคำตอบลง Google Sheets แล้ว";
         } catch (error) {
           predictSync.textContent =
-            "แสดงผลแล้ว แต่ยังบันทึกไม่ได้ กรุณาตรวจอินเทอร์เน็ตแล้วเข้าสู่ระบบใหม่";
+            "คำตอบแสดงผลแล้ว แต่ระบบยังบันทึกให้ไม่ได้ ลองกดตอบอีกครั้ง " +
+            "ถ้ายังไม่ได้ให้บอกครูนะ";
         }
       }
 
@@ -6469,7 +6788,8 @@
             "เรียกคืนคำตอบและคะแนนล่าสุดแล้ว";
         } catch (error) {
           quizSync.textContent =
-            "ยังเรียกคืนแบบทดสอบไม่ได้ กรุณาลองเข้าสู่ระบบใหม่";
+            "ยังเรียกคืนแบบทดสอบไม่ได้ ลองรีเฟรชหน้านี้อีกครั้ง " +
+            "คำตอบที่ส่งไปแล้วยังอยู่ครบ";
         }
       }
 
@@ -6535,6 +6855,28 @@
       renderQuizQuestions();
       updateQuizSubmitButton();
       renderQuizSummary();
+
+      window.addEventListener("online", () => {
+        void flushOutbox();
+      });
+
+      window.addEventListener("offline", () => {
+        announceOutbox();
+      });
+
+      if (offlineRetryButton) {
+        offlineRetryButton.addEventListener("click", () => {
+          showOfflineBar("กำลังลองบันทึกอีกครั้ง...", "queued");
+          void flushOutbox();
+        });
+      }
+
+      // Blueprint #103 ปิดหน้าไปทั้งที่ยังมีงานค้าง ต้องเตือนก่อน
+      window.addEventListener("beforeunload", (event) => {
+        if (!offlineEnabled || !readLocal(OFFLINE_OUTBOX_KEY)) return;
+        event.preventDefault();
+        event.returnValue = "";
+      });
 
       restoreSession();
     })();
