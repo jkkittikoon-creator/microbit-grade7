@@ -3690,6 +3690,19 @@
       let currentUser = null;
       let adminStudents = [];
 
+      /**
+       * เซสชันหมดอายุระหว่างเรียน ให้พากลับไปหน้าเข้าสู่ระบบทันที
+       * พร้อมบอกด้วยภาษาที่นักเรียนเข้าใจว่างานที่บันทึกแล้วยังอยู่
+       * ไม่ปล่อยให้ทำงานต่อไปเรื่อย ๆ ทั้งที่บันทึกไม่ได้แล้ว
+       */
+      function handleSessionExpired() {
+        sessionToken = "";
+        sessionStorage.removeItem(SESSION_KEY);
+        showLogin(
+          "หมดเวลาเข้าใช้งานแล้ว กรุณาเข้าสู่ระบบอีกครั้ง ความก้าวหน้าที่บันทึกไว้ยังอยู่ครบ"
+        );
+      }
+
       function callServer(functionName, ...args) {
         return new Promise((resolve, reject) => {
           if (!window.google || !google.script || !google.script.run) {
@@ -3721,7 +3734,14 @@
               if (settled) return;
               settled = true;
               window.clearTimeout(timeoutId);
-              reject(new Error(error && error.message ? error.message : "ไม่สามารถเชื่อมต่อระบบได้"));
+              const detail =
+                error && error.message ? error.message : "ไม่สามารถเชื่อมต่อระบบได้";
+              if (detail === "SESSION_EXPIRED") {
+                handleSessionExpired();
+                reject(new Error("เซสชันหมดอายุแล้ว"));
+                return;
+              }
+              reject(new Error(detail));
             })[functionName](...args);
         });
       }
@@ -4827,9 +4847,11 @@
           const result = await callServer("getCurrentUser", sessionToken);
           showAuthenticatedUser(result.user);
         } catch (error) {
-          sessionStorage.removeItem(SESSION_KEY);
-          sessionToken = "";
-          showLogin("เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง");
+          if (sessionToken) {
+            // token ยังอยู่ แปลว่าไม่ใช่เซสชันหมดอายุ เพราะกรณีนั้น callServer ล้างให้แล้ว
+            // จึงเก็บ token ไว้ให้ลองใหม่ได้เมื่อเน็ตกลับมา
+            showLogin("เชื่อมต่อระบบไม่ได้ในตอนนี้ กรุณารีเฟรชหน้าอีกครั้ง");
+          }
         }
       }
 
