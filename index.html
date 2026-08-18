@@ -4169,17 +4169,7 @@
           wrap.appendChild(restore);
         }
 
-        if (!student.attempts) {
-          const idle = document.createElement("button");
-          idle.type = "button";
-          idle.className = "admin-reset";
-          idle.textContent = "รีเซ็ตคะแนน";
-          idle.disabled = true;
-          idle.title = "นักเรียนยังไม่ได้ทำแบบทดสอบ";
-          wrap.appendChild(idle);
-          return wrap;
-        }
-
+        // ปุ่มนี้ต้องมีเสมอ เพราะความก้าวหน้ารายขั้นมีให้ดูตั้งแต่ยังไม่ได้ทำแบบทดสอบ
         const detail = document.createElement("button");
         detail.type = "button";
         detail.className = "admin-reset";
@@ -4188,6 +4178,17 @@
           void showStudentDetail(student, detail);
         });
         wrap.appendChild(detail);
+
+        if (!student.attempts) {
+          const idle = document.createElement("button");
+          idle.type = "button";
+          idle.className = "admin-reset";
+          idle.textContent = "รีเซ็ตคะแนน";
+          idle.disabled = true;
+          idle.title = "ยังไม่มีคะแนนให้รีเซ็ต เพราะนักเรียนยังไม่ได้ส่งแบบทดสอบ";
+          wrap.appendChild(idle);
+          return wrap;
+        }
 
         const reset = document.createElement("button");
         reset.type = "button";
