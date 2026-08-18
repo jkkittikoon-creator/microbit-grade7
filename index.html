@@ -338,6 +338,83 @@
       border-radius: 999px;
     }
 
+    .next-step-bar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem clamp(1rem, 4vw, 2rem);
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple-900), var(--purple-700) 70%);
+      box-shadow: var(--shadow);
+    }
+
+    .next-step-bar[hidden] {
+      display: none;
+    }
+
+    .next-step-text {
+      flex: 1 1 16rem;
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .next-step-text small {
+      display: block;
+      opacity: 0.85;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .next-step-go {
+      min-height: 44px;
+      padding: 0.5rem 1.1rem;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 0.8rem;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .next-step-go:hover,
+    .next-step-go:focus-visible {
+      background: rgba(255, 255, 255, 0.26);
+    }
+
+    .lesson-section.is-locked {
+      position: relative;
+      opacity: 0.55;
+    }
+
+    .lesson-section.is-locked::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .section-lock {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0 1rem;
+      padding: 0.7rem 0.9rem;
+      border: 2px dashed var(--border);
+      border-radius: 0.9rem;
+      background: #faf6fb;
+      color: var(--purple-900);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
     .progress-fill {
       width: 100%;
       height: 100%;
@@ -2039,6 +2116,85 @@
       opacity: 0.55;
     }
 
+    .admin-detail {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      border: 2px solid var(--border);
+      border-radius: 0.9rem;
+      background: #faf6fb;
+    }
+
+    .admin-detail[hidden] {
+      display: none;
+    }
+
+    .admin-detail h3 {
+      margin: 0 0 0.25rem;
+      color: var(--purple-900);
+      font-size: 1.1rem;
+    }
+
+    .admin-detail-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 0.75rem 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .admin-detail-steps li {
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: #eef0f4;
+      color: #4b5563;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .admin-detail-steps li.is-done {
+      background: #dcfce7;
+      color: #14532d;
+    }
+
+    .admin-attempt {
+      margin-top: 0.75rem;
+      padding: 0.7rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 0.8rem;
+      background: #fff;
+    }
+
+    .admin-attempt h4 {
+      margin: 0 0 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    .admin-answer {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.86rem;
+    }
+
+    .admin-answer:last-child {
+      border-bottom: none;
+    }
+
+    .admin-answer .mark {
+      flex: 0 0 1.4rem;
+      font-weight: 900;
+    }
+
+    .admin-answer.is-wrong .mark {
+      color: #8a1c1c;
+    }
+
+    .admin-answer.is-right .mark {
+      color: #14532d;
+    }
+
     .admin-reset.is-restore {
       color: #14532d;
       border-color: #14532d;
@@ -2373,6 +2529,14 @@
           </table>
         </div>
         <p class="admin-status" id="admin-status" role="status" aria-live="polite"></p>
+
+        <div class="admin-detail" id="admin-detail" hidden>
+          <h3 id="admin-detail-title" tabindex="-1"></h3>
+          <p id="admin-detail-summary"></p>
+          <ul class="admin-detail-steps" id="admin-detail-steps"></ul>
+          <div id="admin-detail-attempts"></div>
+          <button class="admin-reset" id="admin-detail-close" type="button">ปิดรายละเอียด</button>
+        </div>
       </section>
     </main>
   </section>
@@ -2386,15 +2550,20 @@
         <strong id="student-name">นักเรียน</strong>
         <span id="student-id">กำลังโหลดข้อมูล...</span>
       </div>
-      <div class="progress-wrap" aria-label="ความก้าวหน้า 8 จาก 8 ส่วน">
-        <span>Section 8 / 8</span>
+      <div class="progress-wrap" id="progress-wrap" aria-label="ความก้าวหน้าในบทเรียน">
+        <span id="progress-label">กำลังโหลด...</span>
         <div class="progress-track" aria-hidden="true">
-          <div class="progress-fill"></div>
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
         </div>
       </div>
       <button class="logout-button" id="logout-button" type="button">ออกจากระบบ</button>
     </div>
   </header>
+
+  <div class="next-step-bar" id="next-step-bar" role="status" aria-live="polite" hidden>
+    <p class="next-step-text" id="next-step-text"></p>
+    <button class="next-step-go" id="next-step-go" type="button">ไปยังขั้นถัดไป</button>
+  </div>
 
   <main id="main-content">
     <section class="hero" aria-labelledby="lesson-title">
@@ -3179,6 +3348,11 @@
               if (settled) return;
               settled = true;
               window.clearTimeout(timeoutId);
+              if (functionName === "saveProgress") {
+                window.setTimeout(() => {
+                  void refreshLessonNavigation();
+                }, 0);
+              }
               resolve(result);
             })
             .withFailureHandler((error) => {
@@ -3204,6 +3378,141 @@
         document.querySelector("#login-username").focus();
       }
 
+      let lessonSections = [];
+      let lessonNavState = { completed: [], unlocked: 1 };
+      const nextStepBar = document.querySelector("#next-step-bar");
+      const nextStepText = document.querySelector("#next-step-text");
+      const nextStepGo = document.querySelector("#next-step-go");
+
+      /** โหลดทะเบียนขั้นตอนจากเซิร์ฟเวอร์ ซึ่งเป็นแหล่งความจริงเดียวของลำดับ */
+      async function loadLessonSections() {
+        if (lessonSections.length) return lessonSections;
+        try {
+          const config = await callServer("getPublicConfig");
+          lessonSections = Array.isArray(config.sections) ? config.sections : [];
+        } catch (error) {
+          lessonSections = [];
+        }
+        return lessonSections;
+      }
+
+      function contiguousCompleted(list) {
+        const done = new Set((list || []).map(Number));
+        const prefix = [];
+        for (let order = 1; order <= lessonSections.length; order += 1) {
+          if (!done.has(order)) break;
+          prefix.push(order);
+        }
+        return prefix;
+      }
+
+      function sectionElement(order) {
+        const section = lessonSections.find((item) => item.order === order);
+        return section ? document.querySelector(`#${section.id}`) : null;
+      }
+
+      function applyLessonLocks() {
+        const total = lessonSections.length;
+        const unlocked = lessonNavState.unlocked;
+
+        lessonSections.forEach((section) => {
+          const element = sectionElement(section.order);
+          if (!element) return;
+
+          const locked = section.order > unlocked;
+          element.classList.toggle("is-locked", locked);
+
+          let notice = element.querySelector(".section-lock");
+          if (locked) {
+            if (!notice) {
+              notice = document.createElement("p");
+              notice.className = "section-lock";
+              element.insertBefore(notice, element.firstElementChild);
+            }
+            const need = lessonSections.find((item) => item.order === unlocked);
+            notice.textContent = need
+              ? `🔒 ยังเข้าไม่ได้ กรุณาทำ Section ${need.order} · ${need.title} ให้เสร็จก่อน`
+              : "🔒 ยังเข้าไม่ได้";
+          } else if (notice) {
+            notice.remove();
+          }
+
+          // ปิดเฉพาะตัวที่ยังเปิดอยู่ และปลดเฉพาะตัวที่การล็อกเป็นคนปิดเอง
+          // เพื่อไม่ไปเปิดปุ่มที่ตรรกะอื่นตั้งใจปิดไว้ เช่น ปุ่มส่ง Quiz ที่ยังตอบไม่ครบ
+          element
+            .querySelectorAll("button, input, select, textarea")
+            .forEach((control) => {
+              if (control.closest(".section-lock")) return;
+              if (locked) {
+                if (!control.disabled) {
+                  control.disabled = true;
+                  control.dataset.lockedByNav = "yes";
+                }
+              } else if (control.dataset.lockedByNav === "yes") {
+                control.disabled = false;
+                delete control.dataset.lockedByNav;
+              }
+            });
+        });
+
+        const done = lessonNavState.completed.length;
+        const label = document.querySelector("#progress-label");
+        const fill = document.querySelector("#progress-fill");
+        if (label) label.textContent = `ทำแล้ว ${done} / ${total} ส่วน`;
+        if (fill && total > 0) {
+          fill.style.width = `${Math.round((done / total) * 100)}%`;
+        }
+
+        if (!nextStepBar) return;
+        if (done >= total) {
+          nextStepText.textContent = "🎉 ทำครบทุกขั้นแล้ว";
+          nextStepGo.hidden = true;
+          nextStepBar.hidden = false;
+          return;
+        }
+
+        const next = lessonSections.find((item) => item.order === unlocked);
+        if (!next) {
+          nextStepBar.hidden = true;
+          return;
+        }
+        nextStepText.innerHTML =
+          `ขั้นต่อไปของคุณคือ Section ${next.order} · ${next.title}` +
+          `<small>ทำครบแล้ว ${done} จาก ${total} ส่วน · ย้อนกลับไปทบทวนขั้นเดิมได้เสมอ</small>`;
+        nextStepGo.hidden = false;
+        nextStepBar.hidden = false;
+      }
+
+      /** ดึงความก้าวหน้าล่าสุดแล้วปรับแถบนำทางและการล็อกให้ตรงกัน */
+      async function refreshLessonNavigation() {
+        await loadLessonSections();
+        if (!lessonSections.length) return;
+
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const completed = contiguousCompleted(
+            result.state ? result.state.completedSections : []
+          );
+          lessonNavState = {
+            completed: completed,
+            unlocked: Math.min(completed.length + 1, lessonSections.length)
+          };
+          applyLessonLocks();
+        } catch (error) {
+          // ถ้าดึงไม่ได้ ปล่อยสถานะเดิมไว้ ดีกว่าล็อกผิดจนเรียนต่อไม่ได้
+        }
+      }
+
+      if (nextStepGo) {
+        nextStepGo.addEventListener("click", () => {
+          const target = sectionElement(lessonNavState.unlocked);
+          if (!target) return;
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          const heading = target.querySelector("h2");
+          if (heading) heading.focus({ preventScroll: true });
+        });
+      }
+
       function showApp(user) {
         currentUser = user;
         loginScreen.hidden = true;
@@ -3213,6 +3522,7 @@
         document.querySelector("#student-id").textContent =
           user.role === "teacher" ? "บัญชีครู" : `ชื่อผู้ใช้ ${user.username}`;
         document.querySelector("#lesson-title").focus({ preventScroll: true });
+        void refreshLessonNavigation();
         void restorePredictAnswer();
         void restoreUnpluggedActivity();
         void restoreMgCheck();
@@ -3301,17 +3611,24 @@
         }
 
         if (!student.attempts) {
-          if (!wrap.childElementCount) {
-            const idle = document.createElement("button");
-            idle.type = "button";
-            idle.className = "admin-reset";
-            idle.textContent = "รีเซ็ตคะแนน";
-            idle.disabled = true;
-            idle.title = "นักเรียนยังไม่ได้ทำแบบทดสอบ";
-            wrap.appendChild(idle);
-          }
+          const idle = document.createElement("button");
+          idle.type = "button";
+          idle.className = "admin-reset";
+          idle.textContent = "รีเซ็ตคะแนน";
+          idle.disabled = true;
+          idle.title = "นักเรียนยังไม่ได้ทำแบบทดสอบ";
+          wrap.appendChild(idle);
           return wrap;
         }
+
+        const detail = document.createElement("button");
+        detail.type = "button";
+        detail.className = "admin-reset";
+        detail.textContent = "ดูรายละเอียด";
+        detail.addEventListener("click", () => {
+          void showStudentDetail(student, detail);
+        });
+        wrap.appendChild(detail);
 
         const reset = document.createElement("button");
         reset.type = "button";
@@ -3432,6 +3749,105 @@
           button.disabled = false;
           button.textContent = "กู้คืนคะแนน";
           adminStatus.textContent = `กู้คืนไม่สำเร็จ: ${error.message}`;
+        }
+      }
+
+      const adminDetail = document.querySelector("#admin-detail");
+      const adminDetailTitle = document.querySelector("#admin-detail-title");
+      const adminDetailSummary = document.querySelector("#admin-detail-summary");
+      const adminDetailSteps = document.querySelector("#admin-detail-steps");
+      const adminDetailAttempts = document.querySelector("#admin-detail-attempts");
+      const adminDetailClose = document.querySelector("#admin-detail-close");
+
+      if (adminDetailClose) {
+        adminDetailClose.addEventListener("click", () => {
+          adminDetail.hidden = true;
+        });
+      }
+
+      function renderAttemptCard(attempt) {
+        const card = document.createElement("div");
+        card.className = "admin-attempt";
+
+        const heading = document.createElement("h4");
+        heading.textContent =
+          `ครั้งที่ ${attempt.attemptNumber} · ได้ ${attempt.score}/${attempt.maximumScore} · ` +
+          formatThaiDate(attempt.timestamp);
+        card.appendChild(heading);
+
+        QUIZ_QUESTIONS.forEach((question, index) => {
+          const chosen = attempt.answers ? attempt.answers[question.id] : undefined;
+          const correct = chosen === question.answer;
+
+          const row = document.createElement("div");
+          row.className = `admin-answer ${correct ? "is-right" : "is-wrong"}`;
+
+          const mark = document.createElement("span");
+          mark.className = "mark";
+          mark.textContent = correct ? "✓" : "✗";
+
+          const label = document.createElement("span");
+          const chosenChoice = question.choices.find(([value]) => value === chosen);
+          const answerChoice = question.choices.find(
+            ([value]) => value === question.answer
+          );
+          label.textContent = correct
+            ? `ข้อ ${index + 1} · ตอบ "${chosenChoice ? chosenChoice[1] : "-"}"`
+            : `ข้อ ${index + 1} · ตอบ "${chosenChoice ? chosenChoice[1] : "ไม่ได้ตอบ"}" · ที่ถูกคือ "${answerChoice ? answerChoice[1] : "-"}"`;
+
+          row.append(mark, label);
+          card.appendChild(row);
+        });
+
+        return card;
+      }
+
+      async function showStudentDetail(student, button) {
+        button.disabled = true;
+        button.textContent = "กำลังโหลด...";
+        adminStatus.textContent = `กำลังเปิดรายละเอียดของ ${student.displayName}`;
+
+        try {
+          const result = await callServer(
+            "getStudentDetail",
+            sessionToken,
+            student.username
+          );
+
+          adminDetailTitle.textContent =
+            `เลขที่ ${result.studentNumber} · ${result.displayName}`;
+          adminDetailSummary.textContent = result.attempts.length
+            ? `ส่งแบบทดสอบแล้ว ${result.attempts.length} ครั้ง · ทำกิจกรรมครบ ${result.completedSections.length}/${result.sections.length} ส่วน`
+            : `ยังไม่เคยส่งแบบทดสอบ · ทำกิจกรรมครบ ${result.completedSections.length}/${result.sections.length} ส่วน`;
+
+          adminDetailSteps.replaceChildren();
+          result.sections.forEach((section) => {
+            const item = document.createElement("li");
+            if (section.done) item.classList.add("is-done");
+            item.textContent = `${section.done ? "✓" : "○"} ${section.order}. ${section.title}`;
+            adminDetailSteps.appendChild(item);
+          });
+
+          adminDetailAttempts.replaceChildren();
+          if (!result.attempts.length) {
+            const empty = document.createElement("p");
+            empty.textContent = "ยังไม่มีประวัติการส่งแบบทดสอบ";
+            adminDetailAttempts.appendChild(empty);
+          } else {
+            result.attempts.forEach((attempt) => {
+              adminDetailAttempts.appendChild(renderAttemptCard(attempt));
+            });
+          }
+
+          adminDetail.hidden = false;
+          adminDetailTitle.focus({ preventScroll: true });
+          adminDetail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          adminStatus.textContent = `เปิดรายละเอียดของ ${result.displayName} แล้ว`;
+        } catch (error) {
+          adminStatus.textContent = `เปิดรายละเอียดไม่สำเร็จ: ${error.message}`;
+        } finally {
+          button.disabled = false;
+          button.textContent = "ดูรายละเอียด";
         }
       }
 

@@ -42,6 +42,25 @@ const APP_CONFIG = Object.freeze({
   initialPasswordProperty: 'INITIAL_STUDENT_PASSWORD'
 });
 
+/**
+ * ทะเบียนขั้นตอนบทเรียน — Blueprint #107 LessonStep
+ * เป็นแหล่งความจริงเดียวของลำดับและเงื่อนไขปลดล็อก
+ * ทั้งหน้าเว็บและการตรวจฝั่งเซิร์ฟเวอร์อ่านจากที่นี่ที่เดียว
+ * แก้ลำดับหรือเพิ่มขั้นตอนได้โดยไม่ต้องไล่แก้เงื่อนไขกระจายในโค้ด
+ */
+const LESSON_SECTIONS = Object.freeze([
+  Object.freeze({ order: 1, id: 'hook', title: 'Hook', required: true }),
+  Object.freeze({ order: 2, id: 'predict', title: 'Predict–Observe', required: true }),
+  Object.freeze({ order: 3, id: 'unplugged', title: 'Unplugged map()', required: true }),
+  Object.freeze({ order: 4, id: 'mg-concept', title: 'mg และ g', required: true }),
+  Object.freeze({ order: 5, id: 'tilt-simulator', title: 'Tilt Simulator', required: true }),
+  Object.freeze({ order: 6, id: 'debug-case', title: 'Debug Case Study', required: true }),
+  Object.freeze({ order: 7, id: 'glossary', title: 'Glossary', required: true }),
+  Object.freeze({ order: 8, id: 'quiz', title: 'Self-check Quiz', required: true })
+]);
+
+const LESSON_SECTION_COUNT = LESSON_SECTIONS.length;
+
 const STUDENT_ROSTER = Object.freeze([
   { username: 'std001', studentNumber: '001', displayName: 'เด็กชายณฐชยนต์  สุขแจ่ม' },
   { username: 'std002', studentNumber: '002', displayName: 'เด็กชายธนากร  พรมมาแข้' },
@@ -90,7 +109,15 @@ function getPublicConfig() {
     academicYear: APP_CONFIG.academicYear,
     semester: APP_CONFIG.semester,
     teacherName: APP_CONFIG.teacherName,
-    schoolName: APP_CONFIG.schoolName
+    schoolName: APP_CONFIG.schoolName,
+    sections: LESSON_SECTIONS.map(function (section) {
+      return {
+        order: section.order,
+        id: section.id,
+        title: section.title,
+        required: section.required
+      };
+    })
   };
 }
 
@@ -346,6 +373,35 @@ function recordQuizAttempt(token, attempt) {
     throw new Error('จำนวนครั้งที่ทำไม่ถูกต้อง');
   }
 
+  // Prerequisite ฝั่งเซิร์ฟเวอร์ตาม Blueprint #16 และ #141
+  // เดิมตรวจเงื่อนไขนี้ที่หน้าเว็บเท่านั้น จึงข้ามได้ด้วยการเรียก API ตรง
+  const progressRow = findProgressRow_(session.username);
+  let savedState = null;
+  if (progressRow) {
+    try {
+      savedState = JSON.parse(progressRow.progressJson);
+    } catch (error) {
+      savedState = null;
+    }
+  }
+  const doneBeforeQuiz = contiguousCompleted_(
+    savedState ? savedState.completedSections : []
+  ).length;
+  const requiredBeforeQuiz = LESSON_SECTION_COUNT - 1;
+
+  if (doneBeforeQuiz < requiredBeforeQuiz) {
+    appendAudit_(
+      session.username,
+      'quiz_guard',
+      'blocked',
+      'ทำครบ ' + doneBeforeQuiz + '/' + requiredBeforeQuiz + ' ขั้นก่อนแบบทดสอบ'
+    );
+    throw new Error(
+      'กรุณาทำกิจกรรม Section 1–' + requiredBeforeQuiz +
+        ' ให้ครบก่อนส่งแบบทดสอบ (ตอนนี้ครบ ' + doneBeforeQuiz + ' ขั้น)'
+    );
+  }
+
   getSpreadsheet_().getSheetByName('Attempts').appendRow([
     new Date(),
     session.username,
@@ -379,6 +435,85 @@ function getAdminDashboard(token) {
     spreadsheetUrl: setup.spreadsheetUrl,
     driveFolderUrl: setup.driveFolderUrl,
     students: students
+  };
+}
+
+/**
+ * Administrator-only student detail — Blueprint #77 Student Detail
+ * คืนประวัติการส่งแบบทดสอบรายครั้งพร้อมคำตอบรายข้อ และความก้าวหน้าตามขั้น
+ * ข้อมูลนี้มีอยู่ในชีต Attempts อยู่แล้ว เพียงแต่ยังไม่เคยมีหน้าจอแสดง
+ * ไม่คืนรหัสผ่าน hash หรือ salt ตาม Blueprint #184
+ */
+function getStudentDetail(token, username) {
+  const session = requireRole_(token, 'admin');
+  const target = normalizeUsername_(username);
+  const user = findUser_(target);
+
+  if (!user || user.role !== 'student') {
+    throw new Error('ไม่พบบัญชีนักเรียน');
+  }
+
+  const attempts = readDataObjects_(
+    getSpreadsheet_().getSheetByName('Attempts')
+  )
+    .filter(function (row) {
+      return String(row.username) === target;
+    })
+    .map(function (row) {
+      let answers = {};
+      try {
+        const parsed = JSON.parse(String(row.answersJson || '{}'));
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          answers = parsed;
+        }
+      } catch (error) {
+        answers = {};
+      }
+      return {
+        timestamp: serializeDate_(row.timestamp),
+        assessment: String(row.assessment || ''),
+        score: Number(row.score) || 0,
+        maximumScore: Number(row.maximumScore) || 0,
+        attemptNumber: Number(row.attemptNumber) || 0,
+        answers: answers
+      };
+    });
+
+  const progressRow = findProgressRow_(target);
+  let state = null;
+  if (progressRow) {
+    try {
+      state = JSON.parse(progressRow.progressJson);
+    } catch (error) {
+      state = null;
+    }
+  }
+
+  const completed = contiguousCompleted_(state ? state.completedSections : []);
+
+  appendAudit_(
+    session.username,
+    'student_detail',
+    'success',
+    'เปิดรายละเอียดของ ' + target
+  );
+
+  return {
+    ok: true,
+    username: target,
+    displayName: user.displayName,
+    studentNumber: user.studentNumber,
+    completedSections: completed,
+    unlockedSection: unlockedSection_(completed),
+    sections: LESSON_SECTIONS.map(function (section) {
+      return {
+        order: section.order,
+        title: section.title,
+        done: completed.indexOf(section.order) !== -1
+      };
+    }),
+    attempts: attempts,
+    updatedAt: progressRow ? progressRow.updatedAt : null
   };
 }
 
@@ -835,6 +970,32 @@ function findProgressRow_(username) {
   };
 }
 
+/**
+ * คืนลำดับต่อเนื่องของขั้นที่ทำเสร็จจริง — Blueprint #16 Prerequisite Engine
+ * ถ้าได้รับ [1,2,5] จะคืน [1,2] เพราะข้าม 3 และ 4 ไม่ได้
+ */
+function contiguousCompleted_(completedSections) {
+  const done = {};
+  (completedSections || []).forEach(function (section) {
+    done[Number(section)] = true;
+  });
+
+  const prefix = [];
+  for (let order = 1; order <= LESSON_SECTION_COUNT; order += 1) {
+    if (!done[order]) break;
+    prefix.push(order);
+  }
+  return prefix;
+}
+
+/** ขั้นสูงสุดที่นักเรียนเข้าถึงได้ คือขั้นถัดจากขั้นที่ทำเสร็จต่อเนื่องล่าสุด */
+function unlockedSection_(completedSections) {
+  return Math.min(
+    contiguousCompleted_(completedSections).length + 1,
+    LESSON_SECTION_COUNT
+  );
+}
+
 function createDefaultProgress_(session) {
   return {
     version: APP_CONFIG.stateVersion,
@@ -863,8 +1024,12 @@ function validateProgressState_(state, session) {
     throw new Error('ข้อมูลความก้าวหน้ามีขนาดใหญ่เกินกำหนด');
   }
 
-  const currentSection = Number(state.currentSection);
-  if (!Number.isInteger(currentSection) || currentSection < 1 || currentSection > 8) {
+  const requestedSection = Number(state.currentSection);
+  if (
+    !Number.isInteger(requestedSection) ||
+    requestedSection < 1 ||
+    requestedSection > LESSON_SECTION_COUNT
+  ) {
     throw new Error('Section ปัจจุบันไม่ถูกต้อง');
   }
 
@@ -872,19 +1037,40 @@ function validateProgressState_(state, session) {
   const latestScore = clampInteger_(quiz.latestScore, 0, 6);
   const bestScore = clampInteger_(quiz.bestScore, latestScore, 6);
   const attempts = clampInteger_(quiz.attempts, 0, 3);
-  const completedSections = Array.isArray(state.completedSections)
+  const rawCompleted = Array.isArray(state.completedSections)
     ? state.completedSections
         .map(Number)
         .filter(function (section) {
-          return Number.isInteger(section) && section >= 1 && section <= 8;
+          return (
+            Number.isInteger(section) &&
+            section >= 1 &&
+            section <= LESSON_SECTION_COUNT
+          );
         })
     : [];
+
+  // ตัดขั้นที่ข้ามลำดับทิ้ง แล้วบันทึกไว้ใน Audit เพื่อให้ครูตรวจสอบย้อนหลังได้
+  const completedSections = contiguousCompleted_(rawCompleted);
+  if (new Set(rawCompleted).size !== completedSections.length) {
+    appendAudit_(
+      session.username,
+      'progress_guard',
+      'blocked',
+      'ข้ามลำดับขั้น ส่งมา [' + Array.from(new Set(rawCompleted)).sort().join(',') +
+        '] รับได้ [' + completedSections.join(',') + ']'
+    );
+  }
+
+  const currentSection = Math.min(
+    requestedSection,
+    unlockedSection_(completedSections)
+  );
 
   return {
     version: APP_CONFIG.stateVersion,
     username: session.username,
     currentSection: currentSection,
-    completedSections: Array.from(new Set(completedSections)).sort(),
+    completedSections: completedSections,
     hookAnswers: sanitizeJsonObject_(state.hookAnswers),
     worksheet: sanitizeJsonObject_(state.worksheet),
     reflection: sanitizeJsonObject_(state.reflection),
