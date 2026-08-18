@@ -66,6 +66,10 @@ const SHEET_SCHEMAS = Object.freeze({
     'attemptNumber', 'answersJson'
   ],
   Audit: ['timestamp', 'username', 'action', 'result', 'details'],
+  QuizArchive: [
+    'timestamp', 'actor', 'username', 'reason', 'beforeLatestScore',
+    'beforeBestScore', 'beforeAttempts', 'beforeQuizJson', 'restoredAt', 'restoredBy'
+  ],
   Settings: ['key', 'value', 'updatedAt']
 });
 
@@ -378,6 +382,207 @@ function getAdminDashboard(token) {
   };
 }
 
+/**
+ * Administrator-only quiz reset — Soft Delete ตาม Blueprint #227
+ * เก็บสำเนาคะแนนเดิมลงชีต QuizArchive ก่อนเสมอ จึงกู้คืนได้ด้วย restoreStudentQuiz()
+ * ไม่ลบข้อมูลถาวร และไม่แตะชีต Attempts ที่เป็นประวัติการส่งทุกครั้ง
+ * บันทึก Audit ครบตาม Blueprint #187 — ใคร ทำอะไร กับใคร ค่าก่อน ค่าหลัง เวลา เหตุผล
+ */
+function resetStudentQuiz(token, username, reason) {
+  const session = requireRole_(token, 'admin');
+  const target = normalizeUsername_(username);
+  const note = sanitizePlainText_(reason, 200).trim();
+  const user = findUser_(target);
+
+  if (!user || user.role !== 'student') {
+    throw new Error('ไม่พบบัญชีนักเรียน');
+  }
+  if (note.length < 5) {
+    throw new Error('กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร เพื่อบันทึกไว้ในประวัติการแก้ไข');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const sheet = getSpreadsheet_().getSheetByName('Progress');
+    const row = findRowByValue_(sheet, 1, target);
+
+    if (row < 2) {
+      throw new Error('นักเรียนคนนี้ยังไม่มีคะแนนให้รีเซ็ต');
+    }
+
+    const current = sheet.getRange(row, 3, 1, 5).getValues()[0];
+    const before = {
+      latestScore: Number(current[2]) || 0,
+      bestScore: Number(current[3]) || 0,
+      attempts: Number(current[4]) || 0
+    };
+
+    let state = null;
+    try {
+      state = JSON.parse(String(current[0] || ''));
+    } catch (error) {
+      state = null;
+    }
+    const beforeQuiz = state && state.quiz ? state.quiz : null;
+
+    // Soft Delete — เก็บสำเนาก่อนเขียนทับเสมอ
+    appendQuizArchive_(session.username, target, note, before, beforeQuiz);
+
+    if (state && typeof state === 'object' && !Array.isArray(state)) {
+      state.quiz = {
+        answers: {},
+        latestScore: 0,
+        bestScore: 0,
+        attempts: 0,
+        locked: false
+      };
+      sheet.getRange(row, 3).setValue(JSON.stringify(state));
+    }
+
+    sheet.getRange(row, 5, 1, 4).setValues([[0, 0, 0, new Date()]]);
+
+    appendAudit_(
+      session.username,
+      'quiz_reset',
+      'success',
+      target +
+        ' | ก่อน ' + before.latestScore + '/' + before.bestScore + '/' + before.attempts +
+        ' | หลัง 0/0/0 | เหตุผล ' + note
+    );
+
+    return { ok: true, username: target, displayName: user.displayName, before: before };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Rollback ตาม Blueprint #176 — คืนคะแนนจากสำเนาล่าสุดที่ยังไม่ถูกกู้คืน
+ * ใช้เมื่อรีเซ็ตผิดคนหรือครูเปลี่ยนใจ
+ */
+function restoreStudentQuiz(token, username) {
+  const session = requireRole_(token, 'admin');
+  const target = normalizeUsername_(username);
+  const user = findUser_(target);
+
+  if (!user || user.role !== 'student') {
+    throw new Error('ไม่พบบัญชีนักเรียน');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const archive = getSpreadsheet_().getSheetByName('QuizArchive');
+    if (!archive) {
+      throw new Error('ยังไม่มีสำเนาคะแนนให้กู้คืน');
+    }
+
+    const entries = readDataObjects_(archive).filter(function (item) {
+      return String(item.username) === target && !item.restoredAt;
+    });
+    if (entries.length === 0) {
+      throw new Error('ไม่พบสำเนาคะแนนที่ยังไม่ได้กู้คืนของนักเรียนคนนี้');
+    }
+
+    const entry = entries[entries.length - 1];
+    const sheet = getSpreadsheet_().getSheetByName('Progress');
+    const row = findRowByValue_(sheet, 1, target);
+    if (row < 2) {
+      throw new Error('ไม่พบแถวความก้าวหน้าของนักเรียน');
+    }
+
+    const restored = {
+      latestScore: Number(entry.beforeLatestScore) || 0,
+      bestScore: Number(entry.beforeBestScore) || 0,
+      attempts: Number(entry.beforeAttempts) || 0
+    };
+
+    let state = null;
+    try {
+      state = JSON.parse(String(sheet.getRange(row, 3).getValue() || ''));
+    } catch (error) {
+      state = null;
+    }
+
+    let beforeQuiz = null;
+    try {
+      beforeQuiz = JSON.parse(String(entry.beforeQuizJson || 'null'));
+    } catch (error) {
+      beforeQuiz = null;
+    }
+
+    if (state && typeof state === 'object' && !Array.isArray(state)) {
+      state.quiz = beforeQuiz && typeof beforeQuiz === 'object' && !Array.isArray(beforeQuiz)
+        ? beforeQuiz
+        : {
+            answers: {},
+            latestScore: restored.latestScore,
+            bestScore: restored.bestScore,
+            attempts: restored.attempts,
+            locked: false
+          };
+      sheet.getRange(row, 3).setValue(JSON.stringify(state));
+    }
+
+    const now = new Date();
+    sheet.getRange(row, 5, 1, 4).setValues([[
+      restored.latestScore, restored.bestScore, restored.attempts, now
+    ]]);
+    archive.getRange(entry._rowNumber, 9, 1, 2).setValues([[now, session.username]]);
+
+    appendAudit_(
+      session.username,
+      'quiz_restore',
+      'success',
+      target + ' | ก่อน 0/0/0 | หลัง ' +
+        restored.latestScore + '/' + restored.bestScore + '/' + restored.attempts +
+        ' | กู้จากสำเนา ' + serializeDate_(entry.timestamp)
+    );
+
+    return { ok: true, username: target, displayName: user.displayName, restored: restored };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Migration แบบเพิ่มอย่างเดียวตาม Blueprint #123
+ * สร้างชีต QuizArchive เมื่อยังไม่มี ระบบที่ติดตั้งไปแล้วจึงใช้ต่อได้โดยไม่ต้อง setupSystem ใหม่
+ */
+function ensureQuizArchiveSheet_() {
+  const spreadsheet = getSpreadsheet_();
+  const existing = spreadsheet.getSheetByName('QuizArchive');
+  if (existing) return existing;
+
+  const sheet = spreadsheet.insertSheet('QuizArchive');
+  const headers = SHEET_SCHEMAS.QuizArchive;
+  sheet.getRange(1, 1, 1, headers.length)
+    .setValues([headers])
+    .setBackground('#43105b')
+    .setFontColor('#ffffff')
+    .setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  return sheet;
+}
+
+function appendQuizArchive_(actor, username, reason, before, beforeQuiz) {
+  ensureQuizArchiveSheet_().appendRow([
+    new Date(),
+    actor,
+    username,
+    reason,
+    before.latestScore,
+    before.bestScore,
+    before.attempts,
+    JSON.stringify(beforeQuiz),
+    '',
+    ''
+  ]);
+}
+
 /** Builds safe dashboard rows without password hashes, salts, or credentials. */
 function buildStudentDashboardRows_() {
   const users = readDataObjects_(
@@ -390,6 +595,16 @@ function buildStudentDashboardRows_() {
     getSpreadsheet_().getSheetByName('Progress')
   );
   const progressByUsername = {};
+
+  const archiveSheet = getSpreadsheet_().getSheetByName('QuizArchive');
+  const restorableByUsername = {};
+  if (archiveSheet) {
+    readDataObjects_(archiveSheet).forEach(function (row) {
+      if (!row.restoredAt) {
+        restorableByUsername[String(row.username)] = true;
+      }
+    });
+  }
 
   progressRows.forEach(function (row) {
     progressByUsername[row.username] = {
@@ -406,7 +621,8 @@ function buildStudentDashboardRows_() {
       username: String(user.username),
       studentNumber: String(user.studentNumber),
       displayName: String(user.displayName),
-      active: toBoolean_(user.active)
+      active: toBoolean_(user.active),
+      canRestoreQuiz: Boolean(restorableByUsername[String(user.username)])
     }, progressByUsername[user.username] || {
       currentSection: 1,
       latestScore: 0,

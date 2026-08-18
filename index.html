@@ -2007,6 +2007,75 @@
       background: #eef0f4;
     }
 
+    .admin-reset {
+      min-height: 38px;
+      padding: 0.35rem 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 0.7rem;
+      background: #fff;
+      color: var(--purple-900);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .admin-reset:hover:not(:disabled),
+    .admin-reset:focus-visible:not(:disabled) {
+      border-color: var(--purple-900);
+      background: #f6eff9;
+    }
+
+    .admin-reset.is-confirm {
+      color: #8a1c1c;
+      border-color: #8a1c1c;
+      background: #fee2e2;
+    }
+
+    .admin-reset:disabled {
+      color: var(--muted);
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .admin-reset.is-restore {
+      color: #14532d;
+      border-color: #14532d;
+    }
+
+    .admin-reset-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-width: 210px;
+    }
+
+    .admin-reset-form label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .admin-reset-form input {
+      min-height: 38px;
+      padding: 0.35rem 0.55rem;
+      border: 2px solid var(--border);
+      border-radius: 0.7rem;
+      font: inherit;
+      font-size: 0.84rem;
+    }
+
+    .admin-reset-form input:focus-visible {
+      border-color: var(--purple-900);
+      outline: none;
+    }
+
+    .admin-reset-actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+
     .admin-status {
       min-height: 1.5rem;
       margin: 0.8rem 0 0;
@@ -2263,7 +2332,7 @@
           <strong id="admin-started-quiz">0</strong>
         </article>
         <article>
-          <span>ผ่านเกณฑ์ 4/5</span>
+          <span id="admin-passed-label">ผ่านเกณฑ์</span>
           <strong id="admin-passed-quiz">0</strong>
         </article>
         <article>
@@ -2297,6 +2366,7 @@
                 <th scope="col">จำนวนครั้ง</th>
                 <th scope="col">สถานะ</th>
                 <th scope="col">บันทึกล่าสุด</th>
+                <th scope="col">จัดการ</th>
               </tr>
             </thead>
             <tbody id="admin-student-rows"></tbody>
@@ -3183,7 +3253,7 @@
         if (student.attempts < 1) {
           return { label: "ยังไม่เริ่ม", className: "is-new" };
         }
-        if (student.bestScore >= 4) {
+        if (student.bestScore >= QUIZ_PASSING_SCORE) {
           return { label: "ผ่าน", className: "is-pass" };
         }
         if (student.attempts >= 3) {
@@ -3201,9 +3271,11 @@
 
       function renderAdminSummary(students) {
         const started = students.filter((student) => student.attempts > 0);
-        const passed = students.filter((student) => student.bestScore >= 4);
+        const passed = students.filter(
+          (student) => student.bestScore >= QUIZ_PASSING_SCORE
+        );
         const needsHelp = students.filter(
-          (student) => student.attempts > 0 && student.bestScore < 4
+          (student) => student.attempts > 0 && student.bestScore < QUIZ_PASSING_SCORE
         );
 
         document.querySelector("#admin-total-students").textContent = students.length;
@@ -3212,13 +3284,164 @@
         document.querySelector("#admin-needs-help").textContent = needsHelp.length;
       }
 
+      function createResetButton(student) {
+        const wrap = document.createElement("div");
+        wrap.className = "admin-reset-actions";
+
+        if (student.canRestoreQuiz) {
+          const restore = document.createElement("button");
+          restore.type = "button";
+          restore.className = "admin-reset is-restore";
+          restore.textContent = "กู้คืนคะแนน";
+          restore.title = "คืนคะแนนจากสำเนาล่าสุดที่เก็บไว้ตอนรีเซ็ต";
+          restore.addEventListener("click", () => {
+            void restoreStudentScore(student, restore);
+          });
+          wrap.appendChild(restore);
+        }
+
+        if (!student.attempts) {
+          if (!wrap.childElementCount) {
+            const idle = document.createElement("button");
+            idle.type = "button";
+            idle.className = "admin-reset";
+            idle.textContent = "รีเซ็ตคะแนน";
+            idle.disabled = true;
+            idle.title = "นักเรียนยังไม่ได้ทำแบบทดสอบ";
+            wrap.appendChild(idle);
+          }
+          return wrap;
+        }
+
+        const reset = document.createElement("button");
+        reset.type = "button";
+        reset.className = "admin-reset";
+        reset.textContent = "รีเซ็ตคะแนน";
+        reset.addEventListener("click", () => {
+          openResetForm(student, wrap);
+        });
+        wrap.appendChild(reset);
+
+        return wrap;
+      }
+
+      function openResetForm(student, wrap) {
+        const cell = wrap.parentElement;
+        if (!cell) return;
+
+        const form = document.createElement("div");
+        form.className = "admin-reset-form";
+
+        const label = document.createElement("label");
+        const inputId = `reset-reason-${student.username}`;
+        label.htmlFor = inputId;
+        label.textContent = "เหตุผลในการรีเซ็ต (บันทึกในประวัติ)";
+
+        const input = document.createElement("input");
+        input.id = inputId;
+        input.type = "text";
+        input.maxLength = 200;
+        input.placeholder = "เช่น นักเรียนกดส่งผิดพลาด";
+
+        const actions = document.createElement("div");
+        actions.className = "admin-reset-actions";
+
+        const confirm = document.createElement("button");
+        confirm.type = "button";
+        confirm.className = "admin-reset is-confirm";
+        confirm.textContent = "ยืนยันรีเซ็ต";
+
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.className = "admin-reset";
+        cancel.textContent = "ยกเลิก";
+
+        function close() {
+          cell.replaceChildren(createResetButton(student));
+          adminStatus.textContent = "ยกเลิกการรีเซ็ตแล้ว";
+        }
+
+        confirm.addEventListener("click", () => {
+          const reason = input.value.trim();
+          if (reason.length < 5) {
+            adminStatus.textContent =
+              "กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษรก่อนยืนยัน";
+            input.focus();
+            return;
+          }
+          void resetStudentScore(student, reason, confirm, cancel);
+        });
+
+        cancel.addEventListener("click", close);
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") close();
+        });
+
+        actions.append(confirm, cancel);
+        form.append(label, input, actions);
+        cell.replaceChildren(form);
+        input.focus();
+
+        adminStatus.textContent =
+          `ระบุเหตุผลเพื่อรีเซ็ตคะแนนของ ${student.displayName} — คะแนนเดิมจะถูกเก็บสำเนาไว้และกู้คืนได้`;
+      }
+
+      async function resetStudentScore(student, reason, confirmButton, cancelButton) {
+        confirmButton.disabled = true;
+        cancelButton.disabled = true;
+        confirmButton.textContent = "กำลังรีเซ็ต...";
+        adminStatus.textContent = `กำลังรีเซ็ตคะแนนของ ${student.displayName}`;
+
+        try {
+          const result = await callServer(
+            "resetStudentQuiz",
+            sessionToken,
+            student.username,
+            reason
+          );
+          const before = result && result.before ? result.before : null;
+          await loadAdminDashboard();
+          adminStatus.textContent = before
+            ? `รีเซ็ตคะแนนของ ${student.displayName} แล้ว (เดิม ${before.bestScore}/${QUIZ_QUESTIONS.length} ทำ ${before.attempts} ครั้ง) เก็บสำเนาไว้แล้ว กู้คืนได้`
+            : `รีเซ็ตคะแนนของ ${student.displayName} แล้ว`;
+        } catch (error) {
+          confirmButton.disabled = false;
+          cancelButton.disabled = false;
+          confirmButton.textContent = "ยืนยันรีเซ็ต";
+          adminStatus.textContent = `รีเซ็ตไม่สำเร็จ: ${error.message}`;
+        }
+      }
+
+      async function restoreStudentScore(student, button) {
+        button.disabled = true;
+        button.textContent = "กำลังกู้คืน...";
+        adminStatus.textContent = `กำลังกู้คืนคะแนนของ ${student.displayName}`;
+
+        try {
+          const result = await callServer(
+            "restoreStudentQuiz",
+            sessionToken,
+            student.username
+          );
+          const restored = result && result.restored ? result.restored : null;
+          await loadAdminDashboard();
+          adminStatus.textContent = restored
+            ? `กู้คืนคะแนนของ ${student.displayName} แล้ว (${restored.bestScore}/${QUIZ_QUESTIONS.length} ทำ ${restored.attempts} ครั้ง)`
+            : `กู้คืนคะแนนของ ${student.displayName} แล้ว`;
+        } catch (error) {
+          button.disabled = false;
+          button.textContent = "กู้คืนคะแนน";
+          adminStatus.textContent = `กู้คืนไม่สำเร็จ: ${error.message}`;
+        }
+      }
+
       function renderAdminRows(students) {
         adminRows.replaceChildren();
 
         if (!students.length) {
           const row = document.createElement("tr");
           const cell = document.createElement("td");
-          cell.colSpan = 9;
+          cell.colSpan = 10;
           cell.textContent = "ไม่พบนักเรียนที่ตรงกับคำค้น";
           row.appendChild(cell);
           adminRows.appendChild(row);
@@ -3231,8 +3454,8 @@
           appendAdminCell(row, student.displayName);
           appendAdminCell(row, student.username);
           appendAdminCell(row, `${student.currentSection}/8`);
-          appendAdminCell(row, `${student.latestScore}/5`);
-          appendAdminCell(row, `${student.bestScore}/5`);
+          appendAdminCell(row, `${student.latestScore}/${QUIZ_QUESTIONS.length}`);
+          appendAdminCell(row, `${student.bestScore}/${QUIZ_QUESTIONS.length}`);
           appendAdminCell(row, student.attempts);
 
           const statusCell = document.createElement("td");
@@ -3244,6 +3467,11 @@
           row.appendChild(statusCell);
 
           appendAdminCell(row, formatThaiDate(student.updatedAt));
+
+          const actionCell = document.createElement("td");
+          actionCell.appendChild(createResetButton(student));
+          row.appendChild(actionCell);
+
           adminRows.appendChild(row);
         });
       }
@@ -3284,7 +3512,16 @@
         }
       }
 
+      function syncAdminPassLabel() {
+        const label = document.querySelector("#admin-passed-label");
+        if (label) {
+          label.textContent =
+            `ผ่านเกณฑ์ ${QUIZ_PASSING_SCORE}/${QUIZ_QUESTIONS.length}`;
+        }
+      }
+
       async function loadAdminDashboard() {
+        syncAdminPassLabel();
         setBusy(adminRefreshButton, true, "กำลังรีเฟรช...", "รีเฟรชข้อมูล");
         adminStatus.textContent = "กำลังโหลดข้อมูลจาก Google Sheets...";
 
@@ -3321,8 +3558,8 @@
           student.displayName,
           student.username,
           `${student.currentSection}/8`,
-          `${student.latestScore}/5`,
-          `${student.bestScore}/5`,
+          `${student.latestScore}/${QUIZ_QUESTIONS.length}`,
+          `${student.bestScore}/${QUIZ_QUESTIONS.length}`,
           student.attempts,
           getAdminStatus(student).label,
           formatThaiDate(student.updatedAt)
