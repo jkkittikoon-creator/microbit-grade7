@@ -3956,11 +3956,13 @@
             </p>
           </details>
           <details class="vocab-chip">
-            <summary>📱 accelerometer</summary>
+            <summary>📱 accelerometer (accel)</summary>
             <p>
               อ่านว่า แอ็ก-เซล-เล-โร-มิ-เตอร์
               คือเซนเซอร์ในเครื่องที่รู้ว่าเรากำลังเอียงไปทางไหน
               เหมือนที่ทำให้จอมือถือหมุนตามการถือของเรา
+              ในบทเรียนจะเขียนสั้น ๆ ว่า <strong>accel</strong>
+              ส่วนคำว่า <strong>ค่า accel</strong> คือตัวเลขที่เซนเซอร์ตัวนี้อ่านได้
             </p>
           </details>
           <details class="vocab-chip">
@@ -4051,6 +4053,26 @@
           ยังไม่ต้องเขียนโค้ด ลองใช้หลักสัดส่วนแปลงคะแนน 0–100
           ให้เป็นเกรด 0–4 ก่อน
         </p>
+      </div>
+
+      <div class="vocab-primer">
+        <h3>📖 สองคำที่จะใช้ในส่วนนี้</h3>
+        <div class="vocab-primer-grid">
+          <details class="vocab-chip">
+            <summary>⚖️ สัดส่วน</summary>
+            <p>
+              การเทียบว่าของสองอย่างมากน้อยกันแค่ไหน
+              เช่นได้ครึ่งหนึ่งของคะแนนเต็ม ก็ควรได้ครึ่งหนึ่งของเกรดเต็ม
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>📍 พิกัด</summary>
+            <p>
+              ตัวเลขบอกตำแหน่ง เหมือนเลขที่นั่งในโรงหนัง
+              บอกว่าอยู่ช่องไหน
+            </p>
+          </details>
+        </div>
       </div>
 
       <div class="unplugged-lab">
@@ -4150,6 +4172,28 @@
           ภายในบอร์ดมี accelerometer หรือเซนเซอร์วัดความเร่ง
           ซึ่งช่วยให้โปรแกรมรับรู้การเอียงผ่านแกน x, y และ z
         </p>
+      </div>
+
+      <div class="vocab-primer">
+        <h3>📖 คำที่จะใช้ในส่วนนี้</h3>
+        <div class="vocab-primer-grid">
+          <details class="vocab-chip">
+            <summary>↔️ แกน x, y, z</summary>
+            <p>
+              ทิศทางสามแบบที่เซนเซอร์วัดแยกกันได้ —
+              แกน x คือเอียงซ้ายขวา แกน y คือเอียงหน้าหลัง
+              แกน z คือคว่ำหรือหงาย บทนี้เราใช้แค่แกน x
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>🌍 g (แรงโน้มถ่วง)</summary>
+            <p>
+              แรงที่โลกดึงของทุกอย่างลงพื้น
+              ค่า 1 g คือแรงดึงเต็มที่ ส่วน mg คือหน่วยย่อยของมัน
+              1000 mg เท่ากับ 1 g
+            </p>
+          </details>
+        </div>
       </div>
 
       <div class="sensor-concepts">
@@ -4311,6 +4355,46 @@
         </p>
       </div>
 
+      <div class="vocab-primer">
+        <h3>📖 คำสั่งที่จะเห็นในส่วนนี้</h3>
+        <p class="vocab-primer-lead">
+          ส่วนนี้มีคำใหม่หลายคำ กดเปิดดูความหมายไว้ก่อนได้เลย
+          ยังไม่ต้องจำ เดี๋ยวเราจะได้ใช้จริงตอนเขียนโค้ด
+        </p>
+        <div class="vocab-primer-grid">
+          <details class="vocab-chip">
+            <summary>🔁 ลูป</summary>
+            <p>
+              การสั่งให้ทำงานซ้ำวนไปเรื่อย ๆ ไม่หยุด
+              เหมือนตั้งเพลงให้เล่นวนซ้ำ พอจบเพลงก็เริ่มใหม่เอง
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>♾️ forever</summary>
+            <p>
+              อ่านว่า ฟอร์-เอ-เว่อร์ แปลว่า ตลอดไป
+              เป็นคำสั่งที่ทำให้โปรแกรมวนซ้ำไม่หยุด
+              ทุกอย่างที่ใส่ไว้ข้างในจะถูกทำซ้ำเรื่อย ๆ
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>💡 plot</summary>
+            <p>
+              อ่านว่า พลอต แปลว่า จุดลงไป
+              เป็นคำสั่งให้เปิดไฟดวงหนึ่งบนจอ ตรงตำแหน่งที่เราบอก
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>⏸️ pause</summary>
+            <p>
+              อ่านว่า พอส แปลว่า หยุดพัก
+              เป็นคำสั่งให้โปรแกรมรอสักครู่ก่อนทำรอบถัดไป
+              เขียน pause(50) คือรอ 50 มิลลิวินาที
+            </p>
+          </details>
+        </div>
+      </div>
+
       <div class="simulator-shell">
         <article class="sim-controls">
           <h3>1. ปรับค่า accelerometer</h3>
@@ -4423,8 +4507,8 @@
             → pause(50 ms)
           </p>
           <p>
-            pause ช่วยให้ลูป forever มีจังหวะพัก
-            ไม่สั่งงานจอถี่ต่อเนื่องเกินไป
+            forever จะวนทำซ้ำเร็วมาก ส่วน pause คือการให้หยุดพักนิดหนึ่ง
+            ก่อนเริ่มรอบใหม่ จอจึงไม่ถูกสั่งงานถี่จนเกินไป
           </p>
         </aside>
       </div>
@@ -8618,7 +8702,21 @@
           id: "forever",
           term: "forever",
           reading: "ฟอร์-เอ-เวอร์",
-          meaning: "ลูปที่ทำคำสั่งซ้ำอย่างต่อเนื่อง",
+          meaning: "คำสั่งที่ทำให้โปรแกรมวนทำซ้ำไม่หยุด",
+          type: "term"
+        },
+        {
+          id: "accel",
+          term: "accel",
+          reading: "แอ็ก-เซล",
+          meaning: "คำย่อของ accelerometer ค่า accel คือตัวเลขที่เซนเซอร์อ่านได้",
+          type: "term"
+        },
+        {
+          id: "loop",
+          term: "loop (ลูป)",
+          reading: "ลูป",
+          meaning: "การสั่งให้ทำงานซ้ำวนไปเรื่อย ๆ เหมือนตั้งเพลงให้เล่นวนซ้ำ",
           type: "term"
         },
         {
