@@ -46,6 +46,7 @@ const APP_CONFIG = Object.freeze({
   xpPerfectQuiz: 20,
   xpMiniGame: 20,
   xpMission: 30,
+  xpCodingLab: 30,
   spreadsheetProperty: 'TILT_LAB_SPREADSHEET_ID',
   driveFolderProperty: 'TILT_LAB_DRIVE_FOLDER_ID',
   initialPasswordProperty: 'INITIAL_STUDENT_PASSWORD'
@@ -120,6 +121,20 @@ const LESSON_OPTIONAL_STEPS = Object.freeze([
       id: 'designer',
       label: 'นักออกแบบช่วงใช้งาน',
       detail: 'ออกแบบช่วงใช้งานให้เหมาะกับผู้ใช้จริงได้'
+    })
+  }),
+  Object.freeze({
+    id: 'coding-lab',
+    title: 'ภาคปฏิบัติ เขียนโค้ดจริงบน micro:bit',
+    kind: 'lab',
+    // ต่อจาก Glossary เพราะนักเรียนรู้ครบทุกคำสั่งแล้ว จึงลงมือเขียนจริงได้
+    unlockAfter: 7,
+    xpReward: APP_CONFIG.xpCodingLab,
+    stateKey: 'codingLab',
+    badge: Object.freeze({
+      id: 'coder',
+      label: 'นักเขียนโค้ด micro:bit',
+      detail: 'เขียนและทดลองโปรแกรมเอียงจริงบน MakeCode ได้'
     })
   })
 ]);

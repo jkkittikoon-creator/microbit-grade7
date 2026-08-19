@@ -828,9 +828,199 @@
       line-height: 1.75;
     }
 
+    /* ภาคปฏิบัติเขียนโค้ดจริงบน MakeCode */
+    .lab-open {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 1.25rem 0 0;
+      padding: 1.1rem 1.25rem;
+      border-radius: var(--radius-md);
+      background: #eef4ff;
+      border: 2px solid #c9dcff;
+    }
+
+    .lab-open strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: var(--purple-900);
+    }
+
+    .lab-open p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .lab-open-button {
+      flex: 0 0 auto;
+      padding: 0.85rem 1.5rem;
+      border-radius: 999px;
+      background: var(--purple-700);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.05rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .lab-open-button:hover,
+    .lab-open-button:focus-visible {
+      background: var(--purple-900);
+    }
+
+    .lab-setup {
+      margin: 1rem 0 0;
+      padding-left: 1.4rem;
+      display: grid;
+      gap: 0.5rem;
+      color: #3f3547;
+      line-height: 1.65;
+    }
+
+    .lab-step {
+      margin: 1.5rem 0 0;
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .lab-mission {
+      border-color: #f0c98a;
+      background: #fffaf1;
+    }
+
+    .lab-step-kicker {
+      margin: 0 0 0.35rem;
+      color: var(--purple-700);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .lab-step h3 {
+      margin: 0 0 0.5rem;
+    }
+
+    .lab-code {
+      margin: 0.9rem 0;
+      border-radius: 0.7rem;
+      overflow: hidden;
+      border: 1px solid #2c2540;
+    }
+
+    .lab-code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.5rem 0.85rem;
+      background: #2c2540;
+      color: #e7e0f5;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .lab-copy {
+      padding: 0.35rem 0.85rem;
+      border: 0;
+      border-radius: 0.5rem;
+      background: #6d1a8d;
+      color: #fff;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .lab-copy:hover,
+    .lab-copy:focus-visible {
+      background: #8a3aa8;
+    }
+
+    .lab-copy.is-copied {
+      background: var(--green-700);
+    }
+
+    .lab-code pre {
+      margin: 0;
+      padding: 0.9rem 1rem;
+      background: #1e1830;
+      color: #f4f1fb;
+      overflow-x: auto;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .lab-code code {
+      font-family: "Fira Mono", "Consolas", "Courier New", monospace;
+      white-space: pre;
+    }
+
+    .lab-explain {
+      margin: 0.5rem 0 0;
+      font-size: 0.95rem;
+    }
+
+    .lab-explain summary {
+      cursor: pointer;
+      color: var(--purple-700);
+      font-weight: 700;
+    }
+
+    .lab-explain ul {
+      margin: 0.6rem 0 0;
+      padding-left: 1.2rem;
+      display: grid;
+      gap: 0.4rem;
+      color: #3f3547;
+      line-height: 1.6;
+    }
+
+    .lab-explain code,
+    .lab-step p code,
+    .mission-prompt code {
+      padding: 0.05rem 0.35rem;
+      border-radius: 0.35rem;
+      background: #efe7f5;
+      color: #4a1259;
+      font-family: "Fira Mono", "Consolas", "Courier New", monospace;
+      font-size: 0.9em;
+    }
+
+    .lab-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      margin: 0.9rem 0 0;
+      padding: 0.7rem 0.85rem;
+      border-radius: 0.6rem;
+      background: #f5f2fa;
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--purple-900);
+      line-height: 1.5;
+    }
+
+    .lab-check input {
+      margin-top: 0.15rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      flex: 0 0 auto;
+    }
+
     @media (max-width: 640px) {
       .game-actions {
         grid-template-columns: minmax(0, 1fr);
+      }
+
+      .lab-open-button {
+        width: 100%;
+        text-align: center;
       }
     }
 
@@ -4412,6 +4602,182 @@
       <p class="glossary-sync" id="mission-sync" role="status" aria-live="polite"></p>
     </section>
 
+    <section class="lesson-section optional-section" id="coding-lab"
+             aria-labelledby="coding-lab-title">
+      <div class="section-heading">
+        <p class="section-kicker">
+          💻 ภาคปฏิบัติ · <span class="optional-tag">กิจกรรมเสริม ไม่บังคับ</span>
+        </p>
+        <h2 id="coding-lab-title">เขียนโค้ดจริงบน micro:bit</h2>
+        <p class="section-intro">
+          ที่ผ่านมาเราทดลองบนเครื่องจำลองในบทเรียน คราวนี้จะได้เขียนโค้ดจริง
+          บนเครื่องมือของ micro:bit เอง ที่ชื่อ MakeCode
+          ฝึกสองโปรแกรมง่าย ๆ ก่อน แล้วค่อยลงมือทำภารกิจ
+        </p>
+      </div>
+
+      <p class="reward-preview">
+        🎯 ฝึกครบ 2 โปรแกรม แล้วทำภารกิจ ·
+        ⏱️ ประมาณ 15 นาที ·
+        🎁 ทำสำเร็จได้ +30 XP และเหรียญนักเขียนโค้ด micro:bit
+      </p>
+
+      <div class="lab-open">
+        <div>
+          <strong>เปิดเครื่องมือเขียนโค้ดก่อน</strong>
+          <p>
+            กดปุ่มนี้เพื่อเปิด MakeCode ในแท็บใหม่ ไม่ต้องสมัครหรือเข้าสู่ระบบ
+            เปิดค้างไว้แล้วสลับกลับมาดูขั้นตอนที่นี่ได้
+          </p>
+        </div>
+        <a class="lab-open-button" href="https://makecode.microbit.org/"
+           target="_blank" rel="noopener noreferrer">
+          🚀 เปิด MakeCode
+        </a>
+      </div>
+
+      <ol class="lab-setup">
+        <li>กดปุ่มด้านบน แท็บใหม่จะเปิดหน้า MakeCode</li>
+        <li>กด <strong>โปรเจกต์ใหม่ (New Project)</strong> ตั้งชื่ออะไรก็ได้ เช่น tilt</li>
+        <li>
+          ด้านบนมีปุ่มสลับ <strong>Blocks | JavaScript</strong>
+          กดไปที่ <strong>JavaScript</strong> เพื่อพิมพ์โค้ดเป็นตัวอักษร
+        </li>
+        <li>ลบโค้ดเดิมในช่องทั้งหมด แล้ววางโค้ดจากแต่ละขั้นด้านล่าง</li>
+        <li>
+          ดูจอ micro:bit จำลองด้านซ้าย ลองเอียงด้วยการ
+          <strong>ลากตัวบอร์ด</strong> หรือกดลูกศรซ้ายขวา
+        </li>
+      </ol>
+
+      <article class="lab-step" id="lab-step-1">
+        <p class="lab-step-kicker">ฝึกที่ 1 · ให้เซนเซอร์ตอบสนอง</p>
+        <h3>โปรแกรมแรก — ดูว่าเซนเซอร์รู้ตัวว่าเอียง</h3>
+        <p>
+          โปรแกรมนี้อ่านค่าความเอียงแกน x ตลอดเวลา
+          แล้ววาดเป็นแถบไฟบนจอ ยิ่งเอียงมาก แถบยิ่งเปลี่ยน
+          ให้เห็นกับตาว่าเซนเซอร์ทำงานจริง
+        </p>
+
+        <div class="lab-code">
+          <div class="lab-code-head">
+            <span>โค้ดโปรแกรมที่ 1</span>
+            <button class="lab-copy" type="button" data-copy="lab-code-1">
+              คัดลอกโค้ด
+            </button>
+          </div>
+          <pre id="lab-code-1"><code>basic.forever(function () {
+    led.plotBarGraph(input.acceleration(Dimension.X), 1023)
+})</code></pre>
+        </div>
+
+        <details class="lab-explain">
+          <summary>อ่านทีละบรรทัดว่าโค้ดนี้สั่งอะไร</summary>
+          <ul>
+            <li><code>basic.forever</code> — ทำซ้ำวนไปเรื่อย ๆ ไม่หยุด</li>
+            <li><code>input.acceleration(Dimension.X)</code> — อ่านค่าความเอียงแกน x เป็นตัวเลข mg</li>
+            <li><code>led.plotBarGraph(ค่า, 1023)</code> — วาดแถบไฟตามค่าที่อ่านได้ โดยเทียบกับค่าสูงสุด 1023</li>
+          </ul>
+        </details>
+
+        <label class="lab-check">
+          <input type="checkbox" id="lab-check-1">
+          <span>ลองแล้ว เห็นแถบไฟเปลี่ยนเมื่อเอียงบอร์ด</span>
+        </label>
+      </article>
+
+      <article class="lab-step" id="lab-step-2">
+        <p class="lab-step-kicker">ฝึกที่ 2 · ย้ายจุดด้วย map และ constrain</p>
+        <h3>โปรแกรมหลัก — จุดวิ่งตามการเอียง</h3>
+        <p>
+          โปรแกรมนี้คือหัวใจของบทเรียน ใช้ <code>map</code> เปลี่ยนค่าความเอียง
+          ให้เป็นพิกัด 0–4 แล้วใช้ <code>constrain</code> กันไม่ให้จุดหลุดขอบจอ
+          เหมือนที่เราทดลองในเครื่องจำลอง แต่คราวนี้เป็นโค้ดจริง
+        </p>
+
+        <div class="lab-code">
+          <div class="lab-code-head">
+            <span>โค้ดโปรแกรมที่ 2</span>
+            <button class="lab-copy" type="button" data-copy="lab-code-2">
+              คัดลอกโค้ด
+            </button>
+          </div>
+          <pre id="lab-code-2"><code>basic.forever(function () {
+    let ax = input.acceleration(Dimension.X)
+    let x = Math.map(ax, -600, 600, 0, 4)
+    x = Math.constrain(x, 0, 4)
+    basic.clearScreen()
+    led.plot(Math.round(x), 2)
+    basic.pause(50)
+})</code></pre>
+        </div>
+
+        <details class="lab-explain">
+          <summary>อ่านทีละบรรทัดว่าโค้ดนี้สั่งอะไร</summary>
+          <ul>
+            <li><code>let ax = input.acceleration(Dimension.X)</code> — เก็บค่าความเอียงไว้ในกล่องชื่อ ax</li>
+            <li><code>Math.map(ax, -600, 600, 0, 4)</code> — เปลี่ยนช่วง −600…600 ให้เป็นพิกัด 0…4</li>
+            <li><code>Math.constrain(x, 0, 4)</code> — ถ้าค่าหลุดขอบ ดึงกลับมาให้อยู่ 0…4</li>
+            <li><code>basic.clearScreen()</code> — ลบไฟเดิมก่อน ไม่ให้จุดค้างเป็นทางยาว</li>
+            <li><code>led.plot(Math.round(x), 2)</code> — จุดไฟที่คอลัมน์ที่คำนวณได้ แถวกลางคือ 2</li>
+            <li><code>basic.pause(50)</code> — พัก 50 มิลลิวินาที ไม่ให้สั่งจอถี่เกินไป</li>
+          </ul>
+        </details>
+
+        <label class="lab-check">
+          <input type="checkbox" id="lab-check-2">
+          <span>ลองแล้ว เห็นจุดเดียววิ่งซ้ายขวาตามการเอียง</span>
+        </label>
+      </article>
+
+      <article class="lab-step lab-mission" id="lab-step-3">
+        <p class="lab-step-kicker">ภารกิจ · ปรับช่วงให้เพื่อนที่เอียงมือได้น้อย</p>
+        <h3>ภารกิจจริง — แก้โค้ดให้ไวขึ้น</h3>
+        <p>
+          จำเพื่อนที่ข้อมือเจ็บได้ไหม เขาเอียงมือได้แค่ครึ่งเดียว
+          ในโปรแกรมที่ 2 ให้แก้เลข <code>-600, 600</code> เป็น
+          <code>-300, 300</code> แล้วทดลองใหม่ ว่าจุดวิ่งถึงขอบง่ายขึ้นไหม
+        </p>
+
+        <div class="lab-code">
+          <div class="lab-code-head">
+            <span>แก้บรรทัด map ให้เป็นแบบนี้</span>
+            <button class="lab-copy" type="button" data-copy="lab-code-3">
+              คัดลอกบรรทัด
+            </button>
+          </div>
+          <pre id="lab-code-3"><code>    let x = Math.map(ax, -300, 300, 0, 4)</code></pre>
+        </div>
+
+        <label class="lab-check">
+          <input type="checkbox" id="lab-check-3">
+          <span>ลองแล้ว เอียงเท่าเดิมแต่จุดวิ่งถึงขอบไวขึ้น</span>
+        </label>
+
+        <p class="mission-prompt">
+          สังเกตแล้วเขียนสั้น ๆ ว่า <strong>จุดเปลี่ยนไปอย่างไร</strong>
+          เมื่อแคบช่วงจาก −600…600 มาเป็น −300…300
+        </p>
+        <label class="sr-only" for="lab-note">สิ่งที่สังเกตได้</label>
+        <textarea class="mission-letter" id="lab-note" maxlength="300"
+                  placeholder="เช่น เอียงนิดเดียวจุดก็ไปถึงขอบแล้ว เพราะ..."></textarea>
+        <p class="mission-count" id="lab-note-count">0 / 300 ตัวอักษร</p>
+
+        <div class="mission-actions">
+          <button class="mission-go" id="lab-submit" type="button" disabled>
+            ส่งภาคปฏิบัติ
+          </button>
+        </div>
+      </article>
+
+      <div class="mission-done" id="lab-done" hidden>
+        <p>💻 ภาคปฏิบัติสำเร็จ</p>
+        <p id="lab-done-text"></p>
+      </div>
+
+      <p class="glossary-sync" id="lab-sync" role="status" aria-live="polite"></p>
+    </section>
+
     <section class="lesson-section" id="quiz"
              aria-labelledby="quiz-title">
       <div class="section-heading">
@@ -5145,6 +5511,7 @@
       function syncOptionalControls() {
         [1, 2, 3].forEach((stage) => refreshMissionCheckButton(stage));
         refreshMissionLetter();
+        refreshLabSubmit();
       }
 
       function applyLessonLocks() {
@@ -5464,6 +5831,7 @@
         void restoreQuizProgress();
         void restoreMiniGame();
         void restoreMission();
+        void restoreCodingLab();
       }
 
       function showAuthenticatedUser(user) {
@@ -5959,17 +6327,19 @@
           // กิจกรรมเสริมไม่บังคับ ครูจึงต้องเห็นว่าใครทำและทำได้แค่ไหน
           // เพื่อใช้ชวนคุยได้ ไม่ใช่เพื่อตัดสินว่าใครไม่ทำ ตาม Blueprint #198
           (result.optionalSteps || []).forEach((step) => {
+            const icon =
+              step.kind === "game" ? "🎮" : step.kind === "lab" ? "💻" : "🏆";
             const line = document.createElement("p");
             if (!step.unlocked) {
-              line.textContent = `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · ยังไม่เปิด`;
+              line.textContent = `${icon} ${step.title} · ยังไม่เปิด`;
             } else if (step.completed) {
               line.textContent = step.total
-                ? `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · ทำสำเร็จ ${step.bestScore}/${step.total}`
-                : `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · ทำสำเร็จแล้ว`;
+                ? `${icon} ${step.title} · ทำสำเร็จ ${step.bestScore}/${step.total}`
+                : `${icon} ${step.title} · ทำสำเร็จแล้ว`;
             } else if (step.bestScore > 0) {
-              line.textContent = `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · ลองแล้ว ได้ ${step.bestScore}/${step.total} ยังไม่ถึงเกณฑ์`;
+              line.textContent = `${icon} ${step.title} · ลองแล้ว ได้ ${step.bestScore}/${step.total} ยังไม่ถึงเกณฑ์`;
             } else {
-              line.textContent = `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · เปิดแล้วแต่ยังไม่ได้ทำ`;
+              line.textContent = `${icon} ${step.title} · เปิดแล้วแต่ยังไม่ได้ทำ`;
             }
             adminDetailAttempts.appendChild(line);
           });
@@ -6753,6 +7123,171 @@
       }
       if (missionSubmit) {
         missionSubmit.addEventListener("click", () => void submitMission());
+      }
+
+      // ── ภาคปฏิบัติ เขียนโค้ดจริงบน MakeCode ─────────────────────────
+      const LAB_NOTE_MIN = 15;
+      const labChecks = [1, 2, 3].map((i) =>
+        document.querySelector("#lab-check-" + i)
+      );
+      const labNote = document.querySelector("#lab-note");
+      const labNoteCount = document.querySelector("#lab-note-count");
+      const labSubmit = document.querySelector("#lab-submit");
+      const labSync = document.querySelector("#lab-sync");
+      const labDone = document.querySelector("#lab-done");
+      const labDoneText = document.querySelector("#lab-done-text");
+      const labCopyButtons = document.querySelectorAll(".lab-copy");
+
+      /** ปุ่มคัดลอกโค้ดไปวางใน MakeCode ได้เลย */
+      function copyLabCode(button) {
+        const target = document.querySelector("#" + button.dataset.copy);
+        if (!target) return;
+        const text = target.textContent;
+        const done = () => {
+          const original = button.textContent;
+          button.textContent = "คัดลอกแล้ว ✓";
+          button.classList.add("is-copied");
+          window.setTimeout(() => {
+            button.textContent = original;
+            button.classList.remove("is-copied");
+          }, 1600);
+        };
+        // navigator.clipboard ใช้ไม่ได้ในบางเบราว์เซอร์เก่า จึงมีทางสำรอง
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+        } else {
+          fallbackCopy(text, done);
+        }
+      }
+
+      function fallbackCopy(text, done) {
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "absolute";
+        area.style.left = "-9999px";
+        document.body.appendChild(area);
+        area.select();
+        try {
+          document.execCommand("copy");
+          done();
+        } catch (error) {
+          if (labSync) labSync.textContent = "คัดลอกอัตโนมัติไม่ได้ กดค้างที่โค้ดเพื่อคัดลอกเองได้";
+        }
+        document.body.removeChild(area);
+      }
+
+      /**
+       * ปุ่มส่งจะเปิดเมื่อฝึกครบสองโปรแกรม ทำภารกิจ และเขียนสิ่งที่สังเกตได้แล้ว
+       * เคารพการล็อกขั้นเหมือนปุ่มอื่น ถ้าถูกล็อกจากการนำทางจะไม่เปิดเอง
+       */
+      function refreshLabSubmit() {
+        if (!labSubmit) return;
+        const length = labNote ? labNote.value.trim().length : 0;
+        if (labNoteCount && labNote) {
+          labNoteCount.textContent = `${labNote.value.length} / 300 ตัวอักษร`;
+        }
+        if (labSubmit.dataset.lockedByNav === "yes") return;
+        const allChecked = labChecks.every((box) => box && box.checked);
+        labSubmit.disabled = !(allChecked && length >= LAB_NOTE_MIN);
+      }
+
+      async function saveCodingLab(patch) {
+        const result = await callServer("getProgress", sessionToken);
+        const state = result.state;
+        const previous = (state.worksheet && state.worksheet.codingLab) || {};
+        // กิจกรรมเสริม ห้ามแตะ currentSection หรือ completedSections
+        state.worksheet = {
+          ...(state.worksheet || {}),
+          codingLab: { ...previous, ...patch }
+        };
+        return callServer("saveProgress", sessionToken, state);
+      }
+
+      function collectLabState() {
+        return {
+          check1: Boolean(labChecks[0] && labChecks[0].checked),
+          check2: Boolean(labChecks[1] && labChecks[1].checked),
+          check3: Boolean(labChecks[2] && labChecks[2].checked),
+          note: labNote ? labNote.value.trim() : ""
+        };
+      }
+
+      async function submitCodingLab() {
+        if (!labNote) return;
+        const note = labNote.value.trim();
+        const allChecked = labChecks.every((box) => box && box.checked);
+        if (!allChecked) {
+          labSync.textContent = "ทำครบทั้งสามข้อก่อนนะ ฝึกสองโปรแกรมและลองภารกิจ";
+          return;
+        }
+        if (note.length < LAB_NOTE_MIN) {
+          labSync.textContent = `เขียนสิ่งที่สังเกตอีกนิดนะ อย่างน้อย ${LAB_NOTE_MIN} ตัวอักษร`;
+          labNote.focus();
+          return;
+        }
+
+        labSubmit.disabled = true;
+        labSync.textContent = "กำลังบันทึกภาคปฏิบัติ...";
+        try {
+          const saved = await saveCodingLab({ ...collectLabState(), completed: true });
+          renderRewards(saved.rewards);
+          labDoneText.textContent =
+            "หนูเขียนและทดลองโค้ดจริงบน micro:bit แล้ว เก่งมากที่ลงมือทำเอง";
+          labDone.hidden = false;
+          labDone.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          labSync.textContent = "ส่งภาคปฏิบัติเรียบร้อย แก้ไขแล้วส่งใหม่ได้";
+        } catch (error) {
+          labSync.textContent = `ส่งไม่สำเร็จ: ${error.message}`;
+        } finally {
+          refreshLabSubmit();
+        }
+      }
+
+      async function restoreCodingLab() {
+        if (!labSubmit) return;
+        labSync.textContent = "";
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const saved =
+            result.state && result.state.worksheet && result.state.worksheet.codingLab;
+          if (!saved) {
+            refreshLabSubmit();
+            return;
+          }
+          if (labChecks[0]) labChecks[0].checked = Boolean(saved.check1);
+          if (labChecks[1]) labChecks[1].checked = Boolean(saved.check2);
+          if (labChecks[2]) labChecks[2].checked = Boolean(saved.check3);
+          if (labNote && saved.note) labNote.value = String(saved.note);
+          if (saved.completed) {
+            labDoneText.textContent =
+              "หนูทำภาคปฏิบัติสำเร็จแล้ว กลับมาแก้โค้ดหรือข้อสังเกตอีกก็ได้";
+            labDone.hidden = false;
+          }
+          refreshLabSubmit();
+        } catch (error) {
+          refreshLabSubmit();
+        }
+      }
+
+      labCopyButtons.forEach((button) => {
+        button.addEventListener("click", () => copyLabCode(button));
+      });
+      labChecks.forEach((box) => {
+        if (!box) return;
+        box.addEventListener("change", () => {
+          refreshLabSubmit();
+          // บันทึกสถานะช่องติ๊กไว้ทันที กันหายเมื่อออกกลางคัน
+          saveCodingLab(collectLabState()).catch(() => {
+            /* บันทึกไม่ได้ก็ยังทำต่อได้ ครั้งหน้าจะลองใหม่ */
+          });
+        });
+      });
+      if (labNote) {
+        labNote.addEventListener("input", refreshLabSubmit);
+      }
+      if (labSubmit) {
+        labSubmit.addEventListener("click", () => void submitCodingLab());
       }
 
       const hookChoices = document.querySelectorAll("#hook-choices .choice-button");
