@@ -3224,6 +3224,33 @@
       line-height: 1.6;
     }
 
+    .backup-panel .backup-state {
+      margin: 0 0 0.9rem;
+      padding: 0.75rem 0.95rem;
+      border-radius: 0.7rem;
+      background: #f5f2fa;
+      color: var(--purple-900);
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .backup-panel .backup-state[data-tone="warn"] {
+      background: #fff4e5;
+      color: #92400e;
+    }
+
+    .backup-panel .backup-state[data-tone="ok"] {
+      background: #edf9f2;
+      color: var(--green-700);
+    }
+
+    .backup-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
     .admin-reset-note {
       margin: 0;
       color: var(--muted);
@@ -3585,6 +3612,23 @@
           <span>ต้องติดตาม</span>
           <strong id="admin-needs-help">0</strong>
         </article>
+      </section>
+
+      <section class="admin-panel backup-panel" aria-labelledby="admin-backup-title">
+        <h2 id="admin-backup-title">ความปลอดภัยของข้อมูล</h2>
+        <p class="backup-state" id="backup-state" role="status" aria-live="polite">
+          กำลังตรวจสถานะการสำรองข้อมูล...
+        </p>
+        <div class="backup-actions">
+          <button class="admin-action" id="backup-enable" type="button" hidden>
+            เปิดสำรองอัตโนมัติทุกคืน
+          </button>
+          <button class="admin-action" id="backup-now" type="button">
+            สำรองเดี๋ยวนี้
+          </button>
+          <a class="admin-link" id="backup-folder-link" href="#" hidden
+             target="_blank" rel="noopener noreferrer">เปิดโฟลเดอร์สำเนา</a>
+        </div>
       </section>
 
       <section class="admin-panel" aria-labelledby="admin-roster-title">
@@ -5907,6 +5951,100 @@
         document.querySelector("#admin-needs-help").textContent = needsHelp.length;
       }
 
+
+      // ── ความปลอดภัยของข้อมูล Blueprint #205 ─────────────────────────
+      const backupState = document.querySelector("#backup-state");
+      const backupEnableButton = document.querySelector("#backup-enable");
+      const backupNowButton = document.querySelector("#backup-now");
+      const backupFolderLink = document.querySelector("#backup-folder-link");
+
+      /**
+       * ครูต้องเห็นด้วยตาว่าข้อมูลถูกสำรองไว้ล่าสุดเมื่อไร
+       * ถ้ายังไม่เปิดสำรองอัตโนมัติต้องเตือนให้ชัด ไม่ใช่ปล่อยเงียบ
+       */
+      function renderBackupStatus(status) {
+        if (!backupState) return;
+        const info = status || {};
+
+        if (backupFolderLink) {
+          if (info.folderUrl) {
+            backupFolderLink.href = info.folderUrl;
+            backupFolderLink.hidden = false;
+          } else {
+            backupFolderLink.hidden = true;
+          }
+        }
+        if (backupEnableButton) {
+          backupEnableButton.hidden = Boolean(info.scheduled);
+        }
+
+        if (!info.scheduled) {
+          backupState.dataset.tone = "warn";
+          backupState.textContent =
+            "⚠️ ยังไม่ได้เปิดสำรองอัตโนมัติ — ถ้าไฟล์ข้อมูลเสียหายจะกู้กลับไม่ได้ " +
+            "กดปุ่มด้านล่างเพื่อเปิดครั้งเดียว แล้วระบบจะสำรองให้ทุกคืนเอง";
+          return;
+        }
+
+        if (!info.latestAt) {
+          backupState.dataset.tone = "warn";
+          backupState.textContent =
+            "เปิดสำรองอัตโนมัติแล้ว แต่ยังไม่มีสำเนาสักไฟล์ ลองกดสำรองเดี๋ยวนี้หนึ่งครั้ง";
+          return;
+        }
+
+        backupState.dataset.tone = "ok";
+        backupState.textContent =
+          `✅ สำรองอัตโนมัติทำงานอยู่ · สำเนาล่าสุด ${formatThaiDate(info.latestAt)} · ` +
+          `เก็บไว้ทั้งหมด ${info.count} ไฟล์`;
+      }
+
+      async function runBackupNow() {
+        if (!backupNowButton) return;
+        setBusy(backupNowButton, true, "กำลังสำรอง...", "สำรองเดี๋ยวนี้");
+        backupState.dataset.tone = "";
+        backupState.textContent = "กำลังสำเนาข้อมูลไปเก็บใน Google Drive...";
+        try {
+          const result = await callServer("backupNow", sessionToken);
+          renderBackupStatus(result.status);
+          const pruned = result.backup && result.backup.prunedCount;
+          adminStatus.textContent = pruned
+            ? `สำรองข้อมูลแล้ว และย้ายสำเนาเก่า ${pruned} ไฟล์ลงถังขยะ`
+            : "สำรองข้อมูลเรียบร้อยแล้ว";
+        } catch (error) {
+          backupState.dataset.tone = "warn";
+          backupState.textContent = `สำรองไม่สำเร็จ: ${error.message}`;
+        } finally {
+          setBusy(backupNowButton, false, "กำลังสำรอง...", "สำรองเดี๋ยวนี้");
+        }
+      }
+
+      async function enableBackupSchedule() {
+        if (!backupEnableButton) return;
+        setBusy(backupEnableButton, true, "กำลังเปิด...", "เปิดสำรองอัตโนมัติทุกคืน");
+        backupState.dataset.tone = "";
+        backupState.textContent = "กำลังตั้งการสำรองอัตโนมัติ...";
+        try {
+          const result = await callServer("enableDailyBackup", sessionToken);
+          renderBackupStatus(result.status);
+          adminStatus.textContent = result.message || "เปิดสำรองอัตโนมัติแล้ว";
+        } catch (error) {
+          backupState.dataset.tone = "warn";
+          backupState.textContent =
+            `เปิดสำรองอัตโนมัติไม่สำเร็จ: ${error.message} · ` +
+            "ถ้าเป็นเรื่องสิทธิ์ ให้เปิด Apps Script แล้วรัน setupDailyBackup() หนึ่งครั้ง";
+        } finally {
+          setBusy(backupEnableButton, false, "กำลังเปิด...", "เปิดสำรองอัตโนมัติทุกคืน");
+        }
+      }
+
+      if (backupNowButton) {
+        backupNowButton.addEventListener("click", () => void runBackupNow());
+      }
+      if (backupEnableButton) {
+        backupEnableButton.addEventListener("click", () => void enableBackupSchedule());
+      }
+
       /**
        * การรีเซ็ตสองแบบใช้ฟอร์มขอเหตุผลและเส้นทางกู้คืนชุดเดียวกัน
        * ต่างกันที่ขอบเขต — แบบแรกถอยเฉพาะแบบทดสอบ แบบที่สองกลับไปเริ่มทั้งบท
@@ -6492,6 +6630,7 @@
           renderAdminRows(getFilteredAdminStudents());
           setAdminLink("#admin-sheet-link", result.spreadsheetUrl);
           setAdminLink("#admin-drive-link", result.driveFolderUrl);
+          renderBackupStatus(result.backup);
           adminStatus.textContent =
             `อัปเดตข้อมูลล่าสุด ${formatThaiDate(result.generatedAt)}`;
         } catch (error) {
@@ -8656,6 +8795,45 @@
       let quizRoundLocked = false;
       let quizDraftTimer = null;
 
+      /**
+       * ตัวสุ่มที่ให้ผลเหมือนเดิมทุกครั้งเมื่อ seed เท่ากัน
+       * ใช้ Math.random ไม่ได้ เพราะรีเฟรชหน้าแล้วตัวเลือกจะสลับใหม่
+       * นักเรียนที่ตอบไปครึ่งทางจะสับสน และคำตอบที่เรียกคืนจะดูไม่ตรงที่เลือก
+       */
+      function seedFromText(text) {
+        let hash = 2166136261;
+        for (let i = 0; i < text.length; i += 1) {
+          hash ^= text.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return hash >>> 0;
+      }
+
+      /**
+       * สลับลำดับตัวเลือกให้ต่างกันในแต่ละคน ตาม Blueprint #51
+       * นักเรียนที่นั่งติดกันจึงลอกตำแหน่งคำตอบกันไม่ได้
+       * แต่คนเดิมเห็นลำดับเดิมเสมอ เพราะ seed มาจากชื่อผู้ใช้กับรหัสข้อ
+       *
+       * ปลอดภัยเพราะระบบเก็บและตรวจคำตอบด้วยรหัสตัวเลือก ไม่ใช่ตำแหน่ง
+       * การเรียงลำดับใหม่จึงไม่กระทบการตรวจ การเรียกคืน หรือการวิเคราะห์รายข้อ
+       */
+      function shuffledChoices(question) {
+        const owner = currentUser ? String(currentUser.username) : "";
+        // ยังไม่ล็อกอินก็ไม่ต้องสลับ เพราะจะถูกวาดใหม่หลังเข้าระบบอยู่แล้ว
+        if (!owner) return question.choices.slice();
+
+        let seed = seedFromText(owner + "|" + question.id);
+        const list = question.choices.slice();
+        for (let i = list.length - 1; i > 0; i -= 1) {
+          seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
+          const j = seed % (i + 1);
+          const swap = list[i];
+          list[i] = list[j];
+          list[j] = swap;
+        }
+        return list;
+      }
+
       function createQuizQuestion(question, index) {
         const fieldset = document.createElement("fieldset");
         fieldset.className = "quiz-question";
@@ -8667,7 +8845,7 @@
         const options = document.createElement("div");
         options.className = "quiz-options";
 
-        question.choices.forEach(([value, label]) => {
+        shuffledChoices(question).forEach(([value, label]) => {
           const button = document.createElement("button");
           button.className = "quiz-option";
           button.type = "button";
@@ -9007,6 +9185,9 @@
 
       async function restoreQuizProgress() {
         quizSync.textContent = "";
+        // ตอนโหลดหน้ายังไม่รู้ว่าเป็นใคร จึงยังสลับตัวเลือกไม่ได้
+        // ต้องวาดใหม่ตรงนี้ ก่อนเรียกคืนคำตอบเดิมกลับมาแสดง
+        renderQuizQuestions();
 
         try {
           const result = await callServer("getProgress", sessionToken);

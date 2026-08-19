@@ -49,6 +49,13 @@ const APP_CONFIG = Object.freeze({
   xpCodingLab: 30,
   spreadsheetProperty: 'TILT_LAB_SPREADSHEET_ID',
   driveFolderProperty: 'TILT_LAB_DRIVE_FOLDER_ID',
+  backupFolderProperty: 'TILT_LAB_BACKUP_FOLDER_ID',
+  timeZone: 'Asia/Bangkok',
+  backupFolderName: 'สำรองข้อมูลอัตโนมัติ',
+  // เก็บย้อนหลังกี่วัน — สำเนาที่เก่ากว่านี้จะถูกย้ายลงถังขยะ ไม่ได้ลบถาวร
+  backupKeepDays: 14,
+  // ชั่วโมงที่ให้สำรองอัตโนมัติ ตั้งเป็นตอนดึกเพื่อไม่ชนเวลาเรียน
+  backupHour: 1,
   initialPasswordProperty: 'INITIAL_STUDENT_PASSWORD'
 });
 
@@ -169,6 +176,202 @@ const SHEET_SCHEMAS = Object.freeze({
   ],
   Settings: ['key', 'value', 'updatedAt']
 });
+
+/* ══════════════════════════════════════════════════════════════════
+ * ระบบสำรองข้อมูล — Blueprint #205 Backup และ #206 Restore Test
+ *
+ * ข้อมูลนักเรียนทั้งหมดอยู่ในสเปรดชีตใบเดียว ถ้าไฟล์นั้นเสียหาย
+ * ถูกลบ หรือมีใครแก้ผิดช่อง จะไม่มีทางกู้กลับมาได้เลย
+ * ระบบนี้จึงสำเนาทั้งใบไปเก็บใน Drive ทุกคืนโดยอัตโนมัติ
+ *
+ * ทุกฟังก์ชันในกลุ่มนี้เป็นการ "อ่านแล้วสำเนา" ไม่แตะข้อมูลต้นทางเลย
+ * ══════════════════════════════════════════════════════════════════ */
+
+/** โฟลเดอร์เก็บสำเนา สร้างไว้ใต้โฟลเดอร์หลักของระบบ สร้างครั้งเดียวแล้วจำไว้ */
+function ensureBackupFolder_() {
+  const properties = PropertiesService.getScriptProperties();
+  const savedId = properties.getProperty(APP_CONFIG.backupFolderProperty);
+
+  if (savedId) {
+    try {
+      const existing = DriveApp.getFolderById(savedId);
+      // โฟลเดอร์ที่ถูกย้ายลงถังขยะใช้เก็บสำเนาต่อไม่ได้ ต้องสร้างใหม่
+      if (!existing.isTrashed()) return existing;
+    } catch (error) {
+      // หา id เดิมไม่เจอ แปลว่าถูกลบถาวรไปแล้ว จึงสร้างใหม่ด้านล่าง
+    }
+  }
+
+  const rootId = properties.getProperty(APP_CONFIG.driveFolderProperty);
+  if (!rootId) throw new Error('ระบบยังไม่ได้ตั้งค่า กรุณาเรียก setupSystem()');
+
+  const folder = DriveApp.getFolderById(rootId)
+    .createFolder(APP_CONFIG.backupFolderName);
+  properties.setProperty(APP_CONFIG.backupFolderProperty, folder.getId());
+  return folder;
+}
+
+/**
+ * สำเนาสเปรดชีตทั้งใบไปเก็บในโฟลเดอร์สำรอง
+ * actor บอกว่าใครสั่ง ถ้าเป็นตัวจับเวลาอัตโนมัติจะเป็น 'ระบบอัตโนมัติ'
+ */
+function createBackup_(actor) {
+  const properties = PropertiesService.getScriptProperties();
+  const spreadsheetId = properties.getProperty(APP_CONFIG.spreadsheetProperty);
+  if (!spreadsheetId) throw new Error('ระบบยังไม่ได้ตั้งค่า กรุณาเรียก setupSystem()');
+
+  const folder = ensureBackupFolder_();
+  const stamp = Utilities.formatDate(
+    new Date(), APP_CONFIG.timeZone, 'yyyy-MM-dd HH-mm'
+  );
+  const copy = DriveApp.getFileById(spreadsheetId)
+    .makeCopy('Tilt Lab สำรอง ' + stamp, folder);
+
+  const removed = pruneOldBackups_(folder);
+
+  appendAudit_(
+    actor,
+    'backup_create',
+    'success',
+    'สำเนา ' + copy.getName() +
+      ' | เก็บย้อนหลัง ' + APP_CONFIG.backupKeepDays + ' วัน' +
+      ' | ย้ายสำเนาเก่าลงถังขยะ ' + removed + ' ไฟล์'
+  );
+
+  return {
+    ok: true,
+    name: copy.getName(),
+    createdAt: new Date().toISOString(),
+    prunedCount: removed,
+    folderUrl: 'https://drive.google.com/drive/folders/' + folder.getId()
+  };
+}
+
+/**
+ * ย้ายสำเนาที่เก่ากว่ากำหนดลงถังขยะ — Safe Delete ตาม Blueprint #227
+ * ใช้ setTrashed ไม่ใช่การลบถาวร ครูจึงกู้จากถังขยะได้อีก 30 วัน
+ * และจะเหลือสำเนาล่าสุดไว้อย่างน้อยหนึ่งไฟล์เสมอ แม้จะเลยกำหนดแล้ว
+ */
+function pruneOldBackups_(folder) {
+  const cutoff = new Date().getTime() -
+    APP_CONFIG.backupKeepDays * 24 * 60 * 60 * 1000;
+
+  const files = [];
+  const iterator = folder.getFiles();
+  while (iterator.hasNext()) {
+    const file = iterator.next();
+    if (file.isTrashed()) continue;
+    files.push({ file: file, time: file.getDateCreated().getTime() });
+  }
+
+  // ใหม่สุดอยู่หน้า เพื่อกันไฟล์ล่าสุดไว้เสมอ
+  files.sort(function (a, b) { return b.time - a.time; });
+
+  let removed = 0;
+  files.forEach(function (entry, index) {
+    if (index === 0) return;
+    if (entry.time >= cutoff) return;
+    entry.file.setTrashed(true);
+    removed += 1;
+  });
+
+  return removed;
+}
+
+/** จุดเข้าของตัวจับเวลาอัตโนมัติ ห้ามเปลี่ยนชื่อ เพราะ Trigger อ้างชื่อนี้ */
+function runScheduledBackup() {
+  try {
+    createBackup_('ระบบอัตโนมัติ');
+  } catch (error) {
+    // ตัวจับเวลาล้มเหลวต้องเห็นใน Audit ไม่ใช่เงียบหายไป
+    appendAudit_('ระบบอัตโนมัติ', 'backup_create', 'failed', String(error && error.message));
+  }
+}
+
+/**
+ * ตั้งตัวจับเวลาให้สำรองทุกคืน เรียกครั้งเดียวพอ
+ * เรียกซ้ำได้ปลอดภัย เพราะลบตัวเดิมก่อนสร้างใหม่เสมอ จึงไม่ซ้อนกัน
+ */
+function setupDailyBackup() {
+  ScriptApp.getProjectTriggers().forEach(function (trigger) {
+    if (trigger.getHandlerFunction() === 'runScheduledBackup') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+
+  ScriptApp.newTrigger('runScheduledBackup')
+    .timeBased()
+    .atHour(APP_CONFIG.backupHour)
+    .everyDays(1)
+    .create();
+
+  const result = createBackup_('ตั้งค่าระบบสำรอง');
+  return {
+    ok: true,
+    message: 'ตั้งการสำรองอัตโนมัติทุกวันเวลาประมาณ ' +
+      APP_CONFIG.backupHour + ' นาฬิกาแล้ว และสำรองให้ทันทีหนึ่งครั้ง',
+    backup: result
+  };
+}
+
+/** อ่านสถานะระบบสำรองสำหรับแสดงในหน้าครู */
+function backupStatus_() {
+  const properties = PropertiesService.getScriptProperties();
+  const folderId = properties.getProperty(APP_CONFIG.backupFolderProperty);
+
+  const scheduled = ScriptApp.getProjectTriggers().some(function (trigger) {
+    return trigger.getHandlerFunction() === 'runScheduledBackup';
+  });
+
+  if (!folderId) {
+    return { scheduled: scheduled, count: 0, latestAt: null, folderUrl: null };
+  }
+
+  let folder;
+  try {
+    folder = DriveApp.getFolderById(folderId);
+  } catch (error) {
+    return { scheduled: scheduled, count: 0, latestAt: null, folderUrl: null };
+  }
+
+  let count = 0;
+  let latest = null;
+  const iterator = folder.getFiles();
+  while (iterator.hasNext()) {
+    const file = iterator.next();
+    if (file.isTrashed()) continue;
+    count += 1;
+    const created = file.getDateCreated();
+    if (!latest || created.getTime() > latest.getTime()) latest = created;
+  }
+
+  return {
+    scheduled: scheduled,
+    count: count,
+    latestAt: latest ? latest.toISOString() : null,
+    folderUrl: 'https://drive.google.com/drive/folders/' + folderId
+  };
+}
+
+/** ครูสั่งสำรองเดี๋ยวนี้จากหน้าเว็บ */
+function backupNow(token) {
+  const session = requireRole_(token, 'admin');
+  const result = createBackup_(session.username);
+  return { ok: true, backup: result, status: backupStatus_() };
+}
+
+/** ครูเปิดการสำรองอัตโนมัติจากหน้าเว็บ โดยไม่ต้องเข้า Apps Script */
+function enableDailyBackup(token) {
+  const session = requireRole_(token, 'admin');
+  const result = setupDailyBackup();
+  appendAudit_(
+    session.username,
+    'backup_schedule',
+    'success',
+    'เปิดการสำรองอัตโนมัติทุกวันเวลาประมาณ ' + APP_CONFIG.backupHour + ' นาฬิกา'
+  );
+  return { ok: true, message: result.message, status: backupStatus_() };
+}
 
 /** Serves the student and administrator web app. */
 function doGet() {
@@ -577,6 +780,8 @@ function getAdminDashboard(token) {
     generatedAt: new Date().toISOString(),
     spreadsheetUrl: setup.spreadsheetUrl,
     driveFolderUrl: setup.driveFolderUrl,
+    // ครูต้องเห็นว่าข้อมูลถูกสำรองไว้ล่าสุดเมื่อไร ไม่ใช่เดาเอง
+    backup: backupStatus_(),
     // ฝั่งหน้าเว็บเคยเขียนเลข 8 ไว้ตายตัว พอเพิ่มขั้นสะท้อนผลเป็น 9 เลขจึงเพี้ยน
     totalSections: LESSON_SECTION_COUNT,
     students: students
