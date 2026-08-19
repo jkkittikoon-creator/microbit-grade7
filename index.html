@@ -1437,6 +1437,7 @@
       line-height: 1.7;
     }
 
+    .hook-sync,
     .predict-sync {
       min-height: 1.5rem;
       margin-bottom: 0;
@@ -3480,6 +3481,7 @@
           </button>
         </div>
         <p class="hook-feedback" id="hook-feedback" role="status" aria-live="polite"></p>
+        <p class="hook-sync" id="hook-sync" role="status" aria-live="polite"></p>
       </div>
 
       <div class="mini-challenge">
@@ -5023,6 +5025,61 @@
         nextStepBar.hidden = false;
       }
 
+      /**
+       * หลักฐานว่านักเรียนทำแต่ละขั้นเสร็จจริง อ่านจากคำตอบที่บันทึกไว้แล้ว
+       * ใช้ตรวจสอบย้อนหลังได้ว่าทำไมขั้นนั้นถูกนับว่าเสร็จ ตาม Blueprint #225
+       */
+      function evidenceOfCompletion(state) {
+        const sheet = (state && state.worksheet) || {};
+        const answers = (state && state.hookAnswers) || {};
+        const quiz = (state && state.quiz) || {};
+        const done = [];
+
+        if (answers.sensorGuess) done.push(1);
+        if (answers.predict800) done.push(2);
+        if (sheet.unpluggedMap !== undefined && sheet.unpluggedMap !== null) done.push(3);
+        if (sheet.mgCheck && sheet.mgCheck.completed) done.push(4);
+        if (sheet.tiltSimulator && sheet.tiltSimulator.completed) done.push(5);
+        if (sheet.debugCase && sheet.debugCase.completed) done.push(6);
+        if (sheet.glossary && sheet.glossary.completed) done.push(7);
+
+        const attempts = Number(quiz.attempts) || 0;
+        const best = Number(quiz.bestScore) || 0;
+        if (attempts > 0 && (best >= QUIZ_PASSING_SCORE || attempts >= QUIZ_MAX_ATTEMPTS)) {
+          done.push(8);
+        }
+        if (state && state.reflection && state.reflection.summary) done.push(9);
+
+        return done;
+      }
+
+      /**
+       * ก่อนหน้านี้แต่ละขั้นบันทึกว่า "ขั้นก่อนหน้าเสร็จแล้ว" แต่ลืมนับขั้นตัวเอง
+       * นักเรียนที่ทำผ่านไปแล้วจึงค้าง และปุ่มของขั้นนั้นถูกปิดไปแล้ว
+       * กดซ้ำเพื่อบันทึกใหม่เองไม่ได้ ต้องเติมให้จากหลักฐานที่บันทึกไว้แล้ว
+       * ไม่ได้ให้ขั้นฟรี — เติมเฉพาะขั้นที่มีคำตอบของนักเรียนเป็นหลักฐานจริง
+       * และยังผ่านกฎลำดับต่อเนื่องทั้งฝั่งนี้และฝั่งเซิร์ฟเวอร์เหมือนเดิม
+       */
+      async function healProgressGaps(state) {
+        if (!state) return state;
+
+        const stored = contiguousCompleted(state.completedSections);
+        const healed = contiguousCompleted([
+          ...(state.completedSections || []),
+          ...evidenceOfCompletion(state)
+        ]);
+        if (healed.length <= stored.length) return state;
+
+        const patched = { ...state, completedSections: healed };
+        try {
+          await callServer("saveProgress", sessionToken, patched);
+        } catch (error) {
+          // ซ่อมไม่สำเร็จก็ยังใช้ค่าที่ซ่อมแล้วในหน้าเว็บ
+          // ครั้งหน้าที่เปิดบทเรียนจะลองซ่อมใหม่เอง
+        }
+        return patched;
+      }
+
       /** ดึงความก้าวหน้าล่าสุดแล้วปรับแถบนำทางและการล็อกให้ตรงกัน */
       async function refreshLessonNavigation() {
         await loadLessonSections();
@@ -5030,8 +5087,9 @@
 
         try {
           const result = await callServer("getProgress", sessionToken);
+          const state = await healProgressGaps(result.state);
           const completed = contiguousCompleted(
-            result.state ? result.state.completedSections : []
+            state ? state.completedSections : []
           );
           lessonNavState = {
             completed: completed,
@@ -5141,6 +5199,7 @@
         document.querySelector("#lesson-title").focus({ preventScroll: true });
         void refreshLessonNavigation();
         void restoreReflection();
+        void restoreHookAnswer();
         void restorePredictAnswer();
         void restoreUnpluggedActivity();
         void restoreMgCheck();
@@ -6400,11 +6459,65 @@
         unsure: "ดีมาก การยอมรับว่ายังไม่แน่ใจคือจุดเริ่มต้นของการทดลอง มาหาคำตอบจากหลักฐานกัน"
       };
 
+      const hookSync = document.querySelector("#hook-sync");
+
+      function renderHookAnswer(choice) {
+        if (!feedbackByChoice[choice]) return;
+        hookChoices.forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.choice === choice));
+        });
+        hookFeedback.textContent = feedbackByChoice[choice];
+      }
+
+      /**
+       * Section 1 เป็นขั้นบังคับขั้นแรก ถ้าไม่บันทึกว่าทำแล้ว
+       * นักเรียนใหม่จะเปิด Section 2 ไม่ได้เลยตลอดไป
+       * ข้อนี้ไม่คิดคะแนน เลือกคำตอบใดก็ถือว่าผ่านขั้นนี้
+       */
+      async function saveHookAnswer(choice) {
+        hookSync.textContent = "กำลังบันทึกคำตอบ...";
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const state = result.state;
+          state.completedSections = Array.from(
+            new Set([...(state.completedSections || []), 1])
+          );
+          state.hookAnswers = {
+            ...(state.hookAnswers || {}),
+            sensorGuess: choice
+          };
+          await callServer("saveProgress", sessionToken, state);
+          // ไม่ต้องเรียก refreshLessonNavigation เอง
+          // เพราะ rememberServerResult รีเฟรชให้ทุกครั้งที่บันทึกสำเร็จอยู่แล้ว
+          hookSync.textContent = "บันทึกคำตอบแล้ว เปิด Section 2 ให้เรียนต่อได้เลย";
+        } catch (error) {
+          hookSync.textContent =
+            "คำตอบแสดงผลแล้ว แต่ระบบยังบันทึกให้ไม่ได้ ลองกดตอบอีกครั้ง " +
+            "ถ้ายังไม่ได้ให้บอกครูนะ";
+        }
+      }
+
+      async function restoreHookAnswer() {
+        hookSync.textContent = "";
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const saved =
+            result.state &&
+            result.state.hookAnswers &&
+            result.state.hookAnswers.sensorGuess;
+          if (saved) {
+            renderHookAnswer(saved);
+            hookSync.textContent = "เรียกคืนคำตอบที่บันทึกไว้แล้ว เปลี่ยนใจเลือกใหม่ได้";
+          }
+        } catch (error) {
+          hookSync.textContent = "ยังเรียกคืนคำตอบไม่ได้ แต่เรียนต่อได้ตามปกติ";
+        }
+      }
+
       hookChoices.forEach((button) => {
         button.addEventListener("click", () => {
-          hookChoices.forEach((choice) => choice.setAttribute("aria-pressed", "false"));
-          button.setAttribute("aria-pressed", "true");
-          hookFeedback.textContent = feedbackByChoice[button.dataset.choice];
+          renderHookAnswer(button.dataset.choice);
+          void saveHookAnswer(button.dataset.choice);
         });
       });
 
@@ -6455,7 +6568,10 @@
           const state = result.state;
           state.currentSection = Math.max(Number(state.currentSection) || 1, 2);
           state.completedSections = Array.from(
-            new Set([...(state.completedSections || []), 1])
+            new Set([
+              ...(state.completedSections || []),
+              1, 2
+            ])
           );
           state.hookAnswers = {
             ...(state.hookAnswers || {}),
@@ -6553,7 +6669,10 @@
 
           state.currentSection = 3;
           state.completedSections = Array.from(
-            new Set([...(state.completedSections || []), 1, 2])
+            new Set([
+              ...(state.completedSections || []),
+              1, 2, 3
+            ])
           );
           state.worksheet = {
             ...(state.worksheet || {}),
@@ -6654,7 +6773,10 @@
           if (completed) {
             state.currentSection = 4;
             state.completedSections = Array.from(
-              new Set([...(state.completedSections || []), 1, 2, 3])
+              new Set([
+                ...(state.completedSections || []),
+                1, 2, 3, 4
+              ])
             );
           }
 
@@ -6878,7 +7000,10 @@
           if (completed) {
             state.currentSection = 5;
             state.completedSections = Array.from(
-              new Set([...(state.completedSections || []), 1, 2, 3, 4])
+              new Set([
+                ...(state.completedSections || []),
+                1, 2, 3, 4, 5
+              ])
             );
           }
 
@@ -7077,7 +7202,7 @@
             state.completedSections = Array.from(
               new Set([
                 ...(state.completedSections || []),
-                1, 2, 3, 4, 5
+                1, 2, 3, 4, 5, 6
               ])
             );
           }
@@ -7436,7 +7561,7 @@
             state.completedSections = Array.from(
               new Set([
                 ...(state.completedSections || []),
-                1, 2, 3, 4, 5, 6
+                1, 2, 3, 4, 5, 6, 7
               ])
             );
           }
