@@ -569,6 +569,15 @@ function getPublicConfig() {
         required: section.required
       };
     }),
+    // ยอด XP และจำนวนเหรียญสูงสุด คำนวณจากค่าที่ตั้งไว้จริง
+    // หน้าแรกจะได้ไม่ต้องเขียนตัวเลขตายตัว แล้วเพี้ยนเมื่อเพิ่มกิจกรรม
+    maxXp: LESSON_SECTION_COUNT * APP_CONFIG.xpPerSection +
+      APP_CONFIG.xpQuizPass + APP_CONFIG.xpPerfectQuiz +
+      LESSON_OPTIONAL_STEPS.reduce(function (sum, step) {
+        return sum + (Number(step.xpReward) || 0);
+      }, 0),
+    // 6 เหรียญจากเส้นทางหลัก บวกเหรียญประจำกิจกรรมเสริมแต่ละอย่าง
+    maxBadges: 6 + LESSON_OPTIONAL_STEPS.length,
     optionalSteps: LESSON_OPTIONAL_STEPS.map(function (step) {
       return {
         id: step.id,

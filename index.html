@@ -140,6 +140,45 @@
       font-size: clamp(1rem, 2vw, 1.2rem);
     }
 
+    .lesson-preview {
+      margin-top: 1.6rem;
+      padding: 1rem 1.1rem 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 0.9rem;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .lesson-preview-title {
+      margin: 0 0 0.6rem;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 800;
+      opacity: 0.9;
+    }
+
+    .lesson-preview-list {
+      display: grid;
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .lesson-preview-list li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      color: #fff;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .lesson-preview-list li span {
+      flex: none;
+      width: 1.4rem;
+      text-align: center;
+    }
+
     .feature-chips {
       display: flex;
       flex-wrap: wrap;
@@ -3739,13 +3778,18 @@
           <h1>Tilt Lab</h1>
           <p class="auth-cover-copy">
             ระบบตรวจจับความเอียงกับ micro:bit — เรียนจากการทาย ทดลอง
-            และแก้บั๊กด้วยตัวเอง
+            แก้บั๊ก และเขียนโค้ดจริงด้วยตัวเอง
           </p>
           <ul class="feature-chips" aria-label="จุดเด่นของบทเรียน">
             <li>เริ่มจากศูนย์</li>
-            <li>กิจกรรม Interactive</li>
             <li>2 คาบ × 60 นาที</li>
+            <li>เขียนโค้ดจริงบน MakeCode</li>
           </ul>
+
+          <div class="lesson-preview" id="lesson-preview" hidden>
+            <p class="lesson-preview-title">ในบทเรียนนี้มีอะไรบ้าง</p>
+            <ul class="lesson-preview-list" id="lesson-preview-list"></ul>
+          </div>
         </div>
         <p class="course-stamp">ภาคเรียนที่ 1 ปีการศึกษา 2569 · ระบบบันทึกความก้าวหน้ารายบุคคล</p>
       </div>
@@ -5729,6 +5773,60 @@
       }
 
       let lessonSections = [];
+
+      /**
+       * สรุปว่าในบทเรียนมีอะไรบ้าง แสดงที่หน้าแรกตาม Blueprint #7
+       * ตัวเลขทุกตัวมาจาก getPublicConfig ไม่ได้เขียนตายตัวไว้ใน HTML
+       * เพิ่มหรือลดกิจกรรมเมื่อไร หน้าแรกจะเปลี่ยนตามเอง ไม่มีทางเพี้ยน
+       */
+      function renderLessonPreview(config) {
+        const box = document.querySelector("#lesson-preview");
+        const list = document.querySelector("#lesson-preview-list");
+        if (!box || !list || !config) return;
+
+        const sections = Array.isArray(config.sections) ? config.sections : [];
+        const optional = Array.isArray(config.optionalSteps) ? config.optionalSteps : [];
+        if (!sections.length) return;
+
+        const games = optional.filter((step) => step.kind === "game").length;
+        const missions = optional.filter((step) => step.kind === "mission").length;
+        const labs = optional.length - games - missions;
+
+        const rows = [
+          ["📚", `บทเรียน ${sections.length} ส่วน เรียงตามลำดับ ทำทีละขั้น`]
+        ];
+        if (games) rows.push(["🎮", `มินิเกม ${games} เกม`]);
+        if (missions) rows.push(["🏆", `ภารกิจ ${missions} ภารกิจ`]);
+        if (labs > 0) rows.push(["💻", `ภาคปฏิบัติเขียนโค้ดจริง ${labs} ชุด`]);
+
+        if (Number(config.quizQuestionCount) > 0) {
+          const pass = Math.ceil(
+            config.quizQuestionCount * (Number(config.quizPassPercent) || 0) / 100
+          );
+          rows.push([
+            "📝",
+            `แบบทดสอบ ${config.quizQuestionCount} ข้อ ผ่านที่ ${pass} ข้อ ` +
+            `ทำได้ ${config.quizMaxAttempts} ครั้ง`
+          ]);
+        }
+        if (Number(config.maxXp) > 0) {
+          rows.push([
+            "⭐",
+            `สะสมได้ถึง ${config.maxXp} XP และ ${config.maxBadges} เหรียญ`
+          ]);
+        }
+
+        list.replaceChildren();
+        rows.forEach(([icon, text]) => {
+          const item = document.createElement("li");
+          const mark = document.createElement("span");
+          mark.setAttribute("aria-hidden", "true");
+          mark.textContent = icon;
+          item.append(mark, document.createTextNode(text));
+          list.appendChild(item);
+        });
+        box.hidden = false;
+      }
       let lessonOptionalSteps = [];
       let lessonNavState = { completed: [], unlocked: 1 };
       const nextStepBar = document.querySelector("#next-step-bar");
@@ -9945,6 +10043,13 @@
       renderQuizQuestions();
       updateQuizSubmitButton();
       renderQuizSummary();
+
+      // หน้าแรกต้องบอกได้ว่าในบทมีอะไรบ้างตั้งแต่ก่อนล็อกอิน
+      // getPublicConfig ไม่ต้องใช้ token จึงเรียกได้เลยตอนเปิดหน้า
+      // ถ้าเรียกไม่ได้ กล่องสรุปจะซ่อนไว้เฉย ๆ หน้า login ยังใช้งานได้ปกติ
+      void callServer("getPublicConfig")
+        .then((config) => renderLessonPreview(config))
+        .catch(() => {});
 
       window.addEventListener("online", () => {
         void flushOutbox();
