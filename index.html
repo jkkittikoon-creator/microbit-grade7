@@ -1209,6 +1209,42 @@
       display: none;
     }
 
+    /* เมื่อย่อ แถบเหลือแค่แถบบาง ๆ ให้เนื้อหาด้านล่างไม่ถูกบัง
+       ตาม Blueprint #169 ลด Cognitive Load และ #92 ให้ยุบได้ */
+    .next-step-bar.is-collapsed {
+      padding-top: 0.3rem;
+      padding-bottom: 0.3rem;
+    }
+
+    .next-step-bar.is-collapsed .next-step-text,
+    .next-step-bar.is-collapsed .next-step-go {
+      display: none;
+    }
+
+    .next-step-toggle {
+      min-height: 34px;
+      margin-left: auto;
+      padding: 0.25rem 0.7rem;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 0.7rem;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .next-step-toggle:hover,
+    .next-step-toggle:focus-visible {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .next-step-bar.is-collapsed .next-step-toggle {
+      margin-left: 0;
+    }
+
     .next-step-text {
       flex: 1 1 16rem;
       margin: 0;
@@ -1544,9 +1580,76 @@
       display: none;
     }
 
-    .predict-grid {
+    .vocab-primer {
+      margin: 0 0 1.5rem;
+      padding: 1.1rem 1.2rem 1.3rem;
+      border: 2px solid var(--border);
+      border-radius: 1rem;
+      background: #fbf9fd;
+    }
+
+    .vocab-primer h3 {
+      margin: 0 0 0.3rem;
+      color: var(--purple-900);
+      font-size: 1.15rem;
+    }
+
+    .vocab-primer-lead {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .vocab-primer-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(17rem, 0.85fr);
+      grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+      gap: 0.6rem;
+    }
+
+    .vocab-chip {
+      border: 2px solid var(--border);
+      border-radius: 0.8rem;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .vocab-chip summary {
+      padding: 0.7rem 0.9rem;
+      color: var(--purple-900);
+      cursor: pointer;
+      font-weight: 800;
+      list-style: none;
+    }
+
+    .vocab-chip summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .vocab-chip summary::after {
+      content: " ▼";
+      float: right;
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+
+    .vocab-chip[open] summary::after {
+      content: " ▲";
+    }
+
+    .vocab-chip[open] summary {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .vocab-chip p {
+      margin: 0;
+      padding: 0.7rem 0.9rem 0.9rem;
+      color: #4b4453;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .predict-grid {
       gap: 1.25rem;
       align-items: start;
     }
@@ -3730,6 +3833,9 @@
   <div class="next-step-bar" id="next-step-bar" role="status" aria-live="polite" hidden>
     <p class="next-step-text" id="next-step-text"></p>
     <button class="next-step-go" id="next-step-go" type="button">ไปยังขั้นถัดไป</button>
+    <button class="next-step-toggle" id="next-step-toggle" type="button"
+            aria-expanded="true" aria-controls="next-step-bar"
+            title="ย่อแถบนี้ลง">ย่อ ▲</button>
   </div>
 
   <main id="main-content">
@@ -3827,33 +3933,82 @@
     <section class="lesson-section" id="predict" aria-labelledby="predict-title">
       <div class="section-heading">
         <p class="section-kicker">Section 2 · Predict–Observe</p>
-        <h2 id="predict-title">ทายก่อนทดลอง: ถ้าค่าเกินช่วงจะเกิดอะไรขึ้น?</h2>
+        <h2 id="predict-title">ทายก่อนทดลอง: ถ้าสั่งไฟไปนอกจอ จะเกิดอะไรขึ้น?</h2>
         <p class="section-intro">
-          เลือกจากความคิดแรกได้เลย กิจกรรมนี้ไม่คิดคะแนน
-          แต่ระบบจะเก็บคำตอบแรกไว้เพื่อใช้เปรียบเทียบหลังเรียน
+          ยังไม่ต้องรู้คำตอบที่ถูก เดาจากความรู้สึกแรกได้เลย
+          ข้อนี้ไม่คิดคะแนน ระบบเก็บคำตอบไว้เทียบกับตอนท้ายบท
+          ว่าเราเข้าใจเพิ่มขึ้นแค่ไหน
         </p>
+      </div>
+
+      <div class="vocab-primer">
+        <h3>📖 คำที่จะได้ยินบ่อยวันนี้</h3>
+        <p class="vocab-primer-lead">
+          ยังไม่ต้องจำ กดเปิดดูความหมายง่าย ๆ ไว้ก่อน
+          แล้วเราจะค่อย ๆ เรียนของจริงในแต่ละส่วน
+        </p>
+        <div class="vocab-primer-grid">
+          <details class="vocab-chip">
+            <summary>💡 จอ micro:bit</summary>
+            <p>
+              หน้าจอเป็นหลอดไฟเล็ก ๆ เรียงเป็นตาราง
+              นับตำแหน่งช่องได้ตั้งแต่ช่อง 0 ถึงช่อง 4 เท่านั้น
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>📱 accelerometer</summary>
+            <p>
+              อ่านว่า แอ็ก-เซล-เล-โร-มิ-เตอร์
+              คือเซนเซอร์ในเครื่องที่รู้ว่าเรากำลังเอียงไปทางไหน
+              เหมือนที่ทำให้จอมือถือหมุนตามการถือของเรา
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>📏 mg (มิลลิจี)</summary>
+            <p>
+              หน่วยบอกว่าเอียงมากแค่ไหน
+              ตัวเลขยิ่งมากแปลว่ายิ่งเอียง
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>🔢 map (แม็พ)</summary>
+            <p>
+              การแปลงตัวเลขจากช่วงหนึ่งไปอีกช่วงหนึ่ง
+              เหมือนแปลงคะแนนเต็ม 100 ให้กลายเป็นเกรดเต็ม 4
+            </p>
+          </details>
+          <details class="vocab-chip">
+            <summary>🚧 constrain (คอนสเทรน)</summary>
+            <p>
+              ตัวช่วยจำกัดไม่ให้ตัวเลขเกินขอบที่กำหนด
+              เหมือนกันไม่ให้ไฟหลุดออกนอกจอ
+            </p>
+          </details>
+        </div>
       </div>
 
       <div class="predict-grid">
         <article class="predict-card">
           <h3>สถานการณ์ท้าทาย</h3>
           <p class="predict-condition">
-            ถ้าเอียงบอร์ดจนวัดได้ 800 mg แต่สูตร map กำหนดช่วงไว้
-            −600 ถึง 600 และยังไม่ได้ใช้ constrain คุณคิดว่าจอ LED จะเป็นอย่างไร?
+            จอ micro:bit มีช่องไฟเรียงเป็นแถว
+            นับตำแหน่งได้ตั้งแต่ช่อง 0 ถึงช่อง 4 เท่านั้น
+            ถ้าเราสั่งให้ไฟไปอยู่ “ช่องที่ 6” ซึ่งเลยขอบจอออกไป
+            คุณคิดว่าจะเกิดอะไรขึ้น?
           </p>
 
           <div class="choice-list" id="predict-choices">
             <button class="choice-button" type="button"
                     data-predict="edge" aria-pressed="false">
-              A — แสดงจุดไฟที่ขอบจอ
+              A — ไฟไปโผล่ที่ช่องขอบสุด (ช่อง 4)
             </button>
             <button class="choice-button" type="button"
                     data-predict="missing" aria-pressed="false">
-              B — จอค้างหรือไฟหาย
+              B — ไฟหายไป เพราะไม่มีช่องที่ 6 อยู่จริง
             </button>
             <button class="choice-button" type="button"
                     data-predict="blink" aria-pressed="false">
-              C — จุดไฟกระพริบ
+              C — ไฟกระพริบไปมา
             </button>
           </div>
 
@@ -3864,19 +4019,24 @@
         </article>
 
         <aside class="predict-observation" id="predict-observation" hidden>
-          <h3>สังเกตจากการคำนวณ</h3>
+          <h3>เกร็ดเบื้องหลัง — ไว้ค่อยเข้าใจเต็ม ๆ ทีหลัง</h3>
+          <p>
+            ความเอียงมาก ๆ (เช่นค่า 800) พอเข้าสูตรที่เราจะเรียนกันจริง
+            จะกลายเป็น “ช่องที่ประมาณ 4.67” ซึ่งเลยช่อง 4 ไป
+            ไฟจึงหลุดออกนอกจอ
+          </p>
           <p class="formula-box">
             map(800, −600, 600, 0, 4)<br>
             = ((800 − (−600)) × 4) ÷ 1200<br>
             ≈ 4.67
           </p>
           <p>
-            พิกัดประมาณ 4.67 เกินขอบจอ LED ที่มีพิกัดเพียง 0–4
-            จึงอาจทำให้จอค้างหรือไฟหายตามกรณีที่ทดลองจริง
+            ยังไม่ต้องเข้าใจสูตรตอนนี้นะ
+            เราจะค่อย ๆ เรียนทีละขั้นในส่วนต่อ ๆ ไป
           </p>
           <p class="bridge">
-            map() ไม่จำกัดขอบเขตให้อัตโนมัติ จึงต้องใช้ constrain()
-            ครอบค่าไว้อีกชั้นหนึ่ง
+            สรุปสั้น ๆ คือต้องมีตัวช่วยจำกัดไม่ให้ไฟหลุดขอบจอ
+            ตัวช่วยนั้นเรียกว่า constrain() เดี๋ยวเราจะได้รู้จักมันกัน
           </p>
         </aside>
       </div>
@@ -5320,6 +5480,48 @@
       let lessonOptionalSteps = [];
       let lessonNavState = { completed: [], unlocked: 1 };
       const nextStepBar = document.querySelector("#next-step-bar");
+      const nextStepToggle = document.querySelector("#next-step-toggle");
+
+      /**
+       * แถบขั้นถัดไปติดบนสุดของจอ บนมือถือกินพื้นที่มากจนบังเนื้อหา
+       * จึงให้ย่อลงได้ และจำไว้ในเครื่องว่านักเรียนเลือกย่อหรือกาง
+       * ครั้งต่อไปจะเปิดมาแบบเดิม ไม่ต้องกดซ้ำทุกครั้ง
+       */
+      const NEXT_BAR_COLLAPSE_KEY = "tiltLabNextBarCollapsed";
+
+      function applyNextBarCollapse(collapsed) {
+        if (!nextStepBar || !nextStepToggle) return;
+        nextStepBar.classList.toggle("is-collapsed", collapsed);
+        nextStepToggle.setAttribute("aria-expanded", String(!collapsed));
+        nextStepToggle.textContent = collapsed ? "แสดงขั้นถัดไป ▼" : "ย่อ ▲";
+        nextStepToggle.title = collapsed
+          ? "แสดงแถบขั้นถัดไป"
+          : "ย่อแถบนี้ลงเพื่อไม่ให้บังเนื้อหา";
+      }
+
+      if (nextStepToggle) {
+        // อ่านค่าที่จำไว้ตอนเริ่ม เผื่อครั้งก่อนเลือกย่อไว้
+        let collapsedPref = false;
+        try {
+          collapsedPref =
+            window.localStorage.getItem(NEXT_BAR_COLLAPSE_KEY) === "1";
+        } catch (error) {
+          collapsedPref = false;
+        }
+        applyNextBarCollapse(collapsedPref);
+
+        nextStepToggle.addEventListener("click", () => {
+          const collapsed = !nextStepBar.classList.contains("is-collapsed");
+          applyNextBarCollapse(collapsed);
+          try {
+            window.localStorage.setItem(
+              NEXT_BAR_COLLAPSE_KEY, collapsed ? "1" : "0"
+            );
+          } catch (error) {
+            // จำไม่ได้ก็ไม่เป็นไร แค่ครั้งหน้าเปิดมากางตามเดิม
+          }
+        });
+      }
       const nextStepText = document.querySelector("#next-step-text");
       const nextStepGo = document.querySelector("#next-step-go");
 
@@ -7537,9 +7739,9 @@
         document.querySelector("#predict-sync");
 
       const predictMessages = {
-        edge: "ใกล้เคียง! จุดจะอยู่ที่ขอบได้เมื่อใช้ constrain() จำกัดค่าให้เหลือ 4 ก่อนนำไป plot",
-        missing: "ถูกต้อง! เมื่อยังไม่มี constrain() ค่า 800 mg ถูก map เป็นประมาณ 4.67 ซึ่งเกินพิกัด 0–4",
-        blink: "ยังไม่ใช่ครับ การกระพริบไม่ได้เกิดจากสูตรนี้ ปัญหาคือพิกัดที่คำนวณได้เกินขอบจอ"
+        edge: "ใกล้เคียง! ไฟจะไปหยุดที่ช่องขอบสุดได้ ก็ต่อเมื่อมีตัวช่วยดึงค่ากลับเข้าจอ ซึ่งเราจะได้เรียนกันในส่วนถัด ๆ ไป",
+        missing: "ถูกต้อง! จอมีแค่ช่อง 0 ถึง 4 พอสั่งไปช่องที่ 6 ที่ไม่มีอยู่จริง ไฟจึงหายหรือจอค้าง เดี๋ยวเราจะเรียนวิธีแก้กัน",
+        blink: "ยังไม่ใช่ครับ การกระพริบไม่เกี่ยวกับเรื่องนี้ ปัญหาคือช่องที่สั่งไปนั้นเลยขอบจอที่มีแค่ 0 ถึง 4"
       };
 
       function renderPredictAnswer(choice) {
