@@ -156,6 +156,53 @@ const STUDENT_ROSTER = Object.freeze([
   { username: 'std007', studentNumber: '007', displayName: 'เด็กหญิงลิตานันท์  สิงห์งาม' }
 ]);
 
+/**
+ * สี่ด้านของแบบสังเกตพฤติกรรม ตามแผนการจัดการเรียนรู้ข้อ 9 และ 10
+ * ให้คะแนน 1–3 โดย 3 คือดีมาก 2 คือผ่าน 1 คือควรช่วยเหลือ
+ * เกณฑ์ผ่านคือได้ระดับ 2 ขึ้นไปในทุกด้าน
+ *
+ * เก็บแยกชีตจากคะแนนวิชาการ เพราะเป็นการประเมินเจตคติที่ครูสังเกตเอง
+ * ไม่ใช่สิ่งที่ระบบคำนวณได้ และไม่ควรปนกับคะแนนแบบทดสอบ
+ */
+const OBSERVATION_ASPECTS = Object.freeze([
+  Object.freeze({
+    key: 'predict',
+    label: 'ทำนาย',
+    levels: Object.freeze([
+      'รอคำตอบจากผู้อื่น',
+      'เลือกคำตอบก่อนดูเฉลย',
+      'ให้เหตุผลก่อนดูผล'
+    ])
+  }),
+  Object.freeze({
+    key: 'experiment',
+    label: 'ทดลอง',
+    levels: Object.freeze([
+      'ทดลองไม่ครบหรือข้ามขั้น',
+      'ทำตามภารกิจครบ',
+      'เปลี่ยนค่าหลายจุดและเปรียบเทียบ'
+    ])
+  }),
+  Object.freeze({
+    key: 'debug',
+    label: 'Debug',
+    levels: Object.freeze([
+      'บอกเพียงว่าผิดโดยไม่มีเหตุผล',
+      'ระบุสาเหตุหรือวิธีแก้ได้',
+      'เชื่อมอาการ สูตร และวิธีแก้ได้'
+    ])
+  }),
+  Object.freeze({
+    key: 'teamwork',
+    label: 'ร่วมมือ',
+    levels: Object.freeze([
+      'ไม่ร่วมกิจกรรม',
+      'แบ่งงานและสื่อสาร',
+      'อธิบายให้เพื่อนและรับฟัง'
+    ])
+  })
+]);
+
 const SHEET_SCHEMAS = Object.freeze({
   Users: [
     'username', 'role', 'studentNumber', 'displayName', 'passwordHash',
@@ -173,6 +220,10 @@ const SHEET_SCHEMAS = Object.freeze({
   QuizArchive: [
     'timestamp', 'actor', 'username', 'reason', 'beforeLatestScore',
     'beforeBestScore', 'beforeAttempts', 'beforeQuizJson', 'restoredAt', 'restoredBy'
+  ],
+  Observation: [
+    'username', 'predict', 'experiment', 'debug', 'teamwork',
+    'note', 'updatedAt', 'updatedBy'
   ],
   Settings: ['key', 'value', 'updatedAt']
 });
@@ -373,6 +424,120 @@ function enableDailyBackup(token) {
     'เปิดการสำรองอัตโนมัติทุกวันเวลาประมาณ ' + APP_CONFIG.backupHour + ' นาฬิกา'
   );
   return { ok: true, message: result.message, status: backupStatus_() };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * แบบบันทึกการสังเกตรายบุคคล — แผนการจัดการเรียนรู้ข้อ 10
+ *
+ * แผนเดิมเป็นแบบกระดาษให้ครูกรอกมือ ย้ายมาไว้ในระบบเพื่อให้อยู่ที่เดียว
+ * กับหลักฐานอื่น และครูเปิดดูย้อนหลังได้
+ *
+ * ข้อมูลนี้เป็นความเห็นของครู ไม่ใช่คะแนนวิชาการ จึงเก็บแยกชีต
+ * และไม่แสดงให้นักเรียนเห็น ตามแผนข้อ 9 ที่ห้ามประกาศสถานะ
+ * ต้องการความช่วยเหลือต่อหน้าชั้นเรียน
+ * ══════════════════════════════════════════════════════════════════ */
+
+/** Migration แบบเพิ่มอย่างเดียวตาม Blueprint #123 */
+function ensureObservationSheet_() {
+  const spreadsheet = getSpreadsheet_();
+  const existing = spreadsheet.getSheetByName('Observation');
+  if (existing) return existing;
+
+  const sheet = spreadsheet.insertSheet('Observation');
+  const headers = SHEET_SCHEMAS.Observation;
+  sheet.getRange(1, 1, 1, headers.length)
+    .setValues([headers])
+    .setBackground('#43105b')
+    .setFontColor('#ffffff')
+    .setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  return sheet;
+}
+
+/** คะแนนต้องอยู่ในช่วง 1–3 หรือเป็น 0 เมื่อครูยังไม่ได้ให้ */
+function clampObservationLevel_(value) {
+  const level = Number(value);
+  if (!Number.isInteger(level) || level < 1 || level > 3) return 0;
+  return level;
+}
+
+function readObservation_(username) {
+  const blank = { predict: 0, experiment: 0, debug: 0, teamwork: 0,
+                  note: '', updatedAt: null, updatedBy: '' };
+  const sheet = getSpreadsheet_().getSheetByName('Observation');
+  if (!sheet) return blank;
+
+  const row = readDataObjects_(sheet).filter(function (item) {
+    return String(item.username) === username;
+  })[0];
+  if (!row) return blank;
+
+  return {
+    predict: clampObservationLevel_(row.predict),
+    experiment: clampObservationLevel_(row.experiment),
+    debug: clampObservationLevel_(row.debug),
+    teamwork: clampObservationLevel_(row.teamwork),
+    note: sanitizePlainText_(row.note, 400),
+    updatedAt: serializeDate_(row.updatedAt),
+    updatedBy: String(row.updatedBy || '')
+  };
+}
+
+/** ครูบันทึกผลการสังเกตของนักเรียนหนึ่งคน */
+function saveObservation(token, username, scores, note) {
+  const session = requireRole_(token, 'admin');
+  const target = normalizeUsername_(username);
+  const user = findUser_(target);
+
+  if (!user || user.role !== 'student') {
+    throw new Error('ไม่พบบัญชีนักเรียน');
+  }
+
+  const input = scores && typeof scores === 'object' ? scores : {};
+  const clean = {};
+  OBSERVATION_ASPECTS.forEach(function (aspect) {
+    clean[aspect.key] = clampObservationLevel_(input[aspect.key]);
+  });
+  const comment = sanitizePlainText_(note, 400).trim();
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const sheet = ensureObservationSheet_();
+    const before = readObservation_(target);
+    const now = new Date();
+    const values = [
+      target, clean.predict, clean.experiment, clean.debug, clean.teamwork,
+      comment, now, session.username
+    ];
+
+    const row = findRowByValue_(sheet, 1, target);
+    if (row < 2) {
+      sheet.appendRow(values);
+    } else {
+      sheet.getRange(row, 1, 1, values.length).setValues([values]);
+    }
+
+    appendAudit_(
+      session.username,
+      'observation_save',
+      'success',
+      target +
+        ' | ก่อน ' + describeObservation_(before) +
+        ' | หลัง ' + describeObservation_(clean)
+    );
+
+    return { ok: true, username: target, observation: readObservation_(target) };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function describeObservation_(scores) {
+  return OBSERVATION_ASPECTS.map(function (aspect) {
+    return aspect.label + ' ' + (Number(scores[aspect.key]) || 0);
+  }).join(' ');
 }
 
 /** Serves the student and administrator web app. */
@@ -1026,6 +1191,11 @@ function getStudentDetail(token, username) {
     }),
     attempts: attempts,
     optionalSteps: optionalStepsStatus_(state),
+    // แบบสังเกตพฤติกรรมตามแผนข้อ 10 ครูกรอกเองในหน้ารายละเอียด
+    observation: readObservation_(target),
+    observationAspects: OBSERVATION_ASPECTS.map(function (aspect) {
+      return { key: aspect.key, label: aspect.label, levels: aspect.levels };
+    }),
     // จดหมายถึงเพื่อนเป็นหลักฐานการเรียนรู้ที่ระบบตรวจอัตโนมัติไม่ได้
     // ครูต้องอ่านเอง ตาม Blueprint #199 และ #201
     missionLetter: sanitizePlainText_(

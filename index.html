@@ -2006,6 +2006,7 @@
       color: var(--purple-900);
     }
 
+    .lab-feedback,
     .mg-check-feedback {
       min-height: 3.5rem;
       margin-bottom: 0;
@@ -3354,6 +3355,105 @@
       gap: 0.6rem;
     }
 
+    .observation-panel {
+      margin-top: 1.2rem;
+      padding: 1rem 1.1rem 1.2rem;
+      border: 2px solid var(--border);
+      border-radius: 0.9rem;
+      background: #fbf9fd;
+    }
+
+    .observation-panel h4 {
+      margin: 0 0 0.25rem;
+      color: var(--purple-900);
+      font-size: 1.05rem;
+    }
+
+    .observation-lead {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+
+    .observation-aspect {
+      padding: 0.7rem 0;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .observation-aspect:last-child {
+      border-bottom: 0;
+    }
+
+    .observation-aspect-name {
+      margin: 0 0 0.45rem;
+      color: var(--purple-900);
+      font-weight: 800;
+    }
+
+    .observation-levels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+      gap: 0.4rem;
+    }
+
+    .observation-level {
+      padding: 0.5rem 0.65rem;
+      border: 2px solid var(--border);
+      border-radius: 0.7rem;
+      background: #fff;
+      color: #4b4453;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .observation-level strong {
+      display: block;
+      color: var(--purple-900);
+      font-size: 0.88rem;
+    }
+
+    .observation-level[aria-pressed="true"] {
+      border-color: var(--purple-700);
+      background: #f4eff7;
+    }
+
+    .observation-note-label {
+      display: block;
+      margin: 1rem 0 0.35rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .observation-panel textarea {
+      width: 100%;
+      min-height: 4.5rem;
+      padding: 0.6rem 0.7rem;
+      border: 2px solid var(--border);
+      border-radius: 0.7rem;
+      font: inherit;
+      font-size: 0.88rem;
+      resize: vertical;
+    }
+
+    .observation-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.7rem;
+      margin-top: 0.8rem;
+    }
+
+    .observation-status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
     .admin-reset-note {
       margin: 0;
       color: var(--muted);
@@ -3791,6 +3891,26 @@
           <p id="admin-detail-summary"></p>
           <ul class="admin-detail-steps" id="admin-detail-steps"></ul>
           <div id="admin-detail-attempts"></div>
+          <div class="observation-panel" id="observation-panel" hidden>
+            <h4>แบบบันทึกการสังเกตรายบุคคล</h4>
+            <p class="observation-lead">
+              ให้ระดับ 1–3 ตามเกณฑ์ในแผนการสอน ผ่านเมื่อได้ระดับ 2 ขึ้นไปทุกด้าน
+              ข้อมูลนี้ครูเห็นคนเดียว นักเรียนไม่เห็น
+            </p>
+            <div id="observation-aspects"></div>
+            <label class="observation-note-label" for="observation-note">
+              บันทึกคำช่วยเหลือที่ควรใช้ในคาบถัดไป
+            </label>
+            <textarea id="observation-note" maxlength="400"
+                      placeholder="เช่น ยังสับสนเรื่องช่วง −600…600 ควรทบทวนด้วยสไลเดอร์อีกครั้ง"></textarea>
+            <div class="observation-actions">
+              <button class="admin-reset is-confirm" id="observation-save" type="button">
+                บันทึกผลการสังเกต
+              </button>
+              <p class="observation-status" id="observation-status"
+                 role="status" aria-live="polite"></p>
+            </div>
+          </div>
           <button class="admin-reset" id="admin-detail-close" type="button">ปิดรายละเอียด</button>
         </div>
       </section>
@@ -5016,6 +5136,54 @@
           <input type="checkbox" id="lab-check-2">
           <span>ลองแล้ว เห็นจุดเดียววิ่งซ้ายขวาตามการเอียง</span>
         </label>
+      </article>
+
+      <article class="lab-step" id="lab-step-pause">
+        <p class="lab-step-kicker">ฝึกที่ 3 · ปรับจังหวะพัก</p>
+        <h3>ทำให้จุดเคลื่อนช้าลง</h3>
+        <p>
+          ในโปรแกรมที่ 2 มีบรรทัด <code>basic.pause(50)</code> อยู่ท้ายสุด
+          เลข 50 คือให้เครื่องพัก 50 มิลลิวินาทีก่อนเริ่มรอบใหม่
+          ถ้าอยากให้จุดขยับช้าลง ต้องแก้เลขนี้อย่างไร?
+        </p>
+
+        <div class="choice-list" id="pause-choices">
+          <button class="choice-button" type="button"
+                  data-pause-answer="bigger" aria-pressed="false">
+            A — เพิ่มเลขให้มากขึ้น เช่น 200
+          </button>
+          <button class="choice-button" type="button"
+                  data-pause-answer="smaller" aria-pressed="false">
+            B — ลดเลขให้น้อยลง เช่น 10
+          </button>
+          <button class="choice-button" type="button"
+                  data-pause-answer="remove" aria-pressed="false">
+            C — ลบบรรทัด pause ออกไปเลย
+          </button>
+        </div>
+
+        <p class="lab-feedback" id="pause-feedback"
+           role="status" aria-live="polite"></p>
+
+        <div class="lab-code">
+          <div class="lab-code-head">
+            <span>ลองแก้บรรทัดนี้ในโปรแกรมที่ 2</span>
+            <button class="lab-copy" type="button" data-copy="lab-code-pause">
+              คัดลอกบรรทัด
+            </button>
+          </div>
+          <pre id="lab-code-pause"><code>    basic.pause(200)</code></pre>
+        </div>
+
+        <label class="lab-check">
+          <input type="checkbox" id="lab-check-4">
+          <span>ลองแล้ว จุดขยับช้าลงจริง เห็นการเปลี่ยนแปลงชัดขึ้น</span>
+        </label>
+
+        <p class="bridge">
+          จำง่าย ๆ ว่า เลข pause ยิ่งมาก ยิ่งพักนาน จอยิ่งอัปเดตช้า
+          ถ้าลบ pause ออก เครื่องจะสั่งจอถี่มากจนดูผลไม่ทันและระบบอาจสะดุด
+        </p>
       </article>
 
       <article class="lab-step lab-mission" id="lab-step-3">
@@ -6566,6 +6734,114 @@
       const adminDetailSummary = document.querySelector("#admin-detail-summary");
       const adminDetailSteps = document.querySelector("#admin-detail-steps");
       const adminDetailAttempts = document.querySelector("#admin-detail-attempts");
+      const observationPanel = document.querySelector("#observation-panel");
+      const observationAspectsBox = document.querySelector("#observation-aspects");
+      const observationNote = document.querySelector("#observation-note");
+      const observationSave = document.querySelector("#observation-save");
+      const observationStatus = document.querySelector("#observation-status");
+
+      // นักเรียนที่กำลังเปิดดูอยู่ ใช้ตอนกดบันทึกผลการสังเกต
+      let observationTarget = null;
+      let observationScores = {};
+
+      /**
+       * แบบสังเกตพฤติกรรม 4 ด้าน ตามแผนการจัดการเรียนรู้ข้อ 10
+       * ปุ่มแต่ละระดับเขียนเกณฑ์ไว้เต็ม ครูจึงไม่ต้องเปิดแผนกระดาษเทียบ
+       */
+      function renderObservation(student, result) {
+        if (!observationPanel) return;
+        const aspects = Array.isArray(result.observationAspects)
+          ? result.observationAspects : [];
+        const saved = result.observation || {};
+
+        observationTarget = student.username;
+        observationScores = {};
+        aspects.forEach((aspect) => {
+          observationScores[aspect.key] = Number(saved[aspect.key]) || 0;
+        });
+
+        observationAspectsBox.replaceChildren();
+        aspects.forEach((aspect) => {
+          const row = document.createElement("div");
+          row.className = "observation-aspect";
+
+          const name = document.createElement("p");
+          name.className = "observation-aspect-name";
+          name.textContent = aspect.label;
+
+          const levels = document.createElement("div");
+          levels.className = "observation-levels";
+          levels.setAttribute("role", "group");
+          levels.setAttribute("aria-label", aspect.label);
+
+          (aspect.levels || []).forEach((text, index) => {
+            const level = index + 1;
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "observation-level";
+            button.dataset.aspect = aspect.key;
+            button.dataset.level = String(level);
+            button.setAttribute(
+              "aria-pressed", String(observationScores[aspect.key] === level)
+            );
+
+            const head = document.createElement("strong");
+            head.textContent =
+              level === 3 ? "3 ดีมาก" : level === 2 ? "2 ผ่าน" : "1 ควรช่วยเหลือ";
+            button.append(head, document.createTextNode(text));
+
+            button.addEventListener("click", () => {
+              // กดซ้ำที่ระดับเดิมคือยกเลิก เผื่อครูเลือกผิด
+              observationScores[aspect.key] =
+                observationScores[aspect.key] === level ? 0 : level;
+              levels.querySelectorAll(".observation-level").forEach((other) => {
+                other.setAttribute(
+                  "aria-pressed",
+                  String(Number(other.dataset.level) === observationScores[aspect.key])
+                );
+              });
+              observationStatus.textContent = "ยังไม่ได้บันทึก กดปุ่มบันทึกเมื่อให้ครบ";
+            });
+
+            levels.appendChild(button);
+          });
+
+          row.append(name, levels);
+          observationAspectsBox.appendChild(row);
+        });
+
+        observationNote.value = saved.note ? String(saved.note) : "";
+        observationStatus.textContent = saved.updatedAt
+          ? `บันทึกล่าสุด ${formatThaiDate(saved.updatedAt)}`
+          : "ยังไม่เคยบันทึกผลการสังเกตของนักเรียนคนนี้";
+        observationPanel.hidden = false;
+      }
+
+      async function saveObservationScores() {
+        if (!observationTarget) return;
+        setBusy(observationSave, true, "กำลังบันทึก...", "บันทึกผลการสังเกต");
+        try {
+          const result = await callServer(
+            "saveObservation",
+            sessionToken,
+            observationTarget,
+            observationScores,
+            observationNote.value
+          );
+          const saved = result.observation || {};
+          observationStatus.textContent = saved.updatedAt
+            ? `บันทึกแล้ว ${formatThaiDate(saved.updatedAt)}`
+            : "บันทึกผลการสังเกตแล้ว";
+        } catch (error) {
+          observationStatus.textContent = `บันทึกไม่สำเร็จ: ${error.message}`;
+        } finally {
+          setBusy(observationSave, false, "กำลังบันทึก...", "บันทึกผลการสังเกต");
+        }
+      }
+
+      if (observationSave) {
+        observationSave.addEventListener("click", () => void saveObservationScores());
+      }
       const adminDetailClose = document.querySelector("#admin-detail-close");
 
       if (adminDetailClose) {
@@ -6798,6 +7074,8 @@
             card.append(heading, text);
             adminDetailAttempts.appendChild(card);
           }
+
+          renderObservation(student, result);
 
           const reflection = result.reflection || {};
           if (reflection.summary || reflection.confidence) {
@@ -7571,7 +7849,25 @@
 
       // ── ภาคปฏิบัติ เขียนโค้ดจริงบน MakeCode ─────────────────────────
       const LAB_NOTE_MIN = 15;
-      const labChecks = [1, 2, 3].map((i) =>
+      const pauseChoices =
+        document.querySelectorAll("#pause-choices .choice-button");
+      const pauseFeedback = document.querySelector("#pause-feedback");
+
+      // เฉลยและคำอธิบายของการทดลองปรับจังหวะพัก
+      // ตรงกับแผนการสอนข้อ 8 โจทย์ขยายผลข้อแรก
+      const PAUSE_MESSAGES = {
+        bigger:
+          "ถูกต้อง! เลข pause ยิ่งมาก เครื่องยิ่งพักนานก่อนวาดรอบใหม่ " +
+          "จุดจึงขยับช้าลง มองเห็นการเปลี่ยนแปลงได้ชัดขึ้น",
+        smaller:
+          "ยังไม่ใช่ครับ ลดเลขลงแปลว่าพักสั้นลง จอจะอัปเดตถี่ขึ้น " +
+          "จุดยิ่งขยับไวกว่าเดิม ลองคิดกลับกันดูใหม่",
+        remove:
+          "ยังไม่ใช่ครับ ถ้าไม่มี pause เลย เครื่องจะสั่งจอถี่ที่สุด " +
+          "จุดกระตุกจนดูผลไม่ทัน และระบบอาจสะดุด"
+      };
+
+      const labChecks = [1, 2, 3, 4].map((i) =>
         document.querySelector("#lab-check-" + i)
       );
       const labNote = document.querySelector("#lab-note");
@@ -7648,11 +7944,20 @@
         return callServer("saveProgress", sessionToken, state);
       }
 
+      function selectedPauseAnswer() {
+        const picked = Array.from(pauseChoices).find(
+          (button) => button.getAttribute("aria-pressed") === "true"
+        );
+        return picked ? picked.dataset.pauseAnswer : "";
+      }
+
       function collectLabState() {
         return {
           check1: Boolean(labChecks[0] && labChecks[0].checked),
           check2: Boolean(labChecks[1] && labChecks[1].checked),
           check3: Boolean(labChecks[2] && labChecks[2].checked),
+          check4: Boolean(labChecks[3] && labChecks[3].checked),
+          pauseAnswer: selectedPauseAnswer(),
           note: labNote ? labNote.value.trim() : ""
         };
       }
@@ -7662,7 +7967,8 @@
         const note = labNote.value.trim();
         const allChecked = labChecks.every((box) => box && box.checked);
         if (!allChecked) {
-          labSync.textContent = "ทำครบทั้งสามข้อก่อนนะ ฝึกสองโปรแกรมและลองภารกิจ";
+          labSync.textContent =
+            "ทำครบทุกข้อก่อนนะ ฝึกสองโปรแกรม ปรับจังหวะพัก แล้วลองภารกิจ";
           return;
         }
         if (note.length < LAB_NOTE_MIN) {
@@ -7702,6 +8008,8 @@
           if (labChecks[0]) labChecks[0].checked = Boolean(saved.check1);
           if (labChecks[1]) labChecks[1].checked = Boolean(saved.check2);
           if (labChecks[2]) labChecks[2].checked = Boolean(saved.check3);
+          if (labChecks[3]) labChecks[3].checked = Boolean(saved.check4);
+          if (saved.pauseAnswer) renderPauseAnswer(String(saved.pauseAnswer));
           if (labNote && saved.note) labNote.value = String(saved.note);
           if (saved.completed) {
             labDoneText.textContent =
@@ -7713,6 +8021,28 @@
           refreshLabSubmit();
         }
       }
+
+      function renderPauseAnswer(answer) {
+        if (!PAUSE_MESSAGES[answer]) return;
+        pauseChoices.forEach((button) => {
+          const selected = button.dataset.pauseAnswer === answer;
+          button.setAttribute("aria-pressed", String(selected));
+          delete button.dataset.result;
+          if (selected) {
+            button.dataset.result = answer === "bigger" ? "correct" : "incorrect";
+          }
+        });
+        if (pauseFeedback) pauseFeedback.textContent = PAUSE_MESSAGES[answer];
+      }
+
+      pauseChoices.forEach((button) => {
+        button.addEventListener("click", () => {
+          const answer = button.dataset.pauseAnswer;
+          renderPauseAnswer(answer);
+          // บันทึกทันทีเพื่อไม่ให้คำตอบหายถ้าปิดหน้าไปก่อน
+          void saveCodingLab(collectLabState()).catch(() => {});
+        });
+      });
 
       labCopyButtons.forEach((button) => {
         button.addEventListener("click", () => copyLabCode(button));
