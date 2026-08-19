@@ -562,6 +562,8 @@ function getAdminDashboard(token) {
     generatedAt: new Date().toISOString(),
     spreadsheetUrl: setup.spreadsheetUrl,
     driveFolderUrl: setup.driveFolderUrl,
+    // ฝั่งหน้าเว็บเคยเขียนเลข 8 ไว้ตายตัว พอเพิ่มขั้นสะท้อนผลเป็น 9 เลขจึงเพี้ยน
+    totalSections: LESSON_SECTION_COUNT,
     students: students
   };
 }
@@ -892,7 +894,12 @@ function resetStudentQuiz(token, username, reason) {
         snapshot.currentSection,
         unlockedSection_(state.completedSections)
       );
-      sheet.getRange(row, 3).setValue(JSON.stringify(state));
+      // ต้องเขียนคอลัมน์ currentSection คู่กับ progressJson เสมอ
+      // แดชบอร์ดครูอ่านเลขขั้นจากคอลัมน์นี้ ไม่ได้อ่านจากใน JSON
+      // ถ้าเขียนแค่ JSON ครูจะเห็นเลขขั้นเดิมค้างอยู่ แล้วเข้าใจว่ารีเซ็ตไม่สำเร็จ
+      sheet.getRange(row, 3, 1, 2).setValues([[
+        JSON.stringify(state), state.currentSection
+      ]]);
     }
 
     sheet.getRange(row, 5, 1, 4).setValues([[0, 0, 0, new Date()]]);
@@ -993,7 +1000,10 @@ function restoreStudentQuiz(token, username) {
           unlockedSection_(state.completedSections)
         );
       }
-      sheet.getRange(row, 3).setValue(JSON.stringify(state));
+      // เขียนเลขขั้นคู่กับ JSON ด้วยเหตุผลเดียวกับตอนรีเซ็ต
+      sheet.getRange(row, 3, 1, 2).setValues([[
+        JSON.stringify(state), Number(state.currentSection) || 1
+      ]]);
     }
 
     const now = new Date();

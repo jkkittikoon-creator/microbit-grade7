@@ -2939,7 +2939,101 @@
       color: var(--muted);
     }
 
+    .admin-reset-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
     @media (max-width: 780px) {
+      /* ตารางกว้าง 920px ในกล่องเลื่อนแนวนอน ทำให้คอลัมน์ "จัดการ" ที่อยู่ท้ายสุด
+         หลุดออกนอกจอมือถือ ครูจึงหาปุ่มรีเซ็ตไม่เจอเลย
+         จอแคบจึงเปลี่ยนตารางเป็นการ์ดรายคน ให้ทุกปุ่มอยู่ในระยะที่กดถึง */
+      .admin-table-wrap {
+        overflow-x: visible;
+        border: 0;
+        border-radius: 0;
+      }
+
+      .admin-table {
+        display: block;
+        min-width: 0;
+        border-collapse: separate;
+      }
+
+      .admin-table tbody {
+        display: block;
+      }
+
+      .admin-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .admin-table tbody tr {
+        display: block;
+        margin-bottom: 0.85rem;
+        padding: 0.25rem 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 0.9rem;
+        background: #fff;
+      }
+
+      .admin-table tbody tr:hover {
+        background: #fff;
+      }
+
+      .admin-table tbody tr:last-child {
+        margin-bottom: 0;
+      }
+
+      .admin-table td {
+        display: grid;
+        grid-template-columns: 7.5rem 1fr;
+        gap: 0.75rem;
+        align-items: center;
+        padding: 0.45rem 0;
+      }
+
+      .admin-table td[data-label]::before {
+        content: attr(data-label);
+        color: var(--purple-900);
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      .admin-table td:not([data-label]) {
+        display: block;
+      }
+
+      .admin-table tbody tr td:last-child {
+        display: block;
+        padding-bottom: 0.7rem;
+        border-bottom: 0;
+      }
+
+      .admin-reset-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .admin-reset {
+        width: 100%;
+        white-space: normal;
+      }
+
+      .admin-reset-form {
+        min-width: 0;
+      }
+
       .admin-header,
       .admin-toolbar {
         align-items: stretch;
@@ -5098,9 +5192,14 @@
         return { label: "กำลังเรียน", className: "is-progress" };
       }
 
-      function appendAdminCell(row, value) {
+      // บนจอแคบ หัวตารางถูกซ่อนแล้วใช้ป้ายนี้แทน ครูจึงยังรู้ว่าตัวเลขคืออะไร
+      // ค่าสำรอง 9 ใช้เฉพาะตอนเซิร์ฟเวอร์รุ่นเก่ายังไม่ส่งค่ามา
+      let adminTotalSections = 9;
+
+      function appendAdminCell(row, value, label) {
         const cell = document.createElement("td");
         cell.textContent = String(value);
+        if (label) cell.dataset.label = label;
         row.appendChild(cell);
         return cell;
       }
@@ -5154,6 +5253,14 @@
           idle.disabled = true;
           idle.title = "ยังไม่มีคะแนนให้รีเซ็ต เพราะนักเรียนยังไม่ได้ส่งแบบทดสอบ";
           wrap.appendChild(idle);
+
+          // title ไม่แสดงบนจอสัมผัส ครูที่ใช้มือถือจึงไม่รู้ว่าทำไมปุ่มกดไม่ได้
+          // ต้องเขียนเหตุผลออกมาเป็นข้อความจริง ตาม Blueprint #105
+          const note = document.createElement("p");
+          note.className = "admin-reset-note";
+          note.textContent = "ยังไม่มีคะแนนให้รีเซ็ต เพราะยังไม่ได้ส่งแบบทดสอบ";
+          wrap.appendChild(note);
+
           return wrap;
         }
 
@@ -5565,15 +5672,16 @@
 
         students.forEach((student) => {
           const row = document.createElement("tr");
-          appendAdminCell(row, student.studentNumber);
-          appendAdminCell(row, student.displayName);
-          appendAdminCell(row, student.username);
-          appendAdminCell(row, `${student.currentSection}/8`);
-          appendAdminCell(row, `${student.latestScore}/${QUIZ_QUESTIONS.length}`);
-          appendAdminCell(row, `${student.bestScore}/${QUIZ_QUESTIONS.length}`);
-          appendAdminCell(row, student.attempts);
+          appendAdminCell(row, student.studentNumber, "เลขที่");
+          appendAdminCell(row, student.displayName, "ชื่อ–สกุล");
+          appendAdminCell(row, student.username, "ชื่อผู้ใช้");
+          appendAdminCell(row, `${student.currentSection}/${adminTotalSections}`, "Section");
+          appendAdminCell(row, `${student.latestScore}/${QUIZ_QUESTIONS.length}`, "คะแนนล่าสุด");
+          appendAdminCell(row, `${student.bestScore}/${QUIZ_QUESTIONS.length}`, "คะแนนสูงสุด");
+          appendAdminCell(row, student.attempts, "จำนวนครั้ง");
 
           const statusCell = document.createElement("td");
+          statusCell.dataset.label = "สถานะ";
           const status = getAdminStatus(student);
           const badge = document.createElement("span");
           badge.className = `admin-badge ${status.className}`;
@@ -5581,7 +5689,7 @@
           statusCell.appendChild(badge);
           row.appendChild(statusCell);
 
-          appendAdminCell(row, formatThaiDate(student.updatedAt));
+          appendAdminCell(row, formatThaiDate(student.updatedAt), "บันทึกล่าสุด");
 
           const actionCell = document.createElement("td");
           actionCell.appendChild(createResetButton(student));
@@ -5643,6 +5751,9 @@
         try {
           const result = await callServer("getAdminDashboard", sessionToken);
           adminStudents = Array.isArray(result.students) ? result.students : [];
+          if (Number(result.totalSections) > 0) {
+            adminTotalSections = Number(result.totalSections);
+          }
           renderAdminSummary(adminStudents);
           renderAdminRows(getFilteredAdminStudents());
           setAdminLink("#admin-sheet-link", result.spreadsheetUrl);
@@ -5672,7 +5783,7 @@
           student.studentNumber,
           student.displayName,
           student.username,
-          `${student.currentSection}/8`,
+          `${student.currentSection}/${adminTotalSections}`,
           `${student.latestScore}/${QUIZ_QUESTIONS.length}`,
           `${student.bestScore}/${QUIZ_QUESTIONS.length}`,
           student.attempts,
