@@ -316,41 +316,43 @@ function setupDailyBackup() {
 
 /** อ่านสถานะระบบสำรองสำหรับแสดงในหน้าครู */
 function backupStatus_() {
-  const properties = PropertiesService.getScriptProperties();
-  const folderId = properties.getProperty(APP_CONFIG.backupFolderProperty);
+  // สถานะสำรองต้องไม่ทำให้แดชบอร์ดครูพังเด็ดขาด
+  // ถ้าอ่านอะไรไม่ได้ ให้คืนค่าที่บอกว่า "ไม่ทราบ" แทนการโยน error
+  const status = { scheduled: null, count: 0, latestAt: null, folderUrl: null };
 
-  const scheduled = ScriptApp.getProjectTriggers().some(function (trigger) {
-    return trigger.getHandlerFunction() === 'runScheduledBackup';
-  });
-
-  if (!folderId) {
-    return { scheduled: scheduled, count: 0, latestAt: null, folderUrl: null };
-  }
-
-  let folder;
+  // การอ่านตัวจับเวลาต้องใช้สิทธิ์ script.scriptapp
+  // เว็บแอปที่ deploy ก่อนเพิ่มสิทธิ์นี้จะเรียกไม่ได้ ต้องกันไว้ไม่ให้ล้มทั้งหน้า
   try {
-    folder = DriveApp.getFolderById(folderId);
+    status.scheduled = ScriptApp.getProjectTriggers().some(function (trigger) {
+      return trigger.getHandlerFunction() === 'runScheduledBackup';
+    });
   } catch (error) {
-    return { scheduled: scheduled, count: 0, latestAt: null, folderUrl: null };
+    status.scheduled = null;
   }
 
-  let count = 0;
-  let latest = null;
-  const iterator = folder.getFiles();
-  while (iterator.hasNext()) {
-    const file = iterator.next();
-    if (file.isTrashed()) continue;
-    count += 1;
-    const created = file.getDateCreated();
-    if (!latest || created.getTime() > latest.getTime()) latest = created;
+  try {
+    const folderId = PropertiesService.getScriptProperties()
+      .getProperty(APP_CONFIG.backupFolderProperty);
+    if (!folderId) return status;
+
+    const folder = DriveApp.getFolderById(folderId);
+    status.folderUrl = 'https://drive.google.com/drive/folders/' + folderId;
+
+    let latest = null;
+    const iterator = folder.getFiles();
+    while (iterator.hasNext()) {
+      const file = iterator.next();
+      if (file.isTrashed()) continue;
+      status.count += 1;
+      const created = file.getDateCreated();
+      if (!latest || created.getTime() > latest.getTime()) latest = created;
+    }
+    status.latestAt = latest ? latest.toISOString() : null;
+  } catch (error) {
+    // อ่านโฟลเดอร์ไม่ได้ก็ยังคืนสถานะเท่าที่มี
   }
 
-  return {
-    scheduled: scheduled,
-    count: count,
-    latestAt: latest ? latest.toISOString() : null,
-    folderUrl: 'https://drive.google.com/drive/folders/' + folderId
-  };
+  return status;
 }
 
 /** ครูสั่งสำรองเดี๋ยวนี้จากหน้าเว็บ */

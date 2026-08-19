@@ -5975,7 +5975,26 @@
           }
         }
         if (backupEnableButton) {
-          backupEnableButton.hidden = Boolean(info.scheduled);
+          // ซ่อนปุ่มเปิดเฉพาะเมื่อรู้แน่ว่าเปิดอยู่แล้ว
+          backupEnableButton.hidden = info.scheduled === true;
+        }
+
+        // scheduled เป็น null แปลว่าอ่านสถานะตัวจับเวลาไม่ได้ ไม่ใช่ว่าปิดอยู่
+        // มักเกิดเมื่อยังไม่ได้ deploy เวอร์ชันใหม่ที่มีสิทธิ์ script.scriptapp
+        // จึงต้องไม่ขึ้นว่า "ยังไม่ได้เปิด" ทั้งที่อาจเปิดอยู่แล้ว
+        if (info.scheduled === null || info.scheduled === undefined) {
+          if (info.latestAt) {
+            backupState.dataset.tone = "ok";
+            backupState.textContent =
+              `มีสำเนาข้อมูลล่าสุด ${formatThaiDate(info.latestAt)} · ` +
+              `เก็บไว้ ${info.count} ไฟล์ · ` +
+              "ตัวตั้งเวลาอ่านไม่ได้ ถ้าเพิ่งเพิ่มสิทธิ์ให้ Deploy เวอร์ชันใหม่";
+          } else {
+            backupState.dataset.tone = "warn";
+            backupState.textContent =
+              "ยังตรวจสถานะการสำรองไม่ได้ ถ้าเพิ่งเพิ่มสิทธิ์ใหม่ให้ Deploy เวอร์ชันใหม่อีกครั้ง";
+          }
+          return;
         }
 
         if (!info.scheduled) {
