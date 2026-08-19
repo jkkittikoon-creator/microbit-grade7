@@ -2940,6 +2940,100 @@
       color: var(--muted);
     }
 
+    /* แผงแสดงวิธีคิดทีละบรรทัด ใช้ซ้ำได้ทุกส่วนที่มีการคำนวณ */
+    .work-steps-panel {
+      margin: 1rem 0 0;
+      padding: 1rem 1.1rem 1.15rem;
+      border: 2px solid var(--border);
+      border-radius: 0.9rem;
+      background: #fbf9fd;
+    }
+
+    .work-steps-title {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin: 0 0 0.15rem;
+      color: var(--purple-900);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .work-steps-lead {
+      margin: 0 0 0.85rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .work-steps {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: work-step;
+    }
+
+    .work-step {
+      display: grid;
+      grid-template-columns: 1.75rem 1fr;
+      gap: 0.7rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .work-step:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .work-step-order {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 999px;
+      background: var(--purple-700);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .work-step-math {
+      margin: 0 0 0.2rem;
+      color: var(--purple-900);
+      font-family: "Courier New", monospace;
+      font-size: 1.02rem;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .work-step-meaning {
+      margin: 0;
+      color: #4b4453;
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .work-step.is-warning .work-step-order {
+      background: #b45309;
+    }
+
+    .work-step.is-warning .work-step-math {
+      color: #92400e;
+    }
+
+    .work-steps-note {
+      margin: 0.9rem 0 0;
+      padding: 0.7rem 0.85rem;
+      border-left: 4px solid var(--purple-700);
+      border-radius: 0 0.6rem 0.6rem 0;
+      background: var(--yellow-100);
+      color: var(--purple-900);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
     .admin-reset-note {
       margin: 0;
       color: var(--muted);
@@ -3608,6 +3702,20 @@
                     for="score-slider" aria-live="polite">2.00</output>
           </div>
 
+          <div class="work-steps-panel">
+            <p class="work-steps-title">🔍 ตัวเลขนี้มาจากไหน</p>
+            <p class="work-steps-lead">
+              ลากแถบด้านบนแล้วดูว่าแต่ละบรรทัดเปลี่ยนไปอย่างไร
+            </p>
+            <ol class="work-steps" id="score-work-steps"></ol>
+            <p class="work-steps-note">
+              บรรทัดที่ 1 ตอนนี้ดูเหมือนไม่ได้ทำอะไร เพราะคะแนนต่ำสุดคือ 0
+              การลบ 0 จึงได้เลขเดิม แต่จำบรรทัดนี้ไว้ให้ดี
+              เพราะใน Section 5 ค่าต่ำสุดจะกลายเป็น −600
+              บรรทัดนี้จะกลายเป็นขั้นที่สำคัญที่สุด
+            </p>
+          </div>
+
           <p class="unplugged-feedback" id="unplugged-feedback"
              role="status" aria-live="polite">
             50 อยู่กึ่งกลางของ 0–100 จึงได้เกรด 2 ซึ่งอยู่กึ่งกลางของ 0–4
@@ -3723,6 +3831,51 @@
           การเอียงด้วยมือปกติประมาณ 35–40 องศา
         </p>
       </aside>
+
+      <div class="work-steps-panel">
+        <p class="work-steps-title">🔍 แปลง mg เป็น g ทีละบรรทัด</p>
+        <p class="work-steps-lead">
+          เพราะ 1000 mg เท่ากับ 1 g การเปลี่ยนหน่วยจึงคือการหารด้วย 1000
+          ตัวเลขที่ได้บอกว่าแรงตามแกนนั้นเป็นกี่เท่าของแรงโน้มถ่วง
+        </p>
+        <ol class="work-steps">
+          <li class="work-step">
+            <span class="work-step-order">1</span>
+            <div>
+              <p class="work-step-math">0 ÷ 1000 = 0</p>
+              <p class="work-step-meaning">
+                วางบอร์ดราบ แกนที่เลือกไม่ได้เอียงตามแรงโน้มถ่วงเลย
+                จึงได้ 0 เท่า
+              </p>
+            </div>
+          </li>
+          <li class="work-step">
+            <span class="work-step-order">2</span>
+            <div>
+              <p class="work-step-math">600 ÷ 1000 = 0.6</p>
+              <p class="work-step-meaning">
+                เอียงมือปกติประมาณ 35–40 องศา ได้ 0.6 เท่าของแรงโน้มถ่วง
+                ยังไม่ถึงครึ่งหนึ่งของการเอียงสุด
+              </p>
+            </div>
+          </li>
+          <li class="work-step">
+            <span class="work-step-order">3</span>
+            <div>
+              <p class="work-step-math">1000 ÷ 1000 = 1</p>
+              <p class="work-step-meaning">
+                เอียง 90 องศา แกนที่เลือกหันตามแรงโน้มถ่วงพอดี
+                จึงได้ 1 เท่าเต็ม หรือเขียนว่า 1 g
+              </p>
+            </div>
+          </li>
+        </ol>
+        <p class="work-steps-note">
+          จำง่าย ๆ ว่า ตัวเลข mg ยิ่งมาก แปลว่าเอียงมาก
+          และเครื่องหมาย + หรือ − บอกว่าเอียงไปทางไหน
+          ส่วนสูตรควบคุมจอจะใช้ตัวเลข mg ตรง ๆ ไม่ต้องแปลงเป็น g ก่อน
+        </p>
+      </div>
 
       <div class="mg-check">
         <h3>ตรวจความเข้าใจหนึ่งข้อ</h3>
@@ -3841,6 +3994,20 @@
             map(accel, −600, 600, 0, 4)<br>
             <span id="sim-formula-result">map(0) = 2.00</span>
           </p>
+
+          <div class="work-steps-panel">
+            <p class="work-steps-title">🔍 พิกัดนี้มาจากไหน</p>
+            <p class="work-steps-lead">
+              วิธีคิดชุดเดียวกับการแปลงคะแนนใน Section 3
+              เปลี่ยนแค่ตัวเลขที่แทนเข้าไป
+            </p>
+            <ol class="work-steps" id="sim-work-steps"></ol>
+            <p class="work-steps-note">
+              บรรทัดที่ 1 คือขั้นที่ทำให้บอร์ดราบไม่ได้อยู่ที่พิกัด 0
+              เพราะ 0 mg ไม่ใช่ค่าต่ำสุดของช่วง แต่อยู่กึ่งกลางระหว่าง
+              −600 กับ 600 พิกัดที่ได้จึงเป็น 2 ซึ่งคือกลางจอพอดี
+            </p>
+          </div>
 
           <p>
             จอจำลองเลือกคอลัมน์ที่ใกล้ที่สุด
@@ -3968,6 +4135,8 @@
             <p class="formula-detail" id="correct-formula-detail">
               600 mg อยู่ปลายช่วง จึงได้พิกัด 4 พอดี
             </p>
+            <ol class="work-steps" id="correct-work-steps"></ol>
+
             <p>
               ยังต้องใช้ constrain() ครอบผลลัพธ์
               เพราะ map() ไม่ตรวจขอบเขตให้อัตโนมัติ
@@ -3985,6 +4154,8 @@
             <p class="formula-detail" id="wrong-formula-detail">
               600 mg กลายเป็น 4.06 ซึ่งเกินขอบจอ 0–4
             </p>
+            <ol class="work-steps" id="wrong-work-steps"></ol>
+
             <p>
               บอร์ดราบดูเหมือนพอใช้ได้ แต่เริ่มเกินขอบ
               ตั้งแต่การเอียงปานกลาง
@@ -5078,6 +5249,90 @@
           // ครั้งหน้าที่เปิดบทเรียนจะลองซ่อมใหม่เอง
         }
         return patched;
+      }
+
+      /**
+       * เขียนเลขติดลบด้วยขีดลบแบบเดียวกับที่ใช้ทั้งบทเรียน
+       * เพื่อให้ตัวเลขในแผงวิธีคิดหน้าตาตรงกับสูตรที่นักเรียนเห็น
+       */
+      function signedNumber(value) {
+        return value < 0 ? "−" + Math.abs(value) : String(value);
+      }
+
+      /**
+       * แผงแสดงวิธีคิดทีละบรรทัด ใช้ร่วมกันทุกส่วนที่มีการคำนวณ
+       * แต่ละบรรทัดมีสองชั้น — บรรทัดบนคือการแทนค่าจริง
+       * บรรทัดล่างคือความหมายเป็นภาษาคน ว่าตัวเลขนั้นแปลว่าอะไร
+       * ตาม Blueprint #163 ที่กำหนดว่าตัวอย่างต้องแสดงกระบวนการคิด
+       * ไม่ใช่แสดงเฉพาะคำตอบสุดท้าย
+       */
+      function renderWorkSteps(container, steps) {
+        if (!container) return;
+        container.replaceChildren();
+
+        steps.forEach((step, index) => {
+          const row = document.createElement("li");
+          row.className = step.warning ? "work-step is-warning" : "work-step";
+
+          const order = document.createElement("span");
+          order.className = "work-step-order";
+          order.textContent = step.warning ? "!" : String(index + 1);
+
+          const body = document.createElement("div");
+
+          const math = document.createElement("p");
+          math.className = "work-step-math";
+          math.textContent = step.math;
+
+          const meaning = document.createElement("p");
+          meaning.className = "work-step-meaning";
+          meaning.textContent = step.meaning;
+
+          body.append(math, meaning);
+          row.append(order, body);
+          container.appendChild(row);
+        });
+      }
+
+      /**
+       * ขั้นตอนของสูตร map ที่ใช้ได้กับทุกช่วง ไม่ผูกกับตัวเลขชุดใดชุดหนึ่ง
+       * Section 3 ใช้ช่วงคะแนน 0–100 ส่วน Section 5 และ 6 ใช้ช่วง −600…600
+       * ทั้งสองที่จึงเห็นวิธีคิดชุดเดียวกัน ต่างกันแค่ตัวเลขที่แทนเข้าไป
+       */
+      function mapWorkSteps(options) {
+        const value = options.value;
+        const fromMin = options.fromMin;
+        const fromMax = options.fromMax;
+        const toMax = options.toMax;
+        const unit = options.unit ? " " + options.unit : "";
+
+        const walked = value - fromMin;
+        const width = fromMax - fromMin;
+        const ratio = width === 0 ? 0 : walked / width;
+        const percent = Math.round(ratio * 100);
+        const result = ratio * toMax;
+
+        return [
+          {
+            math: `${signedNumber(value)} − (${signedNumber(fromMin)}) = ${walked}`,
+            meaning:
+              `เริ่มนับจากขอบล่าง ${signedNumber(fromMin)}${unit} ` +
+              `ค่านี้เดินขึ้นมาได้ ${walked}`
+          },
+          {
+            math: `${signedNumber(fromMax)} − (${signedNumber(fromMin)}) = ${width}`,
+            meaning: `ช่วงที่รับเข้ามาทั้งเส้นกว้าง ${width}`
+          },
+          {
+            math: `${walked} ÷ ${width} = ${ratio.toFixed(2)}`,
+            meaning: `แปลว่ามาได้ ${percent}% ของช่วง`
+          },
+          {
+            math: `${ratio.toFixed(2)} × ${toMax} = ${result.toFixed(2)}`,
+            meaning:
+              `${percent}% ของ${options.toLabel} จึงได้ ${result.toFixed(2)}`
+          }
+        ];
       }
 
       /** ดึงความก้าวหน้าล่าสุดแล้วปรับแถบนำทางและการล็อกให้ตรงกัน */
@@ -6616,6 +6871,7 @@
       const scoreOutput = document.querySelector("#score-output");
       const gradeOutput = document.querySelector("#grade-output");
       const scoreFill = document.querySelector("#score-fill");
+      const scoreWorkSteps = document.querySelector("#score-work-steps");
       const unpluggedFeedback =
         document.querySelector("#unplugged-feedback");
       const unpluggedSync =
@@ -6633,6 +6889,17 @@
         scoreOutput.textContent = `${safeScore} คะแนน`;
         gradeOutput.textContent = grade.toFixed(2);
         scoreFill.style.width = `${safeScore}%`;
+
+        renderWorkSteps(
+          scoreWorkSteps,
+          mapWorkSteps({
+            value: safeScore,
+            fromMin: 0,
+            fromMax: 100,
+            toMax: 4,
+            toLabel: "เกรดเต็ม 4"
+          })
+        );
 
         if (safeScore === 0) {
           unpluggedFeedback.textContent =
@@ -6827,6 +7094,7 @@
 
       const ACCEL_MAP_MIN = -600;
       const ACCEL_MAP_MAX = 600;
+      const simWorkSteps = document.querySelector("#sim-work-steps");
       const LED_MIN = 0;
       const LED_MAX = 4;
 
@@ -6938,6 +7206,37 @@
           : `x = ${plotColumn}, y = 2`;
         simFormulaResult.textContent =
           `map(${accel}) = ${mapped.toFixed(2)}`;
+
+        const simSteps = mapWorkSteps({
+          value: accel,
+          fromMin: ACCEL_MAP_MIN,
+          fromMax: ACCEL_MAP_MAX,
+          toMax: LED_MAX,
+          toLabel: "จอที่มีพิกัด 0 ถึง 4",
+          unit: "mg"
+        });
+        // ค่าที่หลุดขอบต้องเห็นด้วยว่าเกิดอะไรขึ้นต่อ ไม่ใช่จบแค่ตัวเลขที่เกิน
+        if (mapped < LED_MIN || mapped > LED_MAX) {
+          simSteps.push(
+            constrainEnabled
+              ? {
+                  warning: true,
+                  math:
+                    `constrain(${mapped.toFixed(2)}, ${LED_MIN}, ${LED_MAX})` +
+                    ` = ${valueForPlot.toFixed(2)}`,
+                  meaning:
+                    `พิกัดหลุดออกนอกจอ constrain จึงดึงกลับมาไว้ที่ ` +
+                    `${valueForPlot.toFixed(2)} ไฟจึงยังติดอยู่ที่ขอบ`
+                }
+              : {
+                  warning: true,
+                  math: `${mapped.toFixed(2)} ไม่อยู่ในช่วง ${LED_MIN} ถึง ${LED_MAX}`,
+                  meaning:
+                    "ยังไม่ได้เปิด constrain พิกัดจึงหลุดออกนอกจอ ไฟจึงหายไป"
+                }
+          );
+        }
+        renderWorkSteps(simWorkSteps, simSteps);
 
         simLedCells.forEach((cell, index) => {
           const row = Math.floor(index / 5);
@@ -7114,6 +7413,9 @@
           "ยังไม่ถูกครับ เลข 1023 เป็นเพียงค่าคงที่ในสูตรเดิม ไม่ได้รับประกันว่าผลจะอยู่ในช่วงจอ"
       };
 
+      const correctWorkSteps = document.querySelector("#correct-work-steps");
+      const wrongWorkSteps = document.querySelector("#wrong-work-steps");
+
       function calculateWrongFormula(accel) {
         return (accel + 1023) / 400;
       }
@@ -7130,6 +7432,36 @@
         debugAccelOutput.textContent = `${accel} mg`;
         correctFormulaOutput.textContent = correctValue.toFixed(2);
         wrongFormulaOutput.textContent = wrongValue.toFixed(2);
+
+        renderWorkSteps(
+          correctWorkSteps,
+          mapWorkSteps({
+            value: accel,
+            fromMin: ACCEL_MAP_MIN,
+            fromMax: ACCEL_MAP_MAX,
+            toMax: LED_MAX,
+            toLabel: "จอที่มีพิกัด 0 ถึง 4",
+            unit: "mg"
+          })
+        );
+
+        // สูตรเดิมมีแค่สองขั้น และทั้งสองขั้นไม่ได้อ้างช่วงใช้งานจริงเลย
+        // เห็นทีละบรรทัดแล้วจะเข้าใจเองว่าทำไมผลลัพธ์จึงเพี้ยน
+        const shifted = accel + 1023;
+        renderWorkSteps(wrongWorkSteps, [
+          {
+            math: `${signedNumber(accel)} + 1023 = ${shifted}`,
+            meaning:
+              "บวก 1023 เพื่อดันค่าติดลบให้กลายเป็นบวกก่อน " +
+              "แต่ 1023 ไม่ใช่ขอบล่างของช่วงใช้งานที่เราเลือก"
+          },
+          {
+            math: `${shifted} ÷ 400 = ${wrongValue.toFixed(2)}`,
+            meaning:
+              `หารด้วย 400 เพื่อย่อให้เล็กลง จึงได้ ${wrongValue.toFixed(2)} ` +
+              "แต่ 400 เป็นเลขที่ตั้งขึ้นเอง ไม่ได้มาจากความกว้างของช่วงจริง"
+          }
+        ]);
 
         correctFormulaDetail.textContent = correctOutside
           ? `${correctValue.toFixed(2)} เกินช่วง 0–4 จึงต้องใช้ constrain()`
