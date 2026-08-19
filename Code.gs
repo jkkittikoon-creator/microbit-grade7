@@ -44,6 +44,8 @@ const APP_CONFIG = Object.freeze({
   xpPerSection: 10,
   xpQuizPass: 30,
   xpPerfectQuiz: 20,
+  xpMiniGame: 20,
+  xpMission: 30,
   spreadsheetProperty: 'TILT_LAB_SPREADSHEET_ID',
   driveFolderProperty: 'TILT_LAB_DRIVE_FOLDER_ID',
   initialPasswordProperty: 'INITIAL_STUDENT_PASSWORD'
@@ -77,6 +79,50 @@ const QUIZ_PASS_MARK = Math.ceil(
 );
 
 const LESSON_SECTION_COUNT = LESSON_SECTIONS.length;
+
+/**
+ * กิจกรรมเสริม — Blueprint #17 Required/Optional, #36 และ #42
+ *
+ * แยกทะเบียนออกจาก LESSON_SECTIONS โดยตั้งใจ
+ * เพราะถ้าแทรกไว้กลางลำดับบังคับ เลขขั้นของทุกขั้นที่อยู่หลังจะเลื่อน
+ * ความก้าวหน้าที่นักเรียนบันทึกไว้แล้วจะถูกตีความผิดทั้งหมด
+ * และต้องทำ migration ตาม Blueprint #123 ซึ่งเสี่ยงโดยไม่จำเป็น
+ *
+ * ครูอนุมัติให้เป็น Optional จึงเก็บผลไว้ใน worksheet
+ * และคุมเงื่อนไขเปิดด้วย unlockAfter แทนการอยู่ในลำดับบังคับ
+ * ถ้าวันหนึ่งครูต้องการเปลี่ยนเป็น Required ให้ย้ายเข้า LESSON_SECTIONS
+ * พร้อม migration ที่เลื่อนเลขขั้นและสำรองข้อมูลเดิมก่อน
+ */
+const LESSON_OPTIONAL_STEPS = Object.freeze([
+  Object.freeze({
+    id: 'mini-game',
+    title: 'นักสืบค่าหลุดขอบ',
+    kind: 'game',
+    // ต่อจาก Tilt Simulator เพราะนักเรียนเพิ่งเห็นผลของ constrain มาหมาด ๆ
+    unlockAfter: 5,
+    xpReward: APP_CONFIG.xpMiniGame,
+    stateKey: 'miniGame',
+    badge: Object.freeze({
+      id: 'detective',
+      label: 'นักสืบค่าหลุดขอบ',
+      detail: 'แยกค่าที่หลุดพิกัดออกจากค่าที่ปลอดภัยได้'
+    })
+  }),
+  Object.freeze({
+    id: 'mission',
+    title: 'ภารกิจออกแบบช่วงใช้งานให้เพื่อน',
+    kind: 'mission',
+    // ต่อจาก Glossary และก่อนแบบทดสอบ ตามลำดับใน Blueprint #127
+    unlockAfter: 7,
+    xpReward: APP_CONFIG.xpMission,
+    stateKey: 'mission',
+    badge: Object.freeze({
+      id: 'designer',
+      label: 'นักออกแบบช่วงใช้งาน',
+      detail: 'ออกแบบช่วงใช้งานให้เหมาะกับผู้ใช้จริงได้'
+    })
+  })
+]);
 
 const STUDENT_ROSTER = Object.freeze([
   { username: 'std001', studentNumber: '001', displayName: 'เด็กชายณฐชยนต์  สุขแจ่ม' },
@@ -136,6 +182,16 @@ function getPublicConfig() {
         id: section.id,
         title: section.title,
         required: section.required
+      };
+    }),
+    optionalSteps: LESSON_OPTIONAL_STEPS.map(function (step) {
+      return {
+        id: step.id,
+        title: step.title,
+        kind: step.kind,
+        unlockAfter: step.unlockAfter,
+        xpReward: step.xpReward,
+        required: false
       };
     })
   };
@@ -745,6 +801,15 @@ function getStudentDetail(token, username) {
       };
     }),
     attempts: attempts,
+    optionalSteps: optionalStepsStatus_(state),
+    // จดหมายถึงเพื่อนเป็นหลักฐานการเรียนรู้ที่ระบบตรวจอัตโนมัติไม่ได้
+    // ครูต้องอ่านเอง ตาม Blueprint #199 และ #201
+    missionLetter: sanitizePlainText_(
+      state && state.worksheet && state.worksheet.mission
+        ? state.worksheet.mission.letter
+        : '',
+      600
+    ),
     reflection: {
       summary: sanitizePlainText_(reflection.summary, 500),
       confidence: sanitizePlainText_(reflection.confidence, 40)
@@ -1270,6 +1335,30 @@ function unlockedSection_(completedSections) {
  * XP และ Badge คำนวณใหม่จากความก้าวหน้าจริงทุกครั้งที่เรียก
  * ไม่ได้สะสมจากค่าที่ผู้ใช้ส่งมา จึงฟาร์มด้วยการ refresh ไม่ได้ ตาม #89
  */
+/**
+ * สรุปสถานะกิจกรรมเสริมจาก worksheet โดยไม่แตะลำดับขั้นบังคับ
+ * เปิดได้เมื่อทำขั้นที่กำหนดใน unlockAfter สำเร็จแล้วเท่านั้น ตาม Blueprint #16
+ */
+function optionalStepsStatus_(state) {
+  const completed = contiguousCompleted_(state ? state.completedSections : []);
+  const worksheet = (state && state.worksheet) || {};
+
+  return LESSON_OPTIONAL_STEPS.map(function (step) {
+    const saved = worksheet[step.stateKey] || {};
+    return {
+      id: step.id,
+      title: step.title,
+      kind: step.kind,
+      unlockAfter: step.unlockAfter,
+      unlocked: completed.indexOf(step.unlockAfter) !== -1,
+      completed: saved.completed === true,
+      bestScore: Number(saved.bestScore) || 0,
+      total: Number(saved.total) || 0,
+      xpReward: step.xpReward
+    };
+  });
+}
+
 function computeRewards_(state) {
   const completed = contiguousCompleted_(state ? state.completedSections : []);
   const quiz = (state && state.quiz) || {};
@@ -1278,9 +1367,15 @@ function computeRewards_(state) {
   const passed = bestScore >= QUIZ_PASS_MARK;
   const perfect = bestScore >= APP_CONFIG.quizQuestionCount;
 
+  // นับจากสถานะจริงทุกครั้ง ไม่สะสม เล่นซ้ำจึงไม่ได้ XP เพิ่ม ตาม Blueprint #89
+  const optionalSteps = optionalStepsStatus_(state);
+
   let xp = completed.length * APP_CONFIG.xpPerSection;
   if (passed) xp += APP_CONFIG.xpQuizPass;
   if (perfect) xp += APP_CONFIG.xpPerfectQuiz;
+  optionalSteps.forEach(function (step) {
+    if (step.completed) xp += step.xpReward;
+  });
 
   const badges = [];
   if (completed.length >= 1) {
@@ -1305,6 +1400,15 @@ function computeRewards_(state) {
   if (completed.length >= LESSON_SECTION_COUNT) {
     badges.push({ id: 'complete', label: 'จบบทเรียน', detail: 'ทำครบทุกขั้นตอน' });
   }
+  LESSON_OPTIONAL_STEPS.forEach(function (step, index) {
+    if (optionalSteps[index] && optionalSteps[index].completed) {
+      badges.push({
+        id: step.badge.id,
+        label: step.badge.label,
+        detail: step.badge.detail
+      });
+    }
+  });
 
   return {
     xp: xp,
@@ -1314,6 +1418,7 @@ function computeRewards_(state) {
     bestScore: bestScore,
     passMark: QUIZ_PASS_MARK,
     passed: passed,
+    optionalSteps: optionalSteps,
     encouragement: buildEncouragement_(completed.length, quiz, passed, perfect)
   };
 }

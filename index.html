@@ -463,6 +463,377 @@
       background: rgba(255, 255, 255, 0.3);
     }
 
+    /* ป้ายกำกับสำหรับโปรแกรมอ่านหน้าจอ มองไม่เห็นแต่ยังอ่านออกเสียงได้ Blueprint #222 */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ── กิจกรรมเสริม Blueprint #17 ── */
+    .optional-section {
+      border: 2px dashed var(--purple-500);
+    }
+
+    .optional-tag {
+      display: inline-block;
+      padding: 0.1rem 0.55rem;
+      border-radius: 999px;
+      background: var(--yellow-100);
+      color: var(--purple-900);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .reward-preview {
+      margin: 0 0 1.25rem;
+      padding: 0.75rem 1rem;
+      border-left: 6px solid var(--yellow-400);
+      border-radius: 0.7rem;
+      background: var(--yellow-100);
+      color: var(--purple-900);
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+    /* ── Mini Game นักสืบค่าหลุดขอบ ── */
+    .game-stage {
+      display: grid;
+      gap: 1rem;
+      justify-items: center;
+    }
+
+    .game-progress {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .game-card {
+      display: grid;
+      gap: 0.35rem;
+      justify-items: center;
+      width: min(100%, 22rem);
+      padding: 1.5rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--page);
+      text-align: center;
+    }
+
+    .game-card-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .game-value {
+      margin: 0;
+      color: var(--purple-900);
+      font-size: clamp(2.4rem, 9vw, 3.4rem);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    .game-value small {
+      font-size: 0.35em;
+      font-weight: 700;
+    }
+
+    .game-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      width: min(100%, 32rem);
+    }
+
+    .game-choice {
+      display: grid;
+      gap: 0.2rem;
+      min-height: 72px;
+      padding: 0.7rem 0.8rem;
+      border: 2px solid var(--border);
+      border-radius: 0.9rem;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+
+    .game-choice small {
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .game-choice:hover:not(:disabled),
+    .game-choice:focus-visible:not(:disabled) {
+      border-color: var(--purple-500);
+      transform: translateY(-2px);
+    }
+
+    .game-choice:disabled {
+      cursor: default;
+      opacity: 0.75;
+    }
+
+    .game-choice[data-result="correct"] {
+      border-color: var(--green-700);
+      background: #edf9f2;
+      color: var(--green-700);
+      opacity: 1;
+    }
+
+    .game-choice[data-result="incorrect"] {
+      border-color: #c0394b;
+      background: #fff1f2;
+      color: #842029;
+      opacity: 1;
+    }
+
+    .game-feedback {
+      width: min(100%, 34rem);
+      padding: 0.85rem 1rem;
+      border-radius: 0.9rem;
+      background: #f6eff9;
+      font-size: 0.92rem;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+    .game-feedback[data-tone="correct"] {
+      background: #edf9f2;
+      color: var(--green-700);
+    }
+
+    .game-feedback[data-tone="incorrect"] {
+      background: #fff1f2;
+      color: #842029;
+    }
+
+    .game-feedback code {
+      font-size: 0.95em;
+    }
+
+    .game-next,
+    .game-replay {
+      min-height: 48px;
+      padding: 0.6rem 1.6rem;
+      border: none;
+      border-radius: 999px;
+      background: var(--purple-900);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .game-next:hover,
+    .game-next:focus-visible,
+    .game-replay:hover,
+    .game-replay:focus-visible {
+      background: var(--purple-700);
+    }
+
+    .game-result {
+      display: grid;
+      gap: 0.75rem;
+      justify-items: center;
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius-md);
+      background: var(--page);
+      text-align: center;
+    }
+
+    .game-score {
+      margin: 0;
+      color: var(--purple-900);
+      font-size: clamp(1.6rem, 6vw, 2.2rem);
+      font-weight: 800;
+    }
+
+    .game-verdict {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.7;
+    }
+
+    .game-verdict[data-tone="pass"] {
+      color: var(--green-700);
+    }
+
+    .game-verdict[data-tone="fail"] {
+      color: var(--orange-600);
+    }
+
+    /* ── Mission ออกแบบช่วงใช้งาน ── */
+    .mission-track {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 0 0 1.25rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .mission-track li {
+      flex: 1 1 8rem;
+      padding: 0.45rem 0.7rem;
+      border: 2px solid var(--border);
+      border-radius: 0.7rem;
+      background: #fff;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .mission-track li[data-state="current"] {
+      border-color: var(--purple-900);
+      background: var(--purple-900);
+      color: #fff;
+    }
+
+    .mission-track li[data-state="done"] {
+      border-color: var(--green-700);
+      background: #edf9f2;
+      color: var(--green-700);
+    }
+
+    .mission-stage {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .mission-stage[hidden] {
+      display: none;
+    }
+
+    .mission-level {
+      margin: 0;
+      color: var(--purple-700);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .mission-prompt {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.8;
+    }
+
+    .mission-letter {
+      width: 100%;
+      min-height: 8rem;
+      padding: 0.8rem;
+      border: 2px solid var(--border);
+      border-radius: 0.9rem;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      line-height: 1.8;
+      resize: vertical;
+    }
+
+    .mission-letter:focus-visible {
+      border-color: var(--purple-700);
+      outline: none;
+    }
+
+    .mission-count {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .mission-feedback {
+      margin: 0;
+      padding: 0.8rem 1rem;
+      border-radius: 0.9rem;
+      background: #f6eff9;
+      font-size: 0.92rem;
+      font-weight: 700;
+      line-height: 1.75;
+    }
+
+    .mission-feedback[data-tone="correct"] {
+      background: #edf9f2;
+      color: var(--green-700);
+    }
+
+    .mission-feedback[data-tone="incorrect"] {
+      background: #fff1f2;
+      color: #842029;
+    }
+
+    .mission-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .mission-go {
+      min-height: 48px;
+      padding: 0.6rem 1.5rem;
+      border: none;
+      border-radius: 999px;
+      background: var(--purple-900);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .mission-go:hover:not(:disabled),
+    .mission-go:focus-visible:not(:disabled) {
+      background: var(--purple-700);
+    }
+
+    .mission-go:disabled {
+      background: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .mission-done {
+      display: grid;
+      gap: 0.6rem;
+      justify-items: center;
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius-md);
+      background: #edf9f2;
+      color: var(--green-700);
+      text-align: center;
+      font-weight: 800;
+      line-height: 1.75;
+    }
+
+    @media (max-width: 640px) {
+      .game-actions {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
     .encourage-card {
       margin: 1rem 0 0;
       padding: 0.8rem 1rem;
@@ -3402,6 +3773,62 @@
       </div>
     </section>
 
+    <section class="lesson-section optional-section" id="mini-game"
+             aria-labelledby="mini-game-title">
+      <div class="section-heading">
+        <p class="section-kicker">
+          🎮 Mini Game · <span class="optional-tag">กิจกรรมเสริม ไม่บังคับ</span>
+        </p>
+        <h2 id="mini-game-title">นักสืบค่าหลุดขอบ</h2>
+        <p class="section-intro">
+          สูตรของเราคือ <code>map(accel, −600, 600, 0, 4)</code>
+          แต่ <strong>map() ไม่ได้จำกัดค่าให้อัตโนมัติ</strong>
+          ถ้าค่าที่เซนเซอร์อ่านได้อยู่นอกช่วง −600 ถึง 600
+          พิกัดที่คำนวณได้จะหลุดออกนอกจอ 0–4
+          หน้าที่ของนักสืบคือดูค่าที่อ่านได้ แล้วบอกว่าค่าไหนปลอดภัย ค่าไหนหลุดขอบ
+        </p>
+      </div>
+
+      <p class="reward-preview">
+        🎯 แยกให้ถูกอย่างน้อย 6 จาก 8 ค่า ·
+        ⏱️ ประมาณ 5 นาที ·
+        🎁 ทำสำเร็จได้ +20 XP และเหรียญนักสืบค่าหลุดขอบ
+      </p>
+
+      <div class="game-stage" id="game-stage">
+        <p class="game-progress" id="game-progress" role="status" aria-live="polite">
+          ค่าที่ 1 จาก 8
+        </p>
+
+        <div class="game-card">
+          <p class="game-card-label">ค่าที่เซนเซอร์อ่านได้</p>
+          <p class="game-value" id="game-value">— <small>mg</small></p>
+        </div>
+
+        <div class="game-actions">
+          <button class="game-choice" id="game-safe" type="button" data-answer="safe">
+            ✅ ปลอดภัย
+            <small>อยู่ในช่วง −600 ถึง 600</small>
+          </button>
+          <button class="game-choice" id="game-out" type="button" data-answer="out">
+            ⚠️ หลุดขอบ
+            <small>ต้องใช้ constrain ช่วย</small>
+          </button>
+        </div>
+
+        <p class="game-feedback" id="game-feedback" role="status" aria-live="polite" hidden></p>
+        <button class="game-next" id="game-next" type="button" hidden>ค่าถัดไป</button>
+      </div>
+
+      <div class="game-result" id="game-result" hidden>
+        <p class="game-score" id="game-score">0 / 8</p>
+        <p class="game-verdict" id="game-verdict"></p>
+        <button class="game-replay" id="game-replay" type="button">เล่นอีกรอบ</button>
+      </div>
+
+      <p class="glossary-sync" id="mini-game-sync" role="status" aria-live="polite"></p>
+    </section>
+
     <section class="lesson-section" id="debug-case"
              aria-labelledby="debug-title">
       <div class="section-heading">
@@ -3578,6 +4005,144 @@
            aria-label="การ์ดคำศัพท์และคำย่อ"></div>
       <p class="glossary-sync" id="glossary-sync"
          role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="lesson-section optional-section" id="mission"
+             aria-labelledby="mission-title">
+      <div class="section-heading">
+        <p class="section-kicker">
+          🏆 Mission · <span class="optional-tag">กิจกรรมเสริม ไม่บังคับ</span>
+        </p>
+        <h2 id="mission-title">ออกแบบช่วงใช้งานให้เพื่อน</h2>
+        <p class="section-intro">
+          เพื่อนคนหนึ่งข้อมือเจ็บ เอียงมือได้ประมาณครึ่งเดียวของคนทั่วไป
+          เขาเล่นเกมเอียงที่เราทำไม่ได้ เพราะจุดไม่ยอมวิ่งไปถึงขอบจอสักที
+          ภารกิจของเราคือออกแบบช่วงใช้งานใหม่ให้เขาเล่นได้
+        </p>
+      </div>
+
+      <p class="reward-preview">
+        🎯 ผ่านครบทั้ง 4 ด่าน ·
+        ⏱️ ประมาณ 10 นาที ·
+        🎁 ทำสำเร็จได้ +30 XP และเหรียญนักออกแบบช่วงใช้งาน
+      </p>
+
+      <ol class="mission-track" id="mission-track">
+        <li data-stage="1" data-state="current">1 · รู้จักค่า</li>
+        <li data-stage="2" data-state="locked">2 · คำนวณ</li>
+        <li data-stage="3" data-state="locked">3 · วิเคราะห์</li>
+        <li data-stage="4" data-state="locked">4 · เขียนถึงเพื่อน</li>
+      </ol>
+
+      <div class="mission-stage" id="mission-stage-1" data-stage="1">
+        <p class="mission-level">ด่าน 1 · ทบทวนสิ่งที่รู้แล้ว</p>
+        <p class="mission-prompt">
+          ก่อนออกแบบช่วงใหม่ ต้องแน่ใจก่อนว่าเราอ่านค่าเป็น
+          <strong>1000 mg เท่ากับกี่ g</strong>
+        </p>
+        <div class="choice-list" id="mission-q1">
+          <button class="choice-button" type="button" data-value="a">0.1 g</button>
+          <button class="choice-button" type="button" data-value="b">1 g</button>
+          <button class="choice-button" type="button" data-value="c">10 g</button>
+          <button class="choice-button" type="button" data-value="d">1000 g</button>
+        </div>
+        <p class="mission-prompt">
+          แล้ว <strong>บอร์ดที่วางราบบนโต๊ะ</strong> จะอ่านค่าได้ประมาณเท่าไร
+        </p>
+        <div class="choice-list" id="mission-q2">
+          <button class="choice-button" type="button" data-value="a">0 mg</button>
+          <button class="choice-button" type="button" data-value="b">600 mg</button>
+          <button class="choice-button" type="button" data-value="c">1000 mg</button>
+          <button class="choice-button" type="button" data-value="d">2048 mg</button>
+        </div>
+        <div class="hint-card" id="mission-hint-1" hidden>
+          <p>💡 ย้อนกลับไปดู Section 4 ที่พูดถึงบอร์ดวางราบกับการเอียง 90 องศา</p>
+        </div>
+        <p class="mission-feedback" id="mission-feedback-1" role="status" aria-live="polite" hidden></p>
+        <div class="mission-actions">
+          <button class="mission-go" id="mission-check-1" type="button" disabled>ตรวจคำตอบ</button>
+          <button class="hint-more" id="mission-hint-button-1" type="button">ขอคำใบ้</button>
+        </div>
+      </div>
+
+      <div class="mission-stage" id="mission-stage-2" data-stage="2" hidden>
+        <p class="mission-level">ด่าน 2 · ลองคำนวณช่วงใหม่</p>
+        <p class="mission-prompt">
+          เพื่อนเอียงมือได้ครึ่งเดียว เราจึงลองแคบช่วงลงเหลือ
+          <code>map(accel, −300, 300, 0, 4)</code>
+          ถ้าเขาเอียงมือจนได้ค่า <strong>150 mg</strong> จุดจะไปอยู่ที่พิกัดไหน
+        </p>
+        <div class="choice-list" id="mission-q3">
+          <button class="choice-button" type="button" data-value="a">2</button>
+          <button class="choice-button" type="button" data-value="b">2.5</button>
+          <button class="choice-button" type="button" data-value="c">3</button>
+          <button class="choice-button" type="button" data-value="d">4</button>
+        </div>
+        <div class="hint-card" id="mission-hint-2" hidden>
+          <p id="mission-hint-2-text"></p>
+        </div>
+        <p class="mission-feedback" id="mission-feedback-2" role="status" aria-live="polite" hidden></p>
+        <div class="mission-actions">
+          <button class="mission-go" id="mission-check-2" type="button" disabled>ตรวจคำตอบ</button>
+          <button class="hint-more" id="mission-hint-button-2" type="button">ขอคำใบ้</button>
+        </div>
+      </div>
+
+      <div class="mission-stage" id="mission-stage-3" data-stage="3" hidden>
+        <p class="mission-level">ด่าน 3 · วิเคราะห์ผลที่ตามมา</p>
+        <p class="mission-prompt">
+          เมื่อเปลี่ยนจากช่วง −600…600 มาเป็น −300…300
+          จุดบนจอจะขยับอย่างไรเมื่อเทียบกับของเดิม
+        </p>
+        <div class="choice-list" id="mission-q4">
+          <button class="choice-button" type="button" data-value="a">
+            ไวขึ้น เอียงนิดเดียวจุดก็วิ่งไปไกล
+          </button>
+          <button class="choice-button" type="button" data-value="b">
+            ช้าลง ต้องเอียงมากขึ้นจุดถึงจะขยับ
+          </button>
+          <button class="choice-button" type="button" data-value="c">
+            เท่าเดิม เพราะพิกัดปลายทางยังเป็น 0–4 เหมือนกัน
+          </button>
+        </div>
+        <div class="hint-card" id="mission-hint-3" hidden>
+          <p id="mission-hint-3-text"></p>
+        </div>
+        <p class="mission-feedback" id="mission-feedback-3" role="status" aria-live="polite" hidden></p>
+        <div class="mission-actions">
+          <button class="mission-go" id="mission-check-3" type="button" disabled>ตรวจคำตอบ</button>
+          <button class="hint-more" id="mission-hint-button-3" type="button">ขอคำใบ้</button>
+        </div>
+      </div>
+
+      <div class="mission-stage" id="mission-stage-4" data-stage="4" hidden>
+        <p class="mission-level">ด่าน 4 · เขียนถึงเพื่อนจริง ๆ</p>
+        <p class="mission-prompt">
+          เขียนถึงเพื่อน 2–3 ประโยค บอกว่าจะเลือกช่วงเท่าไรให้เขา
+          และ <strong>ต้องวัดอะไรจากเขาก่อน</strong> ถึงจะเลือกช่วงได้จริง
+        </p>
+        <p class="mission-feedback" data-tone="" id="mission-guide">
+          💡 คำตอบที่ดีควรมี 2 อย่าง — ตัวเลขช่วงที่เลือก
+          และสิ่งที่ต้องวัดจากเพื่อนก่อนตัดสินใจ
+          ข้อนี้ไม่มีคำตอบถูกผิดตายตัว ครูจะเป็นคนอ่านเอง
+        </p>
+        <label class="sr-only" for="mission-letter">ข้อความถึงเพื่อน</label>
+        <textarea class="mission-letter" id="mission-letter" maxlength="600"
+                  placeholder="ถึงเพื่อน... เราคิดว่าช่วงที่เหมาะกับเธอคือ..."></textarea>
+        <p class="mission-count" id="mission-count">0 / 600 ตัวอักษร</p>
+        <div class="mission-actions">
+          <button class="mission-go" id="mission-submit" type="button" disabled>
+            ส่งภารกิจ
+          </button>
+        </div>
+      </div>
+
+      <div class="mission-done" id="mission-done" hidden>
+        <p>🏆 ภารกิจสำเร็จ</p>
+        <p id="mission-done-text"></p>
+      </div>
+
+      <p class="glossary-sync" id="mission-sync" role="status" aria-live="polite"></p>
     </section>
 
     <section class="lesson-section" id="quiz"
@@ -4075,6 +4640,7 @@
       }
 
       let lessonSections = [];
+      let lessonOptionalSteps = [];
       let lessonNavState = { completed: [], unlocked: 1 };
       const nextStepBar = document.querySelector("#next-step-bar");
       const nextStepText = document.querySelector("#next-step-text");
@@ -4086,6 +4652,9 @@
         try {
           const config = await callServer("getPublicConfig");
           lessonSections = Array.isArray(config.sections) ? config.sections : [];
+          lessonOptionalSteps = Array.isArray(config.optionalSteps)
+            ? config.optionalSteps
+            : [];
 
           // เกณฑ์แบบทดสอบถูกกำหนดไว้ทั้งที่นี่และที่เซิร์ฟเวอร์
           // ถ้าวันหนึ่งแก้ที่เดียวแล้วลืมอีกที่ ให้เห็นทันทีแทนที่จะเงียบไป
@@ -4239,6 +4808,78 @@
         return section ? document.querySelector(`#${section.id}`) : null;
       }
 
+      /**
+       * ล็อกหรือปลดล็อก Section หนึ่งอัน ใช้ร่วมกันทั้งขั้นบังคับและกิจกรรมเสริม
+       * ปิดเฉพาะตัวที่ยังเปิดอยู่ และปลดเฉพาะตัวที่การล็อกเป็นคนปิดเอง
+       * เพื่อไม่ไปเปิดปุ่มที่ตรรกะอื่นตั้งใจปิดไว้ เช่น ปุ่มส่ง Quiz ที่ยังตอบไม่ครบ
+       */
+      function setSectionLocked(element, locked, message) {
+        if (!element) return;
+        element.classList.toggle("is-locked", locked);
+
+        let notice = element.querySelector(".section-lock");
+        if (locked) {
+          if (!notice) {
+            notice = document.createElement("p");
+            notice.className = "section-lock";
+            element.insertBefore(notice, element.firstElementChild);
+          }
+          notice.textContent = message;
+        } else if (notice) {
+          notice.remove();
+        }
+
+        element
+          .querySelectorAll("button, input, select, textarea")
+          .forEach((control) => {
+            if (control.closest(".section-lock")) return;
+            if (locked) {
+              if (!control.disabled) {
+                control.disabled = true;
+                control.dataset.lockedByNav = "yes";
+              }
+            } else if (control.dataset.lockedByNav === "yes") {
+              control.disabled = false;
+              delete control.dataset.lockedByNav;
+            }
+          });
+      }
+
+      /**
+       * กิจกรรมเสริมไม่ได้อยู่ในลำดับบังคับ จึงใช้ unlockAfter ตัดสินแทนเลขขั้น
+       * เงื่อนไขตรงกับฝั่งเซิร์ฟเวอร์คือต้องทำขั้นนั้นเสร็จแบบต่อเนื่องจริง
+       */
+      function applyOptionalLocks() {
+        const freeMode = previewSession && previewSession.mode === "free";
+
+        lessonOptionalSteps.forEach((step) => {
+          const element = document.querySelector("#" + step.id);
+          if (!element) return;
+
+          const ready = lessonNavState.completed.indexOf(step.unlockAfter) !== -1;
+          const need = lessonSections.find((item) => item.order === step.unlockAfter);
+          setSectionLocked(
+            element,
+            !freeMode && !ready,
+            need
+              ? `🔒 กิจกรรมเสริมนี้จะเปิดให้เมื่อทำ Section ${need.order} · ${need.title} เสร็จแล้ว`
+              : "🔒 ยังเข้าไม่ได้"
+          );
+        });
+
+        syncOptionalControls();
+      }
+
+      /**
+       * การปลดล็อกจะเปิดทุกปุ่มที่มันเคยปิดไว้ รวมถึงปุ่มที่มีเงื่อนไขของตัวเอง
+       * เช่นปุ่มตรวจคำตอบที่ต้องเลือกครบก่อน และปุ่มส่งภารกิจที่ต้องเขียนถึงเกณฑ์
+       * จึงต้องคำนวณสถานะจริงคืนให้ทันทีหลังปลดล็อก
+       */
+      function syncOptionalControls() {
+        [1, 2, 3].forEach((stage) => refreshMissionCheckButton(stage));
+        refreshMissionLetter();
+      }
+
       function applyLessonLocks() {
         const total = lessonSections.length;
         // โหมดทดลองแบบข้ามขั้นเปิดทุก Section ให้ครูกระโดดไปดูจุดใดก็ได้ ตาม Blueprint #79
@@ -4248,44 +4889,17 @@
             : lessonNavState.unlocked;
 
         lessonSections.forEach((section) => {
-          const element = sectionElement(section.order);
-          if (!element) return;
-
-          const locked = section.order > unlocked;
-          element.classList.toggle("is-locked", locked);
-
-          let notice = element.querySelector(".section-lock");
-          if (locked) {
-            if (!notice) {
-              notice = document.createElement("p");
-              notice.className = "section-lock";
-              element.insertBefore(notice, element.firstElementChild);
-            }
-            const need = lessonSections.find((item) => item.order === unlocked);
-            notice.textContent = need
+          const need = lessonSections.find((item) => item.order === unlocked);
+          setSectionLocked(
+            sectionElement(section.order),
+            section.order > unlocked,
+            need
               ? `🔒 ยังเข้าไม่ได้ กรุณาทำ Section ${need.order} · ${need.title} ให้เสร็จก่อน`
-              : "🔒 ยังเข้าไม่ได้";
-          } else if (notice) {
-            notice.remove();
-          }
-
-          // ปิดเฉพาะตัวที่ยังเปิดอยู่ และปลดเฉพาะตัวที่การล็อกเป็นคนปิดเอง
-          // เพื่อไม่ไปเปิดปุ่มที่ตรรกะอื่นตั้งใจปิดไว้ เช่น ปุ่มส่ง Quiz ที่ยังตอบไม่ครบ
-          element
-            .querySelectorAll("button, input, select, textarea")
-            .forEach((control) => {
-              if (control.closest(".section-lock")) return;
-              if (locked) {
-                if (!control.disabled) {
-                  control.disabled = true;
-                  control.dataset.lockedByNav = "yes";
-                }
-              } else if (control.dataset.lockedByNav === "yes") {
-                control.disabled = false;
-                delete control.dataset.lockedByNav;
-              }
-            });
+              : "🔒 ยังเข้าไม่ได้"
+          );
         });
+
+        applyOptionalLocks();
 
         const done = lessonNavState.completed.length;
         const label = document.querySelector("#progress-label");
@@ -4440,6 +5054,8 @@
         void restoreDebugCase();
         void restoreGlossaryProgress();
         void restoreQuizProgress();
+        void restoreMiniGame();
+        void restoreMission();
       }
 
       function showAuthenticatedUser(user) {
@@ -4869,6 +5485,36 @@
             adminDetailAttempts.appendChild(reward);
           }
 
+          // กิจกรรมเสริมไม่บังคับ ครูจึงต้องเห็นว่าใครทำและทำได้แค่ไหน
+          // เพื่อใช้ชวนคุยได้ ไม่ใช่เพื่อตัดสินว่าใครไม่ทำ ตาม Blueprint #198
+          (result.optionalSteps || []).forEach((step) => {
+            const line = document.createElement("p");
+            if (!step.unlocked) {
+              line.textContent = `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · ยังไม่เปิด`;
+            } else if (step.completed) {
+              line.textContent = step.total
+                ? `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · ทำสำเร็จ ${step.bestScore}/${step.total}`
+                : `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · ทำสำเร็จแล้ว`;
+            } else if (step.bestScore > 0) {
+              line.textContent = `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · ลองแล้ว ได้ ${step.bestScore}/${step.total} ยังไม่ถึงเกณฑ์`;
+            } else {
+              line.textContent = `${step.kind === "game" ? "🎮" : "🏆"} ${step.title} · เปิดแล้วแต่ยังไม่ได้ทำ`;
+            }
+            adminDetailAttempts.appendChild(line);
+          });
+
+          // จดหมายถึงเพื่อนเป็นคำตอบปลายเปิด ระบบตรวจให้ไม่ได้ ครูต้องอ่านเอง
+          if (result.missionLetter) {
+            const card = document.createElement("div");
+            card.className = "admin-attempt";
+            const heading = document.createElement("h4");
+            heading.textContent = "🏆 ภารกิจ · ข้อความที่เขียนถึงเพื่อน";
+            const text = document.createElement("p");
+            text.textContent = result.missionLetter;
+            card.append(heading, text);
+            adminDetailAttempts.appendChild(card);
+          }
+
           const reflection = result.reflection || {};
           if (reflection.summary || reflection.confidence) {
             const card = document.createElement("div");
@@ -5171,6 +5817,467 @@
             showLogin("เชื่อมต่อระบบไม่ได้ในตอนนี้ กรุณารีเฟรชหน้าอีกครั้ง");
           }
         }
+      }
+
+      /* ════════════════════════════════════════════════════════════
+         Mini Game · นักสืบค่าหลุดขอบ — Blueprint #40 #41 #43 #101
+         ตัวเลขทุกค่าอ้างจากแผนการสอนข้อ 5 ไม่ได้สุ่มขึ้นใหม่
+         ════════════════════════════════════════════════════════════ */
+      const GAME_RANGE_MIN = -600;
+      const GAME_RANGE_MAX = 600;
+      const GAME_PIXEL_MAX = 4;
+      const GAME_PASS_MARK = 6;
+      const GAME_VALUES = Object.freeze([
+        { accel: 0, safe: true },
+        { accel: 800, safe: false },
+        { accel: -600, safe: true },
+        { accel: 1000, safe: false },
+        { accel: 300, safe: true },
+        { accel: -900, safe: false },
+        { accel: 600, safe: true },
+        { accel: -1023, safe: false }
+      ]);
+
+      const gameStage = document.querySelector("#game-stage");
+      const gameProgress = document.querySelector("#game-progress");
+      const gameValue = document.querySelector("#game-value");
+      const gameSafeButton = document.querySelector("#game-safe");
+      const gameOutButton = document.querySelector("#game-out");
+      const gameFeedback = document.querySelector("#game-feedback");
+      const gameNext = document.querySelector("#game-next");
+      const gameResult = document.querySelector("#game-result");
+      const gameScoreText = document.querySelector("#game-score");
+      const gameVerdict = document.querySelector("#game-verdict");
+      const gameReplay = document.querySelector("#game-replay");
+      const miniGameSync = document.querySelector("#mini-game-sync");
+
+      let gameOrder = [];
+      let gameIndex = 0;
+      let gameScore = 0;
+      let gameLocked = false;
+
+      /** สูตรเดียวกับที่ใช้ในบทเรียน map(accel, −600, 600, 0, 4) */
+      function mapAccelToPixel(accel) {
+        return (
+          ((accel - GAME_RANGE_MIN) * GAME_PIXEL_MAX) /
+          (GAME_RANGE_MAX - GAME_RANGE_MIN)
+        );
+      }
+
+      function shuffled(list) {
+        const copy = list.slice();
+        for (let i = copy.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+      }
+
+      /**
+       * Feedback ต้องอธิบายว่าทำไม ไม่ใช่บอกแค่ถูกหรือผิด ตาม Blueprint #43 #44
+       * ทุกข้อความอ้างค่าที่คำนวณได้จริง เพื่อให้นักเรียนเห็นหลักฐาน
+       */
+      function describeGameAnswer(item, saidSafe) {
+        const mapped = mapAccelToPixel(item.accel).toFixed(2);
+        const correct = saidSafe === item.safe;
+        const atEdge = Math.abs(item.accel) === GAME_RANGE_MAX;
+
+        if (item.safe) {
+          const edgeNote = atEdge
+            ? " ค่านี้อยู่ที่ขอบพอดี จึงยังนับว่าปลอดภัย"
+            : "";
+          return {
+            correct: correct,
+            text: correct
+              ? `✅ ถูกต้อง — map ได้ ${mapped} ซึ่งยังอยู่ในพิกัด 0–4${edgeNote}`
+              : `🤔 ยังไม่ตรง — map ได้ ${mapped} ซึ่งยังอยู่ในพิกัด 0–4 ค่านี้ไม่หลุดขอบ${edgeNote}`
+          };
+        }
+
+        return {
+          correct: correct,
+          text: correct
+            ? `✅ ถูกต้อง — map ได้ ${mapped} ซึ่งหลุดพิกัด 0–4 ถ้าไม่ใส่ constrain จุดจะหายไปจากจอ`
+            : `🤔 ยังไม่ตรง — ลองคำนวณดู map ได้ ${mapped} ซึ่งหลุดพิกัด 0–4 จำไว้ว่า map() ไม่ได้จำกัดค่าให้เอง`
+        };
+      }
+
+      function renderGameValue() {
+        const item = gameOrder[gameIndex];
+        if (!item) return;
+
+        gameProgress.textContent = `ค่าที่ ${gameIndex + 1} จาก ${gameOrder.length} · ตอบถูกแล้ว ${gameScore}`;
+        gameValue.innerHTML = "";
+        gameValue.append(
+          document.createTextNode(String(item.accel) + " "),
+          Object.assign(document.createElement("small"), { textContent: "mg" })
+        );
+
+        [gameSafeButton, gameOutButton].forEach((button) => {
+          button.disabled = false;
+          delete button.dataset.result;
+        });
+        gameFeedback.hidden = true;
+        gameNext.hidden = true;
+        gameLocked = false;
+      }
+
+      function startMiniGame() {
+        gameOrder = shuffled(GAME_VALUES);
+        gameIndex = 0;
+        gameScore = 0;
+        gameResult.hidden = true;
+        gameStage.hidden = false;
+        renderGameValue();
+      }
+
+      function answerMiniGame(saidSafe) {
+        if (gameLocked) return;
+        const item = gameOrder[gameIndex];
+        if (!item) return;
+
+        gameLocked = true;
+        const verdict = describeGameAnswer(item, saidSafe);
+        if (verdict.correct) gameScore += 1;
+
+        const chosen = saidSafe ? gameSafeButton : gameOutButton;
+        chosen.dataset.result = verdict.correct ? "correct" : "incorrect";
+        [gameSafeButton, gameOutButton].forEach((button) => {
+          button.disabled = true;
+        });
+
+        gameFeedback.textContent = verdict.text;
+        gameFeedback.dataset.tone = verdict.correct ? "correct" : "incorrect";
+        gameFeedback.hidden = false;
+
+        const last = gameIndex >= gameOrder.length - 1;
+        gameNext.textContent = last ? "ดูผลรวม" : "ค่าถัดไป";
+        gameNext.hidden = false;
+        gameNext.focus({ preventScroll: true });
+      }
+
+      async function finishMiniGame() {
+        const total = gameOrder.length;
+        const passed = gameScore >= GAME_PASS_MARK;
+
+        gameStage.hidden = true;
+        gameResult.hidden = false;
+        gameScoreText.textContent = `${gameScore} / ${total}`;
+        gameVerdict.dataset.tone = passed ? "pass" : "fail";
+        gameVerdict.textContent = passed
+          ? "ผ่านภารกิจนักสืบแล้ว จำได้แม่นว่า map() ไม่ได้จำกัดค่าให้เอง"
+          : `ยังไม่ถึงเกณฑ์ ${GAME_PASS_MARK} จาก ${total} ลองอีกรอบได้เลย ไม่มีการหักคะแนน`;
+        gameResult.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        miniGameSync.textContent = "กำลังบันทึกผลเกม...";
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const state = result.state;
+          const previous = (state.worksheet && state.worksheet.miniGame) || {};
+          const best = Math.max(Number(previous.bestScore) || 0, gameScore);
+
+          // กิจกรรมเสริมต้องไม่แตะ currentSection หรือ completedSections
+          // เพราะไม่ได้อยู่ในลำดับบังคับ ถ้าแตะจะทำให้การล็อกขั้นเพี้ยน
+          state.worksheet = {
+            ...(state.worksheet || {}),
+            miniGame: {
+              completed: best >= GAME_PASS_MARK,
+              bestScore: best,
+              total: total,
+              plays: (Number(previous.plays) || 0) + 1
+            }
+          };
+
+          const saved = await callServer("saveProgress", sessionToken, state);
+          renderRewards(saved.rewards);
+          miniGameSync.textContent =
+            best > gameScore
+              ? `บันทึกแล้ว · สถิติดีที่สุดของหนูยังเป็น ${best}/${total}`
+              : `บันทึกแล้ว · สถิติใหม่ ${best}/${total}`;
+        } catch (error) {
+          miniGameSync.textContent = `บันทึกผลไม่สำเร็จ: ${error.message}`;
+        }
+      }
+
+      async function restoreMiniGame() {
+        if (!gameStage) return;
+        miniGameSync.textContent = "";
+        startMiniGame();
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const saved =
+            result.state && result.state.worksheet && result.state.worksheet.miniGame;
+          if (saved && Number(saved.bestScore) > 0) {
+            miniGameSync.textContent = saved.completed
+              ? `เคยผ่านแล้ว สถิติดีที่สุด ${saved.bestScore}/${saved.total || GAME_VALUES.length} · เล่นซ้ำได้ไม่จำกัด`
+              : `เคยเล่นแล้ว สถิติดีที่สุด ${saved.bestScore}/${saved.total || GAME_VALUES.length} · ต้องได้ ${GAME_PASS_MARK} ขึ้นไปจึงจะผ่าน`;
+          }
+        } catch (error) {
+          /* อ่านสถิติเดิมไม่ได้ก็ยังเล่นเกมได้ตามปกติ */
+        }
+      }
+
+      if (gameSafeButton && gameOutButton && gameNext && gameReplay) {
+        gameSafeButton.addEventListener("click", () => answerMiniGame(true));
+        gameOutButton.addEventListener("click", () => answerMiniGame(false));
+        gameNext.addEventListener("click", () => {
+          if (gameIndex >= gameOrder.length - 1) {
+            void finishMiniGame();
+            return;
+          }
+          gameIndex += 1;
+          renderGameValue();
+        });
+        gameReplay.addEventListener("click", () => {
+          startMiniGame();
+          gameStage.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        });
+      }
+
+      /* ════════════════════════════════════════════════════════════
+         Mission · ออกแบบช่วงใช้งานให้เพื่อน — Blueprint #42 #45 #164
+         โจทย์มาจากหัวข้อ "โจทย์ขยายผล" ข้อ 2 ในแผนการสอนของครู
+         ════════════════════════════════════════════════════════════ */
+      const MISSION_LETTER_MIN = 40;
+      const MISSION_STAGES = 4;
+      const MISSION_ANSWERS = { q1: "b", q2: "a", q3: "c", q4: "a" };
+      const MISSION_HINTS = {
+        2: [
+          "ลองหาก่อนว่า 150 อยู่ตรงไหนของช่วง −300 ถึง 300",
+          "จาก −300 ไปถึง 150 คือ 450 จากช่วงทั้งหมด 600 → 450 ÷ 600 = 0.75 แล้วเอา 0.75 × 4"
+        ],
+        3: [
+          "ลองคิดดูว่าถ้าช่วงที่รับเข้ามาแคบลง แต่พิกัดปลายทางยังเป็น 0–4 เท่าเดิม จะเกิดอะไรขึ้น",
+          "ลองเทียบตัวเลขดู ค่า 150 mg ในช่วงเดิม −600…600 ได้พิกัด 2.5 แต่ในช่วงใหม่ −300…300 ได้ 3"
+        ]
+      };
+
+      const missionTrack = document.querySelector("#mission-track");
+      const missionLetter = document.querySelector("#mission-letter");
+      const missionCount = document.querySelector("#mission-count");
+      const missionSubmit = document.querySelector("#mission-submit");
+      const missionDone = document.querySelector("#mission-done");
+      const missionDoneText = document.querySelector("#mission-done-text");
+      const missionSync = document.querySelector("#mission-sync");
+
+      let missionStage = 1;
+      let missionChoices = {};
+      let missionHintLevel = { 2: 0, 3: 0 };
+
+      function missionStageElement(stage) {
+        return document.querySelector("#mission-stage-" + stage);
+      }
+
+      function renderMissionTrack() {
+        if (!missionTrack) return;
+        missionTrack.querySelectorAll("li").forEach((item) => {
+          const stage = Number(item.dataset.stage);
+          item.dataset.state =
+            stage < missionStage ? "done" : stage === missionStage ? "current" : "locked";
+        });
+      }
+
+      function showMissionStage(stage) {
+        missionStage = stage;
+        for (let index = 1; index <= MISSION_STAGES; index += 1) {
+          const element = missionStageElement(index);
+          if (element) element.hidden = index !== stage;
+        }
+        renderMissionTrack();
+      }
+
+      /** เปิดปุ่มตรวจเมื่อเลือกครบทุกข้อของด่านนั้นแล้ว */
+      function refreshMissionCheckButton(stage) {
+        const button = document.querySelector("#mission-check-" + stage);
+        if (!button) return;
+        const needed = stage === 1 ? ["q1", "q2"] : stage === 2 ? ["q3"] : ["q4"];
+        const ready = needed.every((key) => Boolean(missionChoices[key]));
+        if (button.dataset.lockedByNav === "yes") return;
+        button.disabled = !ready;
+      }
+
+      function bindMissionChoices(listId, key, stage) {
+        const list = document.querySelector("#" + listId);
+        if (!list) return;
+        list.querySelectorAll(".choice-button").forEach((button) => {
+          button.addEventListener("click", () => {
+            list.querySelectorAll(".choice-button").forEach((other) => {
+              other.setAttribute("aria-pressed", String(other === button));
+            });
+            missionChoices[key] = button.dataset.value;
+            refreshMissionCheckButton(stage);
+          });
+        });
+      }
+
+      function missionExplain(stage, correct) {
+        if (stage === 1) {
+          return correct
+            ? "✅ ถูกทั้งสองข้อ — 1000 mg = 1 g และบอร์ดวางราบอ่านได้ 0 mg พร้อมออกแบบต่อแล้ว"
+            : "🤔 ยังไม่ครบ — ทบทวนว่า 1000 mg คือ 1 g และบอร์ดที่วางราบไม่ได้เอียงเลย จึงอ่านได้ 0 mg";
+        }
+        if (stage === 2) {
+          return correct
+            ? "✅ ถูกต้อง — 150 อยู่ที่ 3 ใน 4 ของช่วง −300…300 จึงได้พิกัด 3"
+            : "🤔 ยังไม่ตรง — ลองคิดเป็นสัดส่วน จาก −300 ถึง 150 คือ 450 จาก 600 → 0.75 × 4 = 3";
+        }
+        return correct
+          ? "✅ ถูกต้อง — ช่วงแคบลงครึ่งหนึ่ง เอียงเท่าเดิมจุดจึงขยับไกลขึ้นเป็นสองเท่า เพื่อนที่เอียงมือได้น้อยจึงเล่นได้"
+          : "🤔 ยังไม่ตรง — เทียบดู 150 mg ในช่วงเดิมได้ 2.5 แต่ช่วงใหม่ได้ 3 แปลว่าจุดขยับไวขึ้น";
+      }
+
+      async function saveMissionProgress(patch) {
+        const result = await callServer("getProgress", sessionToken);
+        const state = result.state;
+        const previous = (state.worksheet && state.worksheet.mission) || {};
+        // เช่นเดียวกับ Mini Game คือห้ามแตะลำดับขั้นบังคับ
+        state.worksheet = {
+          ...(state.worksheet || {}),
+          mission: { ...previous, ...patch }
+        };
+        return callServer("saveProgress", sessionToken, state);
+      }
+
+      function checkMissionStage(stage) {
+        const keys = stage === 1 ? ["q1", "q2"] : stage === 2 ? ["q3"] : ["q4"];
+        const correct = keys.every((key) => missionChoices[key] === MISSION_ANSWERS[key]);
+        const feedback = document.querySelector("#mission-feedback-" + stage);
+
+        if (feedback) {
+          feedback.textContent = missionExplain(stage, correct);
+          feedback.dataset.tone = correct ? "correct" : "incorrect";
+          feedback.hidden = false;
+        }
+        if (!correct) return;
+
+        const next = stage + 1;
+        window.setTimeout(() => {
+          showMissionStage(next);
+          const element = missionStageElement(next);
+          if (element) element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, 900);
+
+        missionSync.textContent = "กำลังบันทึกความก้าวหน้าภารกิจ...";
+        saveMissionProgress({ stage: next })
+          .then(() => {
+            missionSync.textContent = `ผ่านด่าน ${stage} แล้ว บันทึกเรียบร้อย`;
+          })
+          .catch((error) => {
+            missionSync.textContent = `บันทึกไม่สำเร็จ: ${error.message}`;
+          });
+      }
+
+      function showMissionHint(stage) {
+        const hints = MISSION_HINTS[stage];
+        const card = document.querySelector("#mission-hint-" + stage);
+        const text = document.querySelector("#mission-hint-" + stage + "-text");
+        const button = document.querySelector("#mission-hint-button-" + stage);
+
+        if (!hints) {
+          const staticCard = document.querySelector("#mission-hint-" + stage);
+          if (staticCard) staticCard.hidden = false;
+          if (button) button.hidden = true;
+          return;
+        }
+        if (!card || !text) return;
+
+        // Blueprint #45 — คำใบ้เล็กน้อยก่อน แล้วค่อยชัดขึ้น ห้ามเฉลยทันที
+        const level = Math.min(missionHintLevel[stage], hints.length - 1);
+        text.textContent = hints[level];
+        card.hidden = false;
+
+        if (missionHintLevel[stage] >= hints.length - 1) {
+          if (button) button.hidden = true;
+        } else {
+          missionHintLevel[stage] += 1;
+          if (button) button.textContent = "ขอคำใบ้ที่ชัดขึ้น";
+        }
+      }
+
+      function refreshMissionLetter() {
+        if (!missionLetter || !missionCount || !missionSubmit) return;
+        const length = missionLetter.value.trim().length;
+        missionCount.textContent = `${missionLetter.value.length} / 600 ตัวอักษร`;
+        if (missionSubmit.dataset.lockedByNav === "yes") return;
+        missionSubmit.disabled = length < MISSION_LETTER_MIN;
+      }
+
+      async function submitMission() {
+        if (!missionLetter) return;
+        const letter = missionLetter.value.trim();
+        if (letter.length < MISSION_LETTER_MIN) {
+          missionSync.textContent = `เขียนอีกนิดนะ อย่างน้อย ${MISSION_LETTER_MIN} ตัวอักษร`;
+          missionLetter.focus();
+          return;
+        }
+
+        missionSubmit.disabled = true;
+        missionSync.textContent = "กำลังส่งภารกิจ...";
+        try {
+          const saved = await saveMissionProgress({
+            stage: MISSION_STAGES,
+            completed: true,
+            letter: letter
+          });
+          renderRewards(saved.rewards);
+          missionDoneText.textContent =
+            "ครูจะได้อ่านข้อความที่หนูเขียนถึงเพื่อน ขอบคุณที่คิดถึงคนที่ใช้งานจริง";
+          missionDone.hidden = false;
+          missionDone.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          missionSync.textContent = "ส่งภารกิจเรียบร้อย แก้ไขข้อความแล้วส่งใหม่ได้";
+        } catch (error) {
+          missionSync.textContent = `ส่งภารกิจไม่สำเร็จ: ${error.message}`;
+        } finally {
+          missionSubmit.disabled = false;
+        }
+      }
+
+      async function restoreMission() {
+        if (!missionTrack) return;
+        missionSync.textContent = "";
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const saved =
+            result.state && result.state.worksheet && result.state.worksheet.mission;
+          if (!saved) {
+            showMissionStage(1);
+            return;
+          }
+
+          const stage = Math.min(Math.max(Number(saved.stage) || 1, 1), MISSION_STAGES);
+          showMissionStage(stage);
+
+          if (saved.letter && missionLetter) {
+            missionLetter.value = String(saved.letter);
+            refreshMissionLetter();
+          }
+          if (saved.completed) {
+            missionDoneText.textContent =
+              "หนูทำภารกิจนี้สำเร็จแล้ว จะกลับมาแก้ข้อความถึงเพื่อนอีกก็ได้";
+            missionDone.hidden = false;
+          }
+        } catch (error) {
+          showMissionStage(1);
+        }
+      }
+
+      bindMissionChoices("mission-q1", "q1", 1);
+      bindMissionChoices("mission-q2", "q2", 1);
+      bindMissionChoices("mission-q3", "q3", 2);
+      bindMissionChoices("mission-q4", "q4", 3);
+
+      [1, 2, 3].forEach((stage) => {
+        const check = document.querySelector("#mission-check-" + stage);
+        if (check) check.addEventListener("click", () => checkMissionStage(stage));
+        const hint = document.querySelector("#mission-hint-button-" + stage);
+        if (hint) hint.addEventListener("click", () => showMissionHint(stage));
+      });
+
+      if (missionLetter) {
+        missionLetter.addEventListener("input", refreshMissionLetter);
+      }
+      if (missionSubmit) {
+        missionSubmit.addEventListener("click", () => void submitMission());
       }
 
       const hookChoices = document.querySelectorAll("#hook-choices .choice-button");
