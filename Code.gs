@@ -822,6 +822,29 @@ function getStudentDetail(token, username) {
 }
 
 /**
+ * สำเนาความก้าวหน้าที่ครบพอจะกู้คืนได้จริง ตาม Blueprint #227
+ * ต้องเก็บคำตอบใน worksheet และ hookAnswers ด้วย ไม่ใช่เก็บแค่คะแนนกับเลขขั้น
+ * เพราะระบบตัดสินว่านักเรียนทำขั้นไหนเสร็จจากคำตอบเหล่านี้
+ * ถ้าเก็บไม่ครบ กู้คืนแล้วจะได้เลขขั้นกลับมาแต่คำตอบหายไป
+ */
+function buildProgressSnapshot_(state) {
+  const source = state && typeof state === 'object' && !Array.isArray(state)
+    ? state
+    : {};
+
+  return {
+    quiz: source.quiz || null,
+    completedSections: Array.isArray(source.completedSections)
+      ? source.completedSections
+      : [],
+    currentSection: Number(source.currentSection) || 1,
+    worksheet: source.worksheet || null,
+    hookAnswers: source.hookAnswers || null,
+    reflection: source.reflection || null
+  };
+}
+
+/**
  * Administrator-only quiz reset — Soft Delete ตาม Blueprint #227
  * เก็บสำเนาคะแนนเดิมลงชีต QuizArchive ก่อนเสมอ จึงกู้คืนได้ด้วย restoreStudentQuiz()
  * ไม่ลบข้อมูลถาวร และไม่แตะชีต Attempts ที่เป็นประวัติการส่งทุกครั้ง
@@ -866,13 +889,7 @@ function resetStudentQuiz(token, username, reason) {
     }
     // สำเนาต้องครอบคลุมทั้งคะแนนและความก้าวหน้ารายขั้น
     // ไม่เช่นนั้นกู้คืนแล้วจะได้คะแนนกลับมาแต่ขั้นที่ทำไปแล้วหายไป
-    const snapshot = {
-      quiz: state && state.quiz ? state.quiz : null,
-      completedSections: state && Array.isArray(state.completedSections)
-        ? state.completedSections
-        : [],
-      currentSection: state ? Number(state.currentSection) || 1 : 1
-    };
+    const snapshot = buildProgressSnapshot_(state);
 
     // Soft Delete — เก็บสำเนาก่อนเขียนทับเสมอ
     appendQuizArchive_(session.username, target, note, before, snapshot);
@@ -914,6 +931,109 @@ function resetStudentQuiz(token, username, reason) {
     );
 
     return { ok: true, username: target, displayName: user.displayName, before: before };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * รีเซ็ตความก้าวหน้าทั้งบท ให้นักเรียนกลับไปเริ่มที่ Section 1 ใหม่ทั้งหมด
+ * ต่างจาก resetStudentQuiz ที่ถอยเฉพาะขั้นแบบทดสอบ
+ *
+ * ต้องล้างคำตอบใน worksheet และ hookAnswers ด้วย ไม่ใช่ล้างแค่ completedSections
+ * เพราะระบบมีตัวซ่อมความก้าวหน้าที่อ่านคำตอบเหล่านี้เป็นหลักฐาน
+ * ถ้าล้างแต่เลขขั้นแล้วปล่อยคำตอบไว้ ตัวซ่อมจะเติมกลับให้ทันทีที่นักเรียนเปิดบทเรียน
+ * ครูจะเห็นว่ารีเซ็ตแล้วไม่มีอะไรเกิดขึ้น
+ *
+ * Soft Delete ตาม Blueprint #227 — เก็บสำเนาก่อนเสมอ กู้คืนได้ด้วยปุ่มเดียวกับรีเซ็ตคะแนน
+ * บันทึก Audit ครบตาม Blueprint #187
+ */
+function resetStudentProgress(token, username, reason) {
+  const session = requireRole_(token, 'admin');
+  const target = normalizeUsername_(username);
+  const note = sanitizePlainText_(reason, 200).trim();
+  const user = findUser_(target);
+
+  if (!user || user.role !== 'student') {
+    throw new Error('ไม่พบบัญชีนักเรียน');
+  }
+  if (note.length < 5) {
+    throw new Error('กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร เพื่อบันทึกไว้ในประวัติการแก้ไข');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const sheet = getSpreadsheet_().getSheetByName('Progress');
+    const row = findRowByValue_(sheet, 1, target);
+
+    if (row < 2) {
+      throw new Error('นักเรียนคนนี้ยังไม่มีความก้าวหน้าให้รีเซ็ต');
+    }
+
+    const current = sheet.getRange(row, 3, 1, 5).getValues()[0];
+    const before = {
+      latestScore: Number(current[2]) || 0,
+      bestScore: Number(current[3]) || 0,
+      attempts: Number(current[4]) || 0
+    };
+
+    let state = null;
+    try {
+      state = JSON.parse(String(current[0] || ''));
+    } catch (error) {
+      state = null;
+    }
+
+    const snapshot = buildProgressSnapshot_(state);
+    const doneBefore = contiguousCompleted_(snapshot.completedSections).length;
+
+    if (doneBefore === 0 && before.attempts === 0) {
+      throw new Error('นักเรียนคนนี้ยังไม่ได้เริ่มบทเรียน จึงไม่มีอะไรให้รีเซ็ต');
+    }
+
+    appendQuizArchive_(session.username, target, note, before, snapshot);
+
+    const cleared = {
+      version: APP_CONFIG.stateVersion,
+      username: target,
+      currentSection: 1,
+      completedSections: [],
+      hookAnswers: {},
+      worksheet: {},
+      reflection: null,
+      quiz: {
+        answers: {},
+        latestScore: 0,
+        bestScore: 0,
+        attempts: 0,
+        locked: false
+      }
+    };
+
+    sheet.getRange(row, 3, 1, 2).setValues([[JSON.stringify(cleared), 1]]);
+    sheet.getRange(row, 5, 1, 4).setValues([[0, 0, 0, new Date()]]);
+
+    appendAudit_(
+      session.username,
+      'progress_reset',
+      'success',
+      target +
+        ' | ก่อน ขั้น ' + doneBefore + '/' + LESSON_SECTION_COUNT +
+        ' คะแนน ' + before.latestScore + '/' + before.bestScore +
+        ' ทำ ' + before.attempts + ' ครั้ง' +
+        ' | หลัง ขั้น 0/' + LESSON_SECTION_COUNT + ' คะแนน 0/0 ทำ 0 ครั้ง' +
+        ' | เหตุผล ' + note
+    );
+
+    return {
+      ok: true,
+      username: target,
+      displayName: user.displayName,
+      before: before,
+      completedBefore: doneBefore
+    };
   } finally {
     lock.releaseLock();
   }
@@ -999,6 +1119,11 @@ function restoreStudentQuiz(token, username) {
           Number(snapshot.currentSection) || 1,
           unlockedSection_(state.completedSections)
         );
+        // สำเนารุ่นแรกไม่มีสามช่องนี้ จึงคืนเฉพาะเมื่อมีจริง
+        // ไม่อย่างนั้นจะไปเขียนทับคำตอบปัจจุบันด้วยค่าว่าง
+        if (snapshot.worksheet) state.worksheet = snapshot.worksheet;
+        if (snapshot.hookAnswers) state.hookAnswers = snapshot.hookAnswers;
+        if (snapshot.reflection) state.reflection = snapshot.reflection;
       }
       // เขียนเลขขั้นคู่กับ JSON ด้วยเหตุผลเดียวกับตอนรีเซ็ต
       sheet.getRange(row, 3, 1, 2).setValues([[
@@ -1086,7 +1211,18 @@ function buildStudentDashboardRows_() {
   }
 
   progressRows.forEach(function (row) {
+    // ครูต้องรู้ว่านักเรียนทำไปกี่ขั้นแล้ว เพื่อตัดสินว่าควรรีเซ็ตหรือยัง
+    // อ่านจาก progressJson เพราะคอลัมน์ currentSection บอกแค่ว่าอยู่ตรงไหน
+    let completedCount = 0;
+    try {
+      const parsed = JSON.parse(String(row.progressJson || ''));
+      completedCount = contiguousCompleted_(parsed.completedSections).length;
+    } catch (error) {
+      completedCount = 0;
+    }
+
     progressByUsername[row.username] = {
+      completedCount: completedCount,
       currentSection: Number(row.currentSection || 1),
       latestScore: Number(row.latestScore || 0),
       bestScore: Number(row.bestScore || 0),
@@ -1103,6 +1239,7 @@ function buildStudentDashboardRows_() {
       active: toBoolean_(user.active),
       canRestoreQuiz: Boolean(restorableByUsername[String(user.username)])
     }, progressByUsername[user.username] || {
+      completedCount: 0,
       currentSection: 1,
       latestScore: 0,
       bestScore: 0,

@@ -5493,17 +5493,23 @@
         });
       }
 
+      // เดิมตัดสินจากจำนวนครั้งที่ส่งแบบทดสอบอย่างเดียว
+      // นักเรียนที่เรียนไปแล้วครึ่งบทแต่ยังไม่ถึงแบบทดสอบจึงขึ้นว่า "ยังไม่เริ่ม"
+      // ซึ่งขัดกับเลข Section ที่แสดงอยู่ข้าง ๆ ในแถวเดียวกัน
       function getAdminStatus(student) {
-        if (student.attempts < 1) {
-          return { label: "ยังไม่เริ่ม", className: "is-new" };
+        if (student.attempts > 0) {
+          if (student.bestScore >= QUIZ_PASSING_SCORE) {
+            return { label: "ผ่าน", className: "is-pass" };
+          }
+          if (student.attempts >= 3) {
+            return { label: "ควรติดตาม", className: "is-help" };
+          }
+          return { label: "กำลังเรียน", className: "is-progress" };
         }
-        if (student.bestScore >= QUIZ_PASSING_SCORE) {
-          return { label: "ผ่าน", className: "is-pass" };
+        if (Number(student.completedCount) > 0) {
+          return { label: "กำลังเรียน", className: "is-progress" };
         }
-        if (student.attempts >= 3) {
-          return { label: "ควรติดตาม", className: "is-help" };
-        }
-        return { label: "กำลังเรียน", className: "is-progress" };
+        return { label: "ยังไม่เริ่ม", className: "is-new" };
       }
 
       // บนจอแคบ หัวตารางถูกซ่อนแล้วใช้ป้ายนี้แทน ครูจึงยังรู้ว่าตัวเลขคืออะไร
@@ -5533,6 +5539,49 @@
         document.querySelector("#admin-needs-help").textContent = needsHelp.length;
       }
 
+      /**
+       * การรีเซ็ตสองแบบใช้ฟอร์มขอเหตุผลและเส้นทางกู้คืนชุดเดียวกัน
+       * ต่างกันที่ขอบเขต — แบบแรกถอยเฉพาะแบบทดสอบ แบบที่สองกลับไปเริ่มทั้งบท
+       * ทั้งสองแบบเก็บสำเนาก่อนเสมอ และกู้คืนได้ด้วยปุ่มเดียวกัน
+       */
+      const RESET_MODES = {
+        quiz: {
+          label: "รีเซ็ตคะแนน",
+          server: "resetStudentQuiz",
+          fieldLabel: "เหตุผลที่รีเซ็ตคะแนน (บันทึกในประวัติ)",
+          placeholder: "เช่น นักเรียนกดส่งผิดพลาด",
+          busy: "กำลังรีเซ็ตคะแนน...",
+          confirm: "ยืนยันรีเซ็ตคะแนน",
+          intro: (student) =>
+            `ระบุเหตุผลเพื่อรีเซ็ตคะแนนของ ${student.displayName} — ` +
+            "ความก้าวหน้าจะถอยมาที่ขั้นแบบทดสอบ ส่วนที่เรียนผ่านมาแล้วยังอยู่ครบ",
+          done: (student, result) => {
+            const before = result && result.before ? result.before : null;
+            return before
+              ? `รีเซ็ตคะแนนของ ${student.displayName} แล้ว ` +
+                `(เดิม ${before.bestScore}/${QUIZ_QUESTIONS.length} ทำ ${before.attempts} ครั้ง) ` +
+                "เก็บสำเนาไว้แล้ว กู้คืนได้"
+              : `รีเซ็ตคะแนนของ ${student.displayName} แล้ว`;
+          }
+        },
+        progress: {
+          label: "รีเซ็ต Section",
+          server: "resetStudentProgress",
+          fieldLabel: "เหตุผลที่ให้เริ่มบทเรียนใหม่ (บันทึกในประวัติ)",
+          placeholder: "เช่น ให้ทบทวนใหม่ทั้งบท",
+          busy: "กำลังรีเซ็ตความก้าวหน้า...",
+          confirm: "ยืนยันเริ่มใหม่ทั้งบท",
+          intro: (student) =>
+            `ระบุเหตุผลเพื่อให้ ${student.displayName} เริ่มบทเรียนใหม่ตั้งแต่ Section 1 — ` +
+            "คำตอบ ความก้าวหน้า และคะแนนทั้งหมดจะถูกเก็บสำเนาไว้และกู้คืนได้",
+          done: (student, result) => {
+            const done = result ? Number(result.completedBefore) || 0 : 0;
+            return `${student.displayName} เริ่มบทเรียนใหม่ได้แล้ว ` +
+              `(เดิมทำไป ${done}/${adminTotalSections} ขั้น) เก็บสำเนาไว้แล้ว กู้คืนได้`;
+          }
+        }
+      };
+
       function createResetButton(student) {
         const wrap = document.createElement("div");
         wrap.className = "admin-reset-actions";
@@ -5541,8 +5590,9 @@
           const restore = document.createElement("button");
           restore.type = "button";
           restore.className = "admin-reset is-restore";
-          restore.textContent = "กู้คืนคะแนน";
-          restore.title = "คืนคะแนนจากสำเนาล่าสุดที่เก็บไว้ตอนรีเซ็ต";
+          restore.textContent = "กู้คืนข้อมูลเดิม";
+          restore.title =
+            "คืนคะแนน คำตอบ และความก้าวหน้าจากสำเนาล่าสุดที่เก็บไว้ตอนรีเซ็ต";
           restore.addEventListener("click", () => {
             void restoreStudentScore(student, restore);
           });
@@ -5559,38 +5609,42 @@
         });
         wrap.appendChild(detail);
 
-        if (!student.attempts) {
-          const idle = document.createElement("button");
-          idle.type = "button";
-          idle.className = "admin-reset";
-          idle.textContent = "รีเซ็ตคะแนน";
-          idle.disabled = true;
-          idle.title = "ยังไม่มีคะแนนให้รีเซ็ต เพราะนักเรียนยังไม่ได้ส่งแบบทดสอบ";
-          wrap.appendChild(idle);
+        const canResetQuiz = Number(student.attempts) > 0;
+        const canResetProgress =
+          canResetQuiz || Number(student.completedCount) > 0;
 
-          // title ไม่แสดงบนจอสัมผัส ครูที่ใช้มือถือจึงไม่รู้ว่าทำไมปุ่มกดไม่ได้
-          // ต้องเขียนเหตุผลออกมาเป็นข้อความจริง ตาม Blueprint #105
+        [
+          canResetQuiz ? RESET_MODES.quiz : null,
+          canResetProgress ? RESET_MODES.progress : null
+        ]
+          .filter(Boolean)
+          .forEach((mode) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "admin-reset";
+            button.textContent = mode.label;
+            button.addEventListener("click", () => {
+              openResetForm(student, wrap, mode);
+            });
+            wrap.appendChild(button);
+          });
+
+        // แสดงเฉพาะปุ่มที่กดได้จริง แล้วอธิบายด้วยข้อความว่าทำไมอีกปุ่มถึงไม่มี
+        // ดีกว่าโชว์ปุ่มสีจางที่กดไม่ได้ และ title ก็ไม่แสดงบนจอสัมผัส
+        // ตาม Blueprint #105 ที่ห้ามให้ผู้ใช้เดาเอง
+        if (!canResetProgress || !canResetQuiz) {
           const note = document.createElement("p");
           note.className = "admin-reset-note";
-          note.textContent = "ยังไม่มีคะแนนให้รีเซ็ต เพราะยังไม่ได้ส่งแบบทดสอบ";
+          note.textContent = canResetProgress
+            ? "ยังไม่ได้ส่งแบบทดสอบ จึงรีเซ็ตได้เฉพาะความก้าวหน้า"
+            : "ยังไม่ได้เริ่มบทเรียน จึงยังไม่มีอะไรให้รีเซ็ต";
           wrap.appendChild(note);
-
-          return wrap;
         }
-
-        const reset = document.createElement("button");
-        reset.type = "button";
-        reset.className = "admin-reset";
-        reset.textContent = "รีเซ็ตคะแนน";
-        reset.addEventListener("click", () => {
-          openResetForm(student, wrap);
-        });
-        wrap.appendChild(reset);
 
         return wrap;
       }
 
-      function openResetForm(student, wrap) {
+      function openResetForm(student, wrap, mode) {
         const cell = wrap.parentElement;
         if (!cell) return;
 
@@ -5600,13 +5654,13 @@
         const label = document.createElement("label");
         const inputId = `reset-reason-${student.username}`;
         label.htmlFor = inputId;
-        label.textContent = "เหตุผลในการรีเซ็ต (บันทึกในประวัติ)";
+        label.textContent = mode.fieldLabel;
 
         const input = document.createElement("input");
         input.id = inputId;
         input.type = "text";
         input.maxLength = 200;
-        input.placeholder = "เช่น นักเรียนกดส่งผิดพลาด";
+        input.placeholder = mode.placeholder;
 
         const actions = document.createElement("div");
         actions.className = "admin-reset-actions";
@@ -5614,7 +5668,7 @@
         const confirm = document.createElement("button");
         confirm.type = "button";
         confirm.className = "admin-reset is-confirm";
-        confirm.textContent = "ยืนยันรีเซ็ต";
+        confirm.textContent = mode.confirm;
 
         const cancel = document.createElement("button");
         cancel.type = "button";
@@ -5634,7 +5688,7 @@
             input.focus();
             return;
           }
-          void resetStudentScore(student, reason, confirm, cancel);
+          void resetStudentScore(student, reason, confirm, cancel, mode);
         });
 
         cancel.addEventListener("click", close);
@@ -5647,33 +5701,29 @@
         cell.replaceChildren(form);
         input.focus();
 
-        adminStatus.textContent =
-          `ระบุเหตุผลเพื่อรีเซ็ตคะแนนของ ${student.displayName} — คะแนนเดิมจะถูกเก็บสำเนาไว้และกู้คืนได้`;
+        adminStatus.textContent = mode.intro(student);
       }
 
-      async function resetStudentScore(student, reason, confirmButton, cancelButton) {
+      async function resetStudentScore(student, reason, confirmButton, cancelButton, mode) {
         confirmButton.disabled = true;
         cancelButton.disabled = true;
-        confirmButton.textContent = "กำลังรีเซ็ต...";
-        adminStatus.textContent = `กำลังรีเซ็ตคะแนนของ ${student.displayName}`;
+        confirmButton.textContent = mode.busy;
+        adminStatus.textContent = `${mode.busy} ของ ${student.displayName}`;
 
         try {
           const result = await callServer(
-            "resetStudentQuiz",
+            mode.server,
             sessionToken,
             student.username,
             reason
           );
-          const before = result && result.before ? result.before : null;
           await loadAdminDashboard();
-          adminStatus.textContent = before
-            ? `รีเซ็ตคะแนนของ ${student.displayName} แล้ว (เดิม ${before.bestScore}/${QUIZ_QUESTIONS.length} ทำ ${before.attempts} ครั้ง) เก็บสำเนาไว้แล้ว กู้คืนได้`
-            : `รีเซ็ตคะแนนของ ${student.displayName} แล้ว`;
+          adminStatus.textContent = mode.done(student, result);
         } catch (error) {
           confirmButton.disabled = false;
           cancelButton.disabled = false;
-          confirmButton.textContent = "ยืนยันรีเซ็ต";
-          adminStatus.textContent = `รีเซ็ตไม่สำเร็จ: ${error.message}`;
+          confirmButton.textContent = mode.confirm;
+          adminStatus.textContent = `ทำรายการไม่สำเร็จ: ${error.message}`;
         }
       }
 
