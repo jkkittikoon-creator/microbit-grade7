@@ -2081,6 +2081,17 @@
       border-top: 6px solid var(--yellow-400);
     }
 
+    .sim-live-view {
+      position: sticky;
+      /* เผื่อพ้นแถบ "ขั้นถัดไป" ที่ตรึงบนสุดของหน้าอยู่แล้ว (สูงประมาณ 4.15rem ตอนกาง) */
+      top: 4.75rem;
+      z-index: 5;
+      padding-bottom: 1.1rem;
+      margin-bottom: 1.1rem;
+      background: var(--surface);
+      border-bottom: 1px dashed var(--border);
+    }
+
     .sim-device {
       border-top: 6px solid var(--purple-700);
     }
@@ -3714,6 +3725,10 @@
         padding: 1.4rem;
       }
 
+      .sim-live-view {
+        top: 3.5rem;
+      }
+
       .auth-screen {
         padding: 0;
         place-items: stretch;
@@ -4626,16 +4641,18 @@
         </article>
 
         <aside class="sim-device">
-          <h3>2. สังเกตจอ micro:bit จำลอง</h3>
-          <div class="sim-led-board">
-            <div class="sim-led-grid" id="sim-led-grid"
-                 role="grid" aria-label="จอ LED จำลอง 5 คูณ 5"></div>
-          </div>
+          <div class="sim-live-view">
+            <h3>2. สังเกตจอ micro:bit จำลอง</h3>
+            <div class="sim-led-board">
+              <div class="sim-led-grid" id="sim-led-grid"
+                   role="grid" aria-label="จอ LED จำลอง 5 คูณ 5"></div>
+            </div>
 
-          <p class="sim-formula">
-            map(accel, −600, 600, 0, 4)<br>
-            <span id="sim-formula-result">map(0) = 2.00</span>
-          </p>
+            <p class="sim-formula">
+              map(accel, −600, 600, 0, 4)<br>
+              <span id="sim-formula-result">map(0) = 2.00</span>
+            </p>
+          </div>
 
           <div class="work-steps-panel">
             <p class="work-steps-title">🔍 พิกัดนี้มาจากไหน</p>
