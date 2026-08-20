@@ -2045,6 +2045,151 @@
       color: var(--purple-900);
     }
 
+    /* คู่มือต่อบล็อก MakeCode — แทนการวางโค้ดตัวอักษร
+       นักเรียน ม.1 เริ่มจากศูนย์เรื่องการเขียนโปรแกรมบล็อก ตามแผนการสอน
+       จึงต้องบอกเป็นขั้นว่าหยิบบล็อกไหนจากหมวดไหน มาต่อตรงไหน */
+    .block-guide {
+      margin: 1rem 0 0;
+      padding: 1.1rem 1.2rem 1.3rem;
+      border: 2px solid var(--border);
+      border-radius: 0.9rem;
+      background: #fbf9fd;
+    }
+
+    .block-guide.is-compact {
+      padding: 0.9rem 1rem 1rem;
+    }
+
+    .block-guide-title {
+      margin: 0 0 0.3rem;
+      color: var(--purple-900);
+      font-size: 1.02rem;
+      font-weight: 800;
+    }
+
+    .block-guide-lead {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .block-guide p {
+      margin: 0 0 0.5rem;
+      line-height: 1.7;
+    }
+
+    .block-guide-note {
+      margin: 0.7rem 0 0;
+      padding: 0.6rem 0.8rem;
+      border-left: 4px solid var(--purple-700);
+      border-radius: 0 0.5rem 0.5rem 0;
+      background: var(--yellow-100);
+      color: var(--purple-900);
+      font-size: 0.88rem;
+    }
+
+    .block-steps {
+      margin: 0;
+      padding-left: 1.3rem;
+    }
+
+    .block-steps li {
+      margin-bottom: 0.85rem;
+      line-height: 1.7;
+    }
+
+    .block-steps li:last-child {
+      margin-bottom: 0;
+    }
+
+    .block-steps small {
+      display: block;
+      margin-top: 0.25rem;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.6;
+    }
+
+    /* ป้ายหมวดในกล่องบล็อกของ MakeCode */
+    .block-cat {
+      display: inline-block;
+      margin-right: 0.4rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--purple-700);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    /* ข้อความบนตัวบล็อก */
+    .block-chip {
+      display: inline-block;
+      padding: 0.1rem 0.5rem;
+      border: 2px solid var(--purple-700);
+      border-radius: 0.5rem;
+      background: #fff;
+      color: var(--purple-900);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .block-preview-title {
+      margin: 1.1rem 0 0.45rem;
+      color: var(--purple-900);
+      font-weight: 800;
+    }
+
+    /* ภาพจำลองบล็อกที่ต่อเสร็จ ให้นักเรียนเทียบกับหน้าจอตัวเอง */
+    .block-preview {
+      overflow-x: auto;
+      padding: 0.8rem;
+      border-radius: 0.8rem;
+      background: #efe9f4;
+    }
+
+    .bp-outer {
+      min-width: 16rem;
+      padding: 0.6rem 0.7rem 0.7rem;
+      border-radius: 0.6rem;
+      background: #1e90ff;
+      color: #fff;
+    }
+
+    .bp-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 800;
+    }
+
+    .bp-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      padding-left: 0.85rem;
+    }
+
+    .bp-row {
+      padding: 0.4rem 0.6rem;
+      border-radius: 0.5rem;
+      background: #5c2d91;
+      color: #fff;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .bp-slot {
+      display: inline-block;
+      margin: 0 0.15rem;
+      padding: 0.05rem 0.4rem;
+      border-radius: 0.4rem;
+      background: rgba(255, 255, 255, 0.92);
+      color: #2b1636;
+      font-weight: 700;
+    }
+
     .lab-feedback,
     .mg-check-feedback {
       min-height: 3.5rem;
@@ -5109,10 +5254,14 @@
         <li>กดปุ่มด้านบน แท็บใหม่จะเปิดหน้า MakeCode</li>
         <li>กด <strong>โปรเจกต์ใหม่ (New Project)</strong> ตั้งชื่ออะไรก็ได้ เช่น tilt</li>
         <li>
-          ด้านบนมีปุ่มสลับ <strong>Blocks | JavaScript</strong>
-          กดไปที่ <strong>JavaScript</strong> เพื่อพิมพ์โค้ดเป็นตัวอักษร
+          หน้าจอจะอยู่ที่โหมด <strong>บล็อก (Blocks)</strong> อยู่แล้ว
+          ซึ่งเป็นโหมดที่เราจะใช้ ไม่ต้องกดสลับอะไร
         </li>
-        <li>ลบโค้ดเดิมในช่องทั้งหมด แล้ววางโค้ดจากแต่ละขั้นด้านล่าง</li>
+        <li>
+          ด้านซ้ายคือ <strong>กล่องบล็อก</strong> แบ่งเป็นหมวดสีต่าง ๆ
+          กดที่ชื่อหมวดเพื่อเปิดดูบล็อกข้างใน
+          แล้ว <strong>ลากบล็อก</strong> มาวางในพื้นที่ว่างตรงกลาง
+        </li>
         <li>
           ดูจอ micro:bit จำลองด้านซ้าย ลองเอียงด้วยการ
           <strong>ลากตัวบอร์ด</strong> หรือกดลูกศรซ้ายขวา
@@ -5128,20 +5277,82 @@
           ให้เห็นกับตาว่าเซนเซอร์ทำงานจริง
         </p>
 
-        <div class="lab-code">
-          <div class="lab-code-head">
-            <span>โค้ดโปรแกรมที่ 1</span>
-            <button class="lab-copy" type="button" data-copy="lab-code-1">
-              คัดลอกโค้ด
-            </button>
+        <div class="block-guide">
+          <p class="block-guide-title">🧩 ต่อบล็อกตามนี้</p>
+          <p class="block-guide-lead">
+            ชื่อหมวดและชื่อบล็อกเขียนไว้ทั้งภาษาไทยและอังกฤษ
+            เพราะ MakeCode จะแสดงภาษาไหนขึ้นกับที่ตั้งไว้ ใช้อันที่ตรงกับหน้าจอได้เลย
+          </p>
+          <ol class="block-steps">
+            <li>
+              <span class="block-cat">พื้นฐาน · Basic</span>
+              ลากบล็อก <span class="block-chip">ตลอดไป · forever</span>
+              มาวางในพื้นที่ว่าง
+              <small>
+                ปกติจะมีบล็อกนี้วางไว้ให้อยู่แล้ว ถ้ามีก็ใช้อันเดิมได้เลย
+                ส่วนบล็อก <span class="block-chip">เมื่อเริ่มต้น · on start</span>
+                ที่อยู่ข้าง ๆ ยังไม่ต้องใช้
+              </small>
+            </li>
+            <li>
+              <span class="block-cat">นำ · Led</span>
+              ลากบล็อก
+              <span class="block-chip">แสดงกราฟแท่งของ _ สูงสุด _ · plot bar graph of _ up to _</span>
+              มาวาง <strong>ข้างใน</strong> บล็อก ตลอดไป
+              <small>วางให้ตัวบล็อกเข้าไปอยู่ในช่องว่างของ ตลอดไป จนได้ยินเสียงคลิก</small>
+            </li>
+            <li>
+              <span class="block-cat">อินพุต · Input</span>
+              ลากบล็อก
+              <span class="block-chip">ความเร่ง (mg) x · acceleration (mg) x</span>
+              ไปวางใน <strong>ช่องแรก</strong> ของบล็อกกราฟแท่ง
+              <small>ช่องแรกคือช่องหลังคำว่า "ของ" หรือ "of"</small>
+            </li>
+            <li>
+              <span class="block-cat">ช่องตัวเลข</span>
+              ที่ช่องหลังคำว่า <strong>สูงสุด (up to)</strong> ให้พิมพ์เลข
+              <strong>1023</strong> แทนเลขเดิม
+            </li>
+          </ol>
+
+          <p class="block-preview-title">ต่อเสร็จแล้วจะหน้าตาแบบนี้</p>
+          <div class="block-preview" aria-label="ภาพจำลองบล็อกที่ต่อเสร็จแล้ว">
+            <div class="bp-outer">
+              <span class="bp-label">ตลอดไป · forever</span>
+              <div class="bp-inner">
+                <span class="bp-row">
+                  แสดงกราฟแท่งของ
+                  <span class="bp-slot">ความเร่ง (mg) x</span>
+                  สูงสุด <span class="bp-slot">1023</span>
+                </span>
+              </div>
+            </div>
           </div>
-          <pre id="lab-code-1"><code>basic.forever(function () {
-    led.plotBarGraph(input.acceleration(Dimension.X), 1023)
-})</code></pre>
         </div>
 
         <details class="lab-explain">
-          <summary>อ่านทีละบรรทัดว่าโค้ดนี้สั่งอะไร</summary>
+          <summary>ทางลัด — ถ้าหาบล็อกไม่เจอ ใช้วิธีวางโค้ดแทนได้</summary>
+          <p>
+            กดปุ่ม <strong>JavaScript</strong> ด้านบนของ MakeCode
+            ลบข้อความเดิมทั้งหมด วางโค้ดนี้ลงไป
+            แล้วกดปุ่ม <strong>บล็อก (Blocks)</strong> กลับมา
+            ระบบจะแปลงเป็นบล็อกให้เอง แล้วเราจะเห็นว่าบล็อกต่อกันอย่างไร
+          </p>
+          <div class="lab-code">
+            <div class="lab-code-head">
+              <span>โค้ดโปรแกรมที่ 1</span>
+              <button class="lab-copy" type="button" data-copy="lab-code-1">
+                คัดลอกโค้ด
+              </button>
+            </div>
+            <pre id="lab-code-1"><code>basic.forever(function () {
+    led.plotBarGraph(input.acceleration(Dimension.X), 1023)
+})</code></pre>
+          </div>
+        </details>
+
+        <details class="lab-explain">
+          <summary>อ่านทีละบรรทัดว่าโปรแกรมนี้สั่งอะไร</summary>
           <ul>
             <li><code>basic.forever</code> — ทำซ้ำวนไปเรื่อย ๆ ไม่หยุด</li>
             <li><code>input.acceleration(Dimension.X)</code> — อ่านค่าความเอียงแกน x เป็นตัวเลข mg</li>
@@ -5164,14 +5375,141 @@
           เหมือนที่เราทดลองในเครื่องจำลอง แต่คราวนี้เป็นโค้ดจริง
         </p>
 
-        <div class="lab-code">
-          <div class="lab-code-head">
-            <span>โค้ดโปรแกรมที่ 2</span>
-            <button class="lab-copy" type="button" data-copy="lab-code-2">
-              คัดลอกโค้ด
-            </button>
+        <div class="block-guide">
+          <p class="block-guide-title">🧩 ต่อบล็อกตามนี้</p>
+          <p class="block-guide-lead">
+            โปรแกรมนี้ยาวกว่าอันแรก ค่อย ๆ ทำทีละข้อ
+            ต่อผิดก็ลากออกมาแก้ได้ ไม่พัง
+          </p>
+          <ol class="block-steps">
+            <li>
+              <span class="block-cat">เริ่มจากของเดิม</span>
+              ลบบล็อกกราฟแท่งของโปรแกรมที่ 1 ออก
+              โดยลากมันไปทิ้งที่กล่องบล็อกด้านซ้าย
+              <small>เก็บบล็อก ตลอดไป ไว้ เราจะใช้ต่อ</small>
+            </li>
+            <li>
+              <span class="block-cat">ตัวแปร · Variables</span>
+              กด <span class="block-chip">สร้างตัวแปร · Make a Variable</span>
+              ตั้งชื่อว่า <strong>ax</strong> แล้วสร้างอีกตัวชื่อ <strong>x</strong>
+              <small>ตัวแปรคือกล่องเก็บตัวเลขไว้ใช้ต่อ เหมือนจดเลขใส่กระดาษไว้ก่อน</small>
+            </li>
+            <li>
+              <span class="block-cat">ตัวแปร · Variables</span>
+              ลากบล็อก <span class="block-chip">กำหนด _ เป็น _ · set _ to _</span>
+              เข้าไปในบล็อก ตลอดไป
+              เลือกชื่อตัวแปรเป็น <strong>ax</strong>
+            </li>
+            <li>
+              <span class="block-cat">อินพุต · Input</span>
+              ลาก <span class="block-chip">ความเร่ง (mg) x · acceleration (mg) x</span>
+              ไปวางในช่องหลังคำว่า เป็น (to)
+            </li>
+            <li>
+              <span class="block-cat">ตัวแปร · Variables</span>
+              ลากบล็อก <span class="block-chip">กำหนด _ เป็น _ · set _ to _</span>
+              มาต่อ <strong>ใต้</strong> บล็อกเมื่อกี้ คราวนี้เลือกตัวแปร <strong>x</strong>
+            </li>
+            <li>
+              <span class="block-cat">คณิตศาสตร์ · Math</span>
+              ลากบล็อก
+              <span class="block-chip">map _ from low _ high _ to low _ high _</span>
+              ไปวางในช่องหลังคำว่า เป็น
+              แล้วกรอกเลขตามนี้
+              <small>
+                ช่องแรกใส่ตัวแปร <strong>ax</strong> (ลากมาจากหมวดตัวแปร) ·
+                from low <strong>−600</strong> · high <strong>600</strong> ·
+                to low <strong>0</strong> · high <strong>4</strong>
+              </small>
+            </li>
+            <li>
+              <span class="block-cat">ตัวแปร · Variables</span>
+              ลาก <span class="block-chip">กำหนด _ เป็น _</span> มาต่อใต้อีกอัน
+              เลือกตัวแปร <strong>x</strong> อีกครั้ง
+            </li>
+            <li>
+              <span class="block-cat">คณิตศาสตร์ · Math</span>
+              ลากบล็อก
+              <span class="block-chip">constrain _ between _ and _</span>
+              ไปวางในช่องหลังคำว่า เป็น
+              ช่องแรกใส่ตัวแปร <strong>x</strong> · between <strong>0</strong> ·
+              and <strong>4</strong>
+            </li>
+            <li>
+              <span class="block-cat">พื้นฐาน · Basic</span>
+              ลาก <span class="block-chip">ล้างหน้าจอ · clear screen</span>
+              มาต่อใต้
+              <small>
+                บล็อกนี้อยู่ในหมวดพื้นฐาน แต่ต้องกด
+                <strong>เพิ่มเติม (More)</strong> ใต้หมวดนั้นก่อนถึงจะเห็น
+              </small>
+            </li>
+            <li>
+              <span class="block-cat">นำ · Led</span>
+              ลาก <span class="block-chip">จุดที่ x _ y _ · plot x _ y _</span>
+              มาต่อใต้ ใส่ช่อง <strong>y</strong> เป็นเลข <strong>2</strong>
+              <small>y เท่ากับ 2 คือแถวกลางของจอ</small>
+            </li>
+            <li>
+              <span class="block-cat">คณิตศาสตร์ · Math</span>
+              ลากบล็อก <span class="block-chip">ปัดเศษ · round</span>
+              ไปวางในช่อง <strong>x</strong> ของบล็อกจุดที่
+              แล้วเอาตัวแปร <strong>x</strong> ใส่ในบล็อกปัดเศษอีกที
+              <small>
+                จอรับได้แค่เลขเต็ม เช่น 2 หรือ 3 ถ้าคำนวณได้ 2.87
+                ต้องปัดเป็น 3 ก่อน
+              </small>
+            </li>
+            <li>
+              <span class="block-cat">พื้นฐาน · Basic</span>
+              ลาก <span class="block-chip">หยุด (ms) _ · pause (ms) _</span>
+              มาต่อเป็นอันสุดท้าย ใส่เลข <strong>50</strong>
+            </li>
+          </ol>
+
+          <p class="block-preview-title">ต่อเสร็จแล้วจะหน้าตาแบบนี้</p>
+          <div class="block-preview" aria-label="ภาพจำลองบล็อกที่ต่อเสร็จแล้ว">
+            <div class="bp-outer">
+              <span class="bp-label">ตลอดไป · forever</span>
+              <div class="bp-inner">
+                <span class="bp-row">
+                  กำหนด <span class="bp-slot">ax</span> เป็น
+                  <span class="bp-slot">ความเร่ง (mg) x</span>
+                </span>
+                <span class="bp-row">
+                  กำหนด <span class="bp-slot">x</span> เป็น
+                  <span class="bp-slot">map ax from low −600 high 600 to low 0 high 4</span>
+                </span>
+                <span class="bp-row">
+                  กำหนด <span class="bp-slot">x</span> เป็น
+                  <span class="bp-slot">constrain x between 0 and 4</span>
+                </span>
+                <span class="bp-row">ล้างหน้าจอ</span>
+                <span class="bp-row">
+                  จุดที่ x <span class="bp-slot">ปัดเศษ x</span>
+                  y <span class="bp-slot">2</span>
+                </span>
+                <span class="bp-row">หยุด (ms) <span class="bp-slot">50</span></span>
+              </div>
+            </div>
           </div>
-          <pre id="lab-code-2"><code>basic.forever(function () {
+        </div>
+
+        <details class="lab-explain">
+          <summary>ทางลัด — ถ้าหาบล็อกไม่เจอ ใช้วิธีวางโค้ดแทนได้</summary>
+          <p>
+            กดปุ่ม <strong>JavaScript</strong> ด้านบน ลบข้อความเดิมทั้งหมด
+            วางโค้ดนี้ แล้วกดปุ่ม <strong>บล็อก (Blocks)</strong> กลับมา
+            ระบบจะต่อบล็อกให้เองทั้งชุด
+          </p>
+          <div class="lab-code">
+            <div class="lab-code-head">
+              <span>โค้ดโปรแกรมที่ 2</span>
+              <button class="lab-copy" type="button" data-copy="lab-code-2">
+                คัดลอกโค้ด
+              </button>
+            </div>
+            <pre id="lab-code-2"><code>basic.forever(function () {
     let ax = input.acceleration(Dimension.X)
     let x = Math.map(ax, -600, 600, 0, 4)
     x = Math.constrain(x, 0, 4)
@@ -5179,10 +5517,11 @@
     led.plot(Math.round(x), 2)
     basic.pause(50)
 })</code></pre>
-        </div>
+          </div>
+        </details>
 
         <details class="lab-explain">
-          <summary>อ่านทีละบรรทัดว่าโค้ดนี้สั่งอะไร</summary>
+          <summary>อ่านทีละบรรทัดว่าโปรแกรมนี้สั่งอะไร</summary>
           <ul>
             <li><code>let ax = input.acceleration(Dimension.X)</code> — เก็บค่าความเอียงไว้ในกล่องชื่อ ax</li>
             <li><code>Math.map(ax, -600, 600, 0, 4)</code> — เปลี่ยนช่วง −600…600 ให้เป็นพิกัด 0…4</li>
@@ -5226,15 +5565,28 @@
         <p class="lab-feedback" id="pause-feedback"
            role="status" aria-live="polite"></p>
 
-        <div class="lab-code">
-          <div class="lab-code-head">
-            <span>ลองแก้บรรทัดนี้ในโปรแกรมที่ 2</span>
-            <button class="lab-copy" type="button" data-copy="lab-code-pause">
-              คัดลอกบรรทัด
-            </button>
-          </div>
-          <pre id="lab-code-pause"><code>    basic.pause(200)</code></pre>
+        <div class="block-guide is-compact">
+          <p class="block-guide-title">🧩 แก้ที่บล็อกไหน</p>
+          <p>
+            หาบล็อก <span class="block-chip">หยุด (ms) 50 · pause (ms) 50</span>
+            ที่อยู่ล่างสุดในบล็อก ตลอดไป
+            แล้ว <strong>กดที่ตัวเลข 50 พิมพ์เปลี่ยนเป็น 200</strong>
+            ไม่ต้องลากบล็อกใหม่
+          </p>
         </div>
+
+        <details class="lab-explain">
+          <summary>ถ้าใช้โหมด JavaScript แก้บรรทัดนี้แทน</summary>
+          <div class="lab-code">
+            <div class="lab-code-head">
+              <span>บรรทัดที่ต้องแก้</span>
+              <button class="lab-copy" type="button" data-copy="lab-code-pause">
+                คัดลอกบรรทัด
+              </button>
+            </div>
+            <pre id="lab-code-pause"><code>    basic.pause(200)</code></pre>
+          </div>
+        </details>
 
         <label class="lab-check">
           <input type="checkbox" id="lab-check-4">
@@ -5256,15 +5608,33 @@
           <code>-300, 300</code> แล้วทดลองใหม่ ว่าจุดวิ่งถึงขอบง่ายขึ้นไหม
         </p>
 
-        <div class="lab-code">
-          <div class="lab-code-head">
-            <span>แก้บรรทัด map ให้เป็นแบบนี้</span>
-            <button class="lab-copy" type="button" data-copy="lab-code-3">
-              คัดลอกบรรทัด
-            </button>
-          </div>
-          <pre id="lab-code-3"><code>    let x = Math.map(ax, -300, 300, 0, 4)</code></pre>
+        <div class="block-guide is-compact">
+          <p class="block-guide-title">🧩 แก้ที่บล็อกไหน</p>
+          <p>
+            หาบล็อก <span class="block-chip">map ax from low −600 high 600 to low 0 high 4</span>
+            แล้วแก้แค่ <strong>สองช่อง</strong> — เปลี่ยน
+            <strong>−600 เป็น −300</strong> และ
+            <strong>600 เป็น 300</strong>
+            ช่อง 0 กับ 4 ปล่อยไว้เหมือนเดิม
+          </p>
+          <p class="block-guide-note">
+            ทำไมไม่แก้ 0 กับ 4 ด้วย — เพราะจอยังมีช่องเท่าเดิม
+            สิ่งที่เปลี่ยนคือช่วงความเอียงที่เรารับเข้ามา ไม่ใช่ขนาดจอ
+          </p>
         </div>
+
+        <details class="lab-explain">
+          <summary>ถ้าใช้โหมด JavaScript แก้บรรทัดนี้แทน</summary>
+          <div class="lab-code">
+            <div class="lab-code-head">
+              <span>บรรทัดที่ต้องแก้</span>
+              <button class="lab-copy" type="button" data-copy="lab-code-3">
+                คัดลอกบรรทัด
+              </button>
+            </div>
+            <pre id="lab-code-3"><code>    let x = Math.map(ax, -300, 300, 0, 4)</code></pre>
+          </div>
+        </details>
 
         <label class="lab-check">
           <input type="checkbox" id="lab-check-3">
