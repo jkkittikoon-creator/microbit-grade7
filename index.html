@@ -963,6 +963,62 @@
       margin: 0 0 0.5rem;
     }
 
+    .lab-code {
+      margin: 0.9rem 0;
+      border: 1px solid #2c2540;
+      border-radius: 0.7rem;
+      overflow: hidden;
+    }
+
+    .lab-code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.5rem 0.85rem;
+      background: #2c2540;
+      color: #e7e0f5;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .lab-copy {
+      padding: 0.35rem 0.85rem;
+      border: 0;
+      border-radius: 0.5rem;
+      background: #6d1a8d;
+      color: #fff;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .lab-copy:hover,
+    .lab-copy:focus-visible {
+      background: #8a3aa8;
+    }
+
+    .lab-copy.is-copied {
+      background: var(--green-700);
+    }
+
+    .lab-code pre {
+      margin: 0;
+      padding: 0.9rem 1rem;
+      background: #1e1830;
+      color: #f4f1fb;
+      overflow-x: auto;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .lab-code code {
+      font-family: "Fira Mono", "Consolas", "Courier New", monospace;
+      white-space: pre;
+    }
+
     .makecode-figure {
       margin: 1rem 0;
       padding: 0.85rem;
@@ -6670,6 +6726,27 @@
           </ol>
         </details>
 
+        <details class="lab-explain">
+          <summary>ทางลัด — ถ้าหาบล็อกไม่เจอ ใช้วิธีวางโค้ดแทนได้</summary>
+          <p>
+            กดปุ่ม <strong>JavaScript</strong> ด้านบนของ MakeCode
+            ลบข้อความเดิมทั้งหมด วางโค้ดนี้ลงไป
+            แล้วกดปุ่ม <strong>บล็อก (Blocks)</strong> กลับมา
+            ระบบจะแปลงเป็นบล็อกให้เอง แล้วเราจะเห็นว่าบล็อกต่อกันอย่างไร
+          </p>
+          <div class="lab-code">
+            <div class="lab-code-head">
+              <span>โค้ดกิจกรรมที่ 1</span>
+              <button class="lab-copy" type="button" data-copy="lab-code-sensor">
+                คัดลอกโค้ด
+              </button>
+            </div>
+            <pre id="lab-code-sensor" tabindex="0" role="region" aria-label="โค้ดตัวอย่าง เลื่อนซ้าย–ขวาได้บนจอขนาดเล็ก"><code>basic.forever(function () {
+    basic.showNumber(input.acceleration(Dimension.X))
+})</code></pre>
+          </div>
+        </details>
+
         <section class="sensor-worksheet" aria-labelledby="sensor-worksheet-title">
           <h4 id="sensor-worksheet-title">ตารางบันทึกผล · ใบงานที่ 1</h4>
           <p class="sensor-worksheet-lead" id="sensor-reading-help">
@@ -7188,6 +7265,30 @@
           <figcaption>ภาพตัวอย่างจริงจากห้องเรียน · รอบที่ 3 นำ map ใส่ในช่องแรกของ constrain ทั้งแกน x และ y</figcaption>
         </figure>
 
+        <details class="lab-explain">
+          <summary>ทางลัด — ถ้าหาบล็อกไม่เจอ ใช้วิธีวางโค้ดแทนได้</summary>
+          <p>
+            กดปุ่ม <strong>JavaScript</strong> ด้านบน ลบข้อความเดิมทั้งหมด
+            วางโค้ดนี้ แล้วกดปุ่ม <strong>บล็อก (Blocks)</strong> กลับมา
+            ระบบจะต่อบล็อกให้เองทั้งชุด รวมทั้งวาง map ไว้ในช่องแรกของ constrain ให้ถูกที่
+          </p>
+          <div class="lab-code">
+            <div class="lab-code-head">
+              <span>โค้ดกิจกรรมที่ 4 · map อยู่ข้างใน constrain</span>
+              <button class="lab-copy" type="button" data-copy="lab-code-system">
+                คัดลอกโค้ด
+              </button>
+            </div>
+            <pre id="lab-code-system" tabindex="0" role="region" aria-label="โค้ดตัวอย่าง เลื่อนซ้าย–ขวาได้บนจอขนาดเล็ก"><code>basic.forever(function () {
+    basic.clearScreen()
+    let x = Math.constrain(Math.round(Math.map(input.acceleration(Dimension.X), -600, 600, 0, 4)), 0, 4)
+    let y = Math.constrain(Math.round(Math.map(input.acceleration(Dimension.Y), -600, 600, 0, 4)), 0, 4)
+    led.plot(x, y)
+    basic.pause(50)
+})</code></pre>
+          </div>
+        </details>
+
         <p class="round-observation">
           <strong>ผลที่ควรได้:</strong> จุดไล่จากพิกัด 0 ไป 4 ตามการเอียง และเมื่อค่าเกินช่วง
           จุดจะค้างที่ขอบแทนการหายจากจอ ✅
@@ -7389,6 +7490,19 @@
           <figcaption>กดที่ตัวเลขในบล็อก pause แล้วเปลี่ยนจาก 50 เป็น 200</figcaption>
         </figure>
 
+        <details class="lab-explain">
+          <summary>ถ้าใช้โหมด JavaScript แก้บรรทัดนี้แทน</summary>
+          <div class="lab-code">
+            <div class="lab-code-head">
+              <span>บรรทัดที่ต้องแก้</span>
+              <button class="lab-copy" type="button" data-copy="lab-code-pause">
+                คัดลอกบรรทัด
+              </button>
+            </div>
+            <pre id="lab-code-pause" tabindex="0" role="region" aria-label="โค้ดตัวอย่าง เลื่อนซ้าย–ขวาได้บนจอขนาดเล็ก"><code>    basic.pause(200)</code></pre>
+          </div>
+        </details>
+
         <label class="lab-check">
           <input type="checkbox" id="lab-check-4">
           <span>ลองแล้ว จุดขยับช้าลงจริง เห็นการเปลี่ยนแปลงชัดขึ้น</span>
@@ -7500,6 +7614,23 @@
           </div>
           <figcaption>แก้เฉพาะขอบเขตรับค่าเป็น −300 และ 300 ส่วนพิกัดจอยังคงเป็น 0 และ 4</figcaption>
         </figure>
+
+        <details class="lab-explain">
+          <summary>ถ้าใช้โหมด JavaScript แก้บรรทัดนี้แทน</summary>
+          <p>
+            เปลี่ยนเฉพาะช่วงรับค่าใน <code>Math.map</code> จาก −600, 600
+            เป็น −300, 300 ส่วนพิกัดจอ 0 กับ 4 คงเดิม
+          </p>
+          <div class="lab-code">
+            <div class="lab-code-head">
+              <span>บรรทัดที่ต้องแก้ · แกน x</span>
+              <button class="lab-copy" type="button" data-copy="lab-code-mission">
+                คัดลอกบรรทัด
+              </button>
+            </div>
+            <pre id="lab-code-mission" tabindex="0" role="region" aria-label="โค้ดตัวอย่าง เลื่อนซ้าย–ขวาได้บนจอขนาดเล็ก"><code>    let x = Math.constrain(Math.round(Math.map(input.acceleration(Dimension.X), -300, 300, 0, 4)), 0, 4)</code></pre>
+          </div>
+        </details>
 
         <label class="lab-check">
           <input type="checkbox" id="lab-check-3">
@@ -10816,6 +10947,60 @@
       const labSync = document.querySelector("#lab-sync");
       const labDone = document.querySelector("#lab-done");
       const labDoneText = document.querySelector("#lab-done-text");
+
+      /**
+       * ปุ่มคัดลอกโค้ดในภาคปฏิบัติ ตาม Blueprint #166
+       * นักเรียนที่หาบล็อกไม่เจอจะได้ไม่ตัน มีทางไปต่อด้วยการวางโค้ด
+       * แล้วสลับกลับมาโหมดบล็อกเพื่อดูว่าบล็อกต่อกันอย่างไร
+       */
+      const labCopyButtons = Array.from(document.querySelectorAll(".lab-copy"));
+
+      function fallbackCopyLabCode(text, done) {
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "absolute";
+        area.style.left = "-9999px";
+        document.body.appendChild(area);
+        area.select();
+        try {
+          document.execCommand("copy");
+          done();
+        } catch (error) {
+          done("คัดลอกไม่ได้ ให้ลากเลือกข้อความแล้วกด Ctrl+C");
+        }
+        document.body.removeChild(area);
+      }
+
+      function copyLabCode(button) {
+        const target = document.querySelector("#" + button.dataset.copy);
+        if (!target) return;
+        // เก็บข้อความเดิมไว้ครั้งแรก กันกดรัวแล้วป้ายค้างเป็น 'คัดลอกแล้ว'
+        const original = button.dataset.label || button.textContent.trim();
+        button.dataset.label = original;
+        const done = (message) => {
+          button.textContent = message || "คัดลอกแล้ว ✓";
+          button.classList.toggle("is-copied", !message);
+          window.setTimeout(() => {
+            button.textContent = original;
+            button.classList.remove("is-copied");
+          }, 1600);
+        };
+        const text = target.textContent;
+        // navigator.clipboard ใช้ไม่ได้ในบางเบราว์เซอร์ จึงมีทางสำรอง
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard
+            .writeText(text)
+            .then(() => done())
+            .catch(() => fallbackCopyLabCode(text, done));
+        } else {
+          fallbackCopyLabCode(text, done);
+        }
+      }
+
+      labCopyButtons.forEach((button) => {
+        button.addEventListener("click", () => copyLabCode(button));
+      });
       const SENSOR_READING_KEYS = [
         "flat",
         "leftSmall",
