@@ -20,10 +20,8 @@
  *    ถ้าไม่ตั้ง ระบบจะรีเซ็ตนักเรียนทุกคน
  * 3) เรียกฟังก์ชันนี้ ระบบจะ hash รหัสใหม่แล้วลบ property ทิ้งทันที
  *
- * ปกตินักเรียนจะใช้รหัสที่ครูตั้งให้ได้เลย ไม่ถูกบังคับให้เปลี่ยน
- * ถ้าต้องการบังคับให้ตั้งรหัสของตัวเองตอนล็อกอินครั้งถัดไป
- * ให้ตั้ง Script property RESET_STUDENT_MUST_CHANGE เป็น yes
- * (กรณีนั้นรหัสใหม่ที่นักเรียนตั้งต้องยาว 8 ตัวขึ้นไปและมีทั้งตัวอักษรกับตัวเลข)
+ * ตาม D-002 นักเรียนไม่มีหน้าจอเปลี่ยนรหัสผ่านด้วยตนเอง
+ * การรีเซ็ตจึงตั้ง mustChangePassword เป็น false เสมอ
  */
 function resetStudentPasswords() {
   const properties = PropertiesService.getScriptProperties();
@@ -33,11 +31,6 @@ function resetStudentPasswords() {
     throw new Error('กรุณาตั้ง RESET_STUDENT_PASSWORD ใน Script properties ก่อนเรียกฟังก์ชันนี้');
   }
   validateStudentPassword_(password);
-
-  const mustChange =
-    String(properties.getProperty('RESET_STUDENT_MUST_CHANGE') || '')
-      .trim()
-      .toLowerCase() === 'yes';
 
   const requested = String(properties.getProperty('RESET_STUDENT_USERNAMES') || '')
     .split(',')
@@ -61,7 +54,7 @@ function resetStudentPasswords() {
   }
 
   targets.forEach(function (username) {
-    setUserPassword_(username, password, mustChange);
+    setUserPassword_(username, password);
   });
 
   // Plaintext exists only in a temporary Script property during the reset.
@@ -79,7 +72,7 @@ function resetStudentPasswords() {
     ok: true,
     count: targets.length,
     usernames: targets,
-    mustChangePassword: mustChange
+    mustChangePassword: false
   };
 }
 
@@ -146,7 +139,7 @@ function showSetupStatus() {
   return report;
 }
 
-function setUserPassword_(username, password, mustChangePassword) {
+function setUserPassword_(username, password) {
   const sheet = getSpreadsheet_().getSheetByName('Users');
   const row = findRowByValue_(sheet, 1, username);
   if (row < 2) throw new Error('ไม่พบบัญชีผู้ใช้ ' + username);
@@ -155,7 +148,7 @@ function setUserPassword_(username, password, mustChangePassword) {
     hashPassword_(password, salt),
     salt,
     true,
-    Boolean(mustChangePassword)
+    false
   ]]);
   sheet.getRange(row, 10).setValue(new Date());
 }
