@@ -53,6 +53,15 @@
 
     button {
       font: inherit;
+      min-height: 44px;
+      min-width: 44px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(109, 26, 141, 0.18);
+    }
+
+    a {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(109, 26, 141, 0.18);
     }
 
     input {
@@ -241,7 +250,7 @@
       border-radius: 0.9rem;
     }
 
-    .form-field input:focus {
+    .form-field input:focus-visible {
       border-color: var(--purple-500);
       outline: 4px solid rgba(166, 44, 197, 0.14);
     }
@@ -348,7 +357,10 @@
     }
 
     button:focus-visible,
-    a:focus-visible {
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
       outline: 4px solid rgba(217, 95, 24, 0.32);
       outline-offset: 3px;
     }
@@ -485,8 +497,12 @@
       font-size: 0.9rem;
     }
 
-    .preview-bar button {
-      min-height: 40px;
+    .preview-bar button,
+    .preview-bar a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
       padding: 0.4rem 0.9rem;
       border: 2px solid rgba(255, 255, 255, 0.6);
       border-radius: 0.7rem;
@@ -495,10 +511,13 @@
       cursor: pointer;
       font: inherit;
       font-weight: 800;
+      text-decoration: none;
     }
 
     .preview-bar button:hover,
-    .preview-bar button:focus-visible {
+    .preview-bar button:focus-visible,
+    .preview-bar a:hover,
+    .preview-bar a:focus-visible {
       background: rgba(255, 255, 255, 0.3);
     }
 
@@ -794,7 +813,6 @@
 
     .mission-letter:focus-visible {
       border-color: var(--purple-700);
-      outline: none;
     }
 
     .mission-count {
@@ -1183,7 +1201,7 @@
     }
 
     .hint-more {
-      min-height: 40px;
+      min-height: 44px;
       margin-top: 0.35rem;
       padding: 0.35rem 0.8rem;
       border: 2px solid var(--purple-900);
@@ -1232,7 +1250,7 @@
 
     .next-step-bar {
       position: sticky;
-      top: 0;
+      top: var(--preview-bar-height, 0px);
       z-index: 40;
       display: flex;
       flex-wrap: wrap;
@@ -1261,7 +1279,7 @@
     }
 
     .next-step-toggle {
-      min-height: 34px;
+      min-height: 44px;
       margin-left: auto;
       padding: 0.25rem 0.7rem;
       border: 2px solid rgba(255, 255, 255, 0.5);
@@ -2029,7 +2047,7 @@
     }
 
     .range-note strong {
-      color: var(--orange-600);
+      color: #a63f0d;
     }
 
     .mg-check {
@@ -2154,7 +2172,7 @@
       min-width: 16rem;
       padding: 0.6rem 0.7rem 0.7rem;
       border-radius: 0.6rem;
-      background: #1e90ff;
+      background: #0969b3;
       color: #fff;
     }
 
@@ -2228,8 +2246,12 @@
 
     .sim-live-view {
       position: sticky;
-      /* เผื่อพ้นแถบ "ขั้นถัดไป" ที่ตรึงบนสุดของหน้าอยู่แล้ว (สูงประมาณ 4.15rem ตอนกาง) */
-      top: 4.75rem;
+      /* อยู่ใต้แถบ Preview และแถบขั้นถัดไปตามความสูงจริงของแต่ละแถบ */
+      top: calc(
+        var(--preview-bar-height, 0px) +
+        var(--next-step-bar-height, 0px) +
+        0.75rem
+      );
       z-index: 5;
       padding-bottom: 1.1rem;
       margin-bottom: 1.1rem;
@@ -2829,6 +2851,13 @@
       font-weight: 800;
     }
 
+    .quiz-option[data-result="selected"] {
+      color: var(--purple-900);
+      background: #f6eff9;
+      border-color: var(--purple-700);
+      font-weight: 800;
+    }
+
     .quiz-option[data-result="incorrect"] {
       color: #842029;
       background: #fff1f2;
@@ -3238,7 +3267,7 @@
     }
 
     .admin-reset {
-      min-height: 38px;
+      min-height: 44px;
       padding: 0.35rem 0.75rem;
       border: 2px solid var(--border);
       border-radius: 0.7rem;
@@ -3405,7 +3434,7 @@
     }
 
     .admin-reset-form input {
-      min-height: 38px;
+      min-height: 44px;
       padding: 0.35rem 0.55rem;
       border: 2px solid var(--border);
       border-radius: 0.7rem;
@@ -3415,7 +3444,6 @@
 
     .admin-reset-form input:focus-visible {
       border-color: var(--purple-900);
-      outline: none;
     }
 
     .admin-reset-actions {
@@ -3751,8 +3779,18 @@
       }
 
       .admin-header-actions {
+        display: grid;
+        width: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         align-items: stretch;
-        flex-direction: column;
+      }
+
+      .admin-header-actions .admin-action {
+        width: 100%;
+        min-width: 0;
+        padding-inline: 0.45rem;
+        line-height: 1.35;
+        white-space: normal;
       }
 
       .admin-summary {
@@ -3779,6 +3817,11 @@
 
       .simulator-shell {
         grid-template-columns: 1fr;
+      }
+
+      .sim-live-view {
+        position: static;
+        top: auto;
       }
 
       .sensor-concepts,
@@ -3812,18 +3855,51 @@
       }
 
       .site-header {
-        align-items: flex-start;
+        align-items: stretch;
         flex-direction: column;
       }
 
       .progress-wrap {
+        grid-area: progress;
         width: 100%;
-        grid-template-columns: auto 1fr;
+        min-width: 0;
+        grid-template-columns: auto minmax(3rem, 1fr);
       }
 
       .user-area {
+        display: grid;
         width: 100%;
-        justify-content: space-between;
+        min-width: 0;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+          "identity logout"
+          "reward progress";
+        align-items: center;
+        justify-content: normal;
+        column-gap: 0.75rem;
+        row-gap: 0.65rem;
+      }
+
+      .user-chip {
+        grid-area: identity;
+        min-width: 0;
+        text-align: left;
+      }
+
+      .user-chip strong,
+      .user-chip span {
+        overflow-wrap: anywhere;
+      }
+
+      .reward-chip {
+        grid-area: reward;
+        justify-self: start;
+      }
+
+      .logout-button {
+        grid-area: logout;
+        align-self: center;
+        white-space: nowrap;
       }
 
       .hero {
@@ -3868,10 +3944,6 @@
 
       .sim-led-board {
         padding: 1.4rem;
-      }
-
-      .sim-live-view {
-        top: 3.5rem;
       }
 
       .auth-screen {
@@ -4150,7 +4222,7 @@
 
   <div class="preview-bar" id="preview-bar" role="status" hidden>
     <p id="preview-bar-text">โหมดทดลองของครู — ข้อมูลไม่ถูกบันทึกลงชีตนักเรียน</p>
-    <button type="button" id="preview-reset">เริ่มทดลองใหม่</button>
+    <a id="preview-reset" href="<?= webAppUrl ?>" target="_top">เริ่มทดลองใหม่</a>
     <button type="button" id="preview-exit">กลับไปแดชบอร์ด</button>
   </div>
 
@@ -5811,6 +5883,7 @@
       "use strict";
 
       const SESSION_KEY = "tiltLabSessionToken";
+      const PREVIEW_RESTART_KEY = "tiltLabPreviewRestartMode";
       const loginScreen = document.querySelector("#login-screen");
       const adminScreen = document.querySelector("#admin-screen");
       const appShell = document.querySelector("#app-shell");
@@ -5864,6 +5937,7 @@
       let offlineEnabled = false;
       let offlineRetryTimer = 0;
       let flushingOutbox = false;
+      let latestSyncRevision = 0;
 
       /**
        * ผูกที่เก็บในเครื่องกับผู้เรียนคนที่ล็อกอินอยู่
@@ -5873,6 +5947,10 @@
       function setOfflineOwner(username, enabled) {
         offlineOwner = String(username || "");
         offlineEnabled = Boolean(enabled);
+        const cached = readLocal(OFFLINE_STATE_KEY);
+        latestSyncRevision = cached && cached.state
+          ? progressSyncRevision(cached.state)
+          : 0;
       }
 
       function offlineKey(base) {
@@ -5908,10 +5986,40 @@
         }
       }
 
+      function progressSyncRevision(stateOrValue) {
+        const raw = stateOrValue && typeof stateOrValue === "object"
+          ? stateOrValue.syncRevision
+          : stateOrValue;
+        const revision = Number(raw);
+        return Number.isSafeInteger(revision) && revision >= 0 ? revision : 0;
+      }
+
+      function progressSyncMutation(stateOrValue) {
+        const raw = stateOrValue && typeof stateOrValue === "object"
+          ? stateOrValue.syncMutation
+          : stateOrValue;
+        const mutation = String(raw || "initial");
+        return ["initial", "quiz_reset", "progress_reset", "restore"].includes(mutation)
+          ? mutation
+          : "initial";
+      }
+
+      function isProgressConflict(error) {
+        return String(error && error.message || error || "").includes("PROGRESS_CONFLICT:");
+      }
+
+      function quizSectionOrder() {
+        const section = Array.isArray(lessonSections)
+          ? lessonSections.find((item) => item && item.id === "quiz")
+          : null;
+        const order = Number(section && section.order);
+        return Number.isInteger(order) && order >= 1 ? order : 8;
+      }
+
       /**
        * รวมความก้าวหน้าสองฝั่งตาม Blueprint #195 ห้ามเขียนทับแบบสุ่ม
        * ขั้นที่ทำเสร็จรวมกันทั้งสองฝั่ง เพราะทำเสร็จแล้วย้อนกลับไม่ได้
-       * คะแนนสอบเชื่อเซิร์ฟเวอร์ เพราะ recordQuizAttempt เป็นผู้ตัดสิน
+       * คะแนนสอบเชื่อเซิร์ฟเวอร์ เพราะ submitQuizAttemptV2 เป็นผู้ตัดสิน
        * คำตอบกิจกรรมเชื่อฝั่งเครื่อง เพราะเป็นสิ่งที่นักเรียนเพิ่งทำ
        */
       function mergeProgress(serverState, localState) {
@@ -5923,6 +6031,9 @@
         return {
           ...remote,
           ...local,
+          // revision เป็นอำนาจของเซิร์ฟเวอร์ ห้ามให้งานค้างเขียนย้อนกลับ
+          syncRevision: progressSyncRevision(remote),
+          syncMutation: progressSyncMutation(remote),
           currentSection: Math.max(
             Number(remote.currentSection) || 1,
             Number(local.currentSection) || 1
@@ -5952,6 +6063,58 @@
             latestScore: Number(remoteQuiz.latestScore) || Number(localQuiz.latestScore) || 0
           }
         };
+      }
+
+      /**
+       * เมื่อครู reset/restore ระหว่างที่เครื่องนักเรียนมีงานค้าง
+       * ต้องตัดสินตามชนิดคำสั่ง ไม่เช่นนั้น localStorage จะชุบข้อมูลเก่ากลับมา
+       */
+      function resolveProgressConflict(serverState, localState) {
+        const remote = serverState && typeof serverState === "object" ? serverState : {};
+        const local = localState && typeof localState === "object" ? localState : {};
+        const mutation = progressSyncMutation(remote);
+        const revision = progressSyncRevision(remote);
+
+        clearPendingQuizSubmission();
+
+        if (mutation === "quiz_reset") {
+          const quizOrder = quizSectionOrder();
+          const rebased = mergeProgress(remote, local);
+          rebased.completedSections = (rebased.completedSections || [])
+            .filter((order) => Number(order) < quizOrder);
+          rebased.currentSection = Math.min(
+            Number(rebased.currentSection) || 1,
+            quizOrder
+          );
+          rebased.quiz = { ...(remote.quiz || {}) };
+          // Reflection อยู่หลัง Quiz จึงต้องยึดเซิร์ฟเวอร์ด้วย
+          // ไม่เช่นนั้นตัวซ่อมความก้าวหน้าอาจชุบ Section 9 เก่ากลับมา
+          rebased.reflection = remote.reflection || {};
+          rebased.syncRevision = revision;
+          rebased.syncMutation = mutation;
+
+          writeLocal(OFFLINE_OUTBOX_KEY, {
+            state: rebased,
+            at: new Date().toISOString(),
+            rebasedFromRevision: progressSyncRevision(local)
+          });
+          showOfflineBar(
+            "🔄 ครูรีเซ็ตแบบทดสอบแล้ว ระบบเก็บกิจกรรมก่อนหน้าไว้และนำ Quiz เก่าออก",
+            "queued"
+          );
+          scheduleFlush();
+          return rebased;
+        }
+
+        clearLocal(OFFLINE_OUTBOX_KEY);
+        showOfflineBar(
+          mutation === "restore"
+            ? "🔄 ครูกู้คืนข้อมูลแล้ว ระบบโหลดสำเนาล่าสุดจากโรงเรียนให้แล้ว"
+            : "🔄 ครูรีเซ็ตความก้าวหน้าแล้ว ระบบเริ่มบทเรียนตามข้อมูลล่าสุด",
+          "saved"
+        );
+        window.setTimeout(hideOfflineBar, 8000);
+        return remote;
       }
 
       function showOfflineBar(message, tone) {
@@ -6027,20 +6190,63 @@
       /** เก็บผลจากเซิร์ฟเวอร์ลงเครื่อง และพางานที่ค้างติดไปกับทุกครั้งที่อ่าน */
       function rememberServerResult(functionName, args, result) {
         if (functionName === "saveProgress") {
-          rememberState(args[1]);
+          // DIFF-04A: จำ canonical state ที่ผ่านกติกา server แล้วเท่านั้น
+          // fallback รองรับ deployment เก่าชั่วคราวระหว่างอัปเดตสองไฟล์
+          const savedState = result && result.state ? result.state : args[1];
+          latestSyncRevision = progressSyncRevision(savedState);
+          rememberState(savedState);
           clearLocal(OFFLINE_OUTBOX_KEY);
           hideOfflineBar();
-          window.setTimeout(() => {
-            void refreshLessonNavigation();
-          }, 0);
+          // ใช้ canonical state จากคำตอบของเซิร์ฟเวอร์ปลดล็อกทันที
+          // ไม่ต้องรอ getProgress รอบที่สองจนข้อความสำเร็จกับหน้าจอขัดกัน
+          if (
+            !result ||
+            !result.state ||
+            !applyLessonNavigationState(result.state, result.rewards)
+          ) {
+            window.setTimeout(() => {
+              void refreshLessonNavigation();
+            }, 0);
+          }
+          return;
+        }
+        if (
+          functionName === "submitQuizAttemptV2" &&
+          result &&
+          result.state
+        ) {
+          latestSyncRevision = progressSyncRevision(result.state);
+          const pending = readLocal(OFFLINE_OUTBOX_KEY);
+          const stateToRemember = pending && pending.state
+            ? mergeProgress(result.state, pending.state)
+            : result.state;
+          rememberState(stateToRemember);
+          // Quiz ใช้ endpoint คนละตัว แต่ต้องปลดล็อกด้วย canonical state
+          // ในจังหวะเดียวกับกิจกรรมส่วนอื่นทั้งบทเรียน
+          if (!applyLessonNavigationState(result.state, result.rewards)) {
+            window.setTimeout(() => {
+              void refreshLessonNavigation();
+            }, 0);
+          }
           return;
         }
         if (functionName === "getProgress" && result && result.state) {
+          const serverRevision = progressSyncRevision(result.state);
+          latestSyncRevision = serverRevision;
+
+          const pendingQuiz = readPendingQuizSubmission();
+          if (
+            pendingQuiz &&
+            progressSyncRevision(pendingQuiz) !== serverRevision
+          ) {
+            clearPendingQuizSubmission();
+          }
+
           const pending = readLocal(OFFLINE_OUTBOX_KEY);
           if (pending && pending.state) {
-            // งานที่ค้างต้องติดไปกับทุกการอ่าน ไม่อย่างนั้นการบันทึกครั้งถัดไป
-            // จะทับความก้าวหน้าที่ยังส่งขึ้นระบบไม่สำเร็จ
-            result.state = mergeProgress(result.state, pending.state);
+            result.state = progressSyncRevision(pending.state) === serverRevision
+              ? mergeProgress(result.state, pending.state)
+              : resolveProgressConflict(result.state, pending.state);
           }
           rememberState(result.state);
         }
@@ -6065,7 +6271,11 @@
         flushingOutbox = true;
         try {
           const fresh = await callServer("getProgress", sessionToken);
-          const merged = mergeProgress(fresh && fresh.state, pending.state);
+          // getProgress อาจล้างหรือ rebase Outbox เมื่อพบ reset/restore
+          // จึงต้องอ่านใหม่ ห้ามใช้ตัวแปร pending เก่าที่จับไว้ก่อนเรียกเซิร์ฟเวอร์
+          const currentPending = readLocal(OFFLINE_OUTBOX_KEY);
+          if (!currentPending || !currentPending.state) return true;
+          const merged = mergeProgress(fresh && fresh.state, currentPending.state);
           const saved = await callServer("saveProgress", sessionToken, merged);
           if (saved && saved.queued) return false;
 
@@ -6073,6 +6283,13 @@
           window.setTimeout(hideOfflineBar, 6000);
           return true;
         } catch (error) {
+          if (isProgressConflict(error)) {
+            try {
+              await callServer("getProgress", sessionToken);
+            } catch (refreshError) {
+              // ถ้าโหลดรอบแก้ conflict ไม่สำเร็จ ให้รอ retry โดยยังไม่ทิ้งงาน
+            }
+          }
           scheduleFlush();
           return false;
         } finally {
@@ -6218,6 +6435,28 @@
       let lessonNavState = { completed: [], unlocked: 1 };
       const nextStepBar = document.querySelector("#next-step-bar");
       const nextStepToggle = document.querySelector("#next-step-toggle");
+
+      /** ทำให้ Simulator ที่ตรึงอยู่หลบแถบขั้นถัดไปได้พอดี แม้แถบย่อหรือพันบรรทัด */
+      function syncNextStepBarOffset() {
+        const height =
+          nextStepBar && !nextStepBar.hidden
+            ? Math.ceil(nextStepBar.getBoundingClientRect().height)
+            : 0;
+        document.documentElement.style.setProperty(
+          "--next-step-bar-height",
+          `${height}px`
+        );
+      }
+
+      const nextStepBarResizeObserver =
+        nextStepBar && typeof ResizeObserver === "function"
+          ? new ResizeObserver(syncNextStepBarOffset)
+          : null;
+      if (nextStepBarResizeObserver) {
+        nextStepBarResizeObserver.observe(nextStepBar);
+      }
+      window.addEventListener("resize", syncNextStepBarOffset, { passive: true });
+      syncNextStepBarOffset();
 
       /**
        * แถบขั้นถัดไปติดบนสุดของจอ บนมือถือกินพื้นที่มากจนบังเนื้อหา
@@ -6685,6 +6924,23 @@
         ];
       }
 
+      /**
+       * ใช้สถานะที่ผ่านกติกาเซิร์ฟเวอร์แล้วปรับการนำทางในจังหวะเดียวกัน
+       * คืน false เฉพาะตอนทะเบียน Section ยังโหลดไม่เสร็จ เพื่อให้ผู้เรียก fallback ได้
+       */
+      function applyLessonNavigationState(state, rewards) {
+        if (!state || !lessonSections.length) return false;
+
+        const completed = contiguousCompleted(state.completedSections || []);
+        lessonNavState = {
+          completed: completed,
+          unlocked: Math.min(completed.length + 1, lessonSections.length)
+        };
+        applyLessonLocks();
+        renderRewards(rewards);
+        return true;
+      }
+
       /** ดึงความก้าวหน้าล่าสุดแล้วปรับแถบนำทางและการล็อกให้ตรงกัน */
       async function refreshLessonNavigation() {
         await loadLessonSections();
@@ -6693,15 +6949,7 @@
         try {
           const result = await callServer("getProgress", sessionToken);
           const state = await healProgressGaps(result.state);
-          const completed = contiguousCompleted(
-            state ? state.completedSections : []
-          );
-          lessonNavState = {
-            completed: completed,
-            unlocked: Math.min(completed.length + 1, lessonSections.length)
-          };
-          applyLessonLocks();
-          renderRewards(result.rewards);
+          applyLessonNavigationState(state, result.rewards);
         } catch (error) {
           // ถ้าดึงไม่ได้ ปล่อยสถานะเดิมไว้ ดีกว่าล็อกผิดจนเรียนต่อไม่ได้
         }
@@ -6726,8 +6974,31 @@
       const previewBarText = document.querySelector("#preview-bar-text");
 
       /**
+       * กันแถบขั้นถัดไปซ้อนกับแถบโหมดทดลอง โดยวัดความสูงจริงที่อาจเปลี่ยน
+       * เมื่อข้อความพันบรรทัดบนมือถือ และคืนค่าเป็น 0 เมื่อออกจากโหมดทดลอง
+       */
+      function syncPreviewBarOffset() {
+        const height =
+          previewBar && !previewBar.hidden
+            ? Math.ceil(previewBar.getBoundingClientRect().height)
+            : 0;
+        document.documentElement.style.setProperty(
+          "--preview-bar-height",
+          `${height}px`
+        );
+      }
+
+      const previewBarResizeObserver =
+        previewBar && typeof ResizeObserver === "function"
+          ? new ResizeObserver(syncPreviewBarOffset)
+          : null;
+      if (previewBarResizeObserver) previewBarResizeObserver.observe(previewBar);
+      window.addEventListener("resize", syncPreviewBarOffset, { passive: true });
+      syncPreviewBarOffset();
+
+      /**
        * Teacher Preview ตาม Blueprint #78 และ #113
-       * ใช้ token คนละใบกับเซสชันครู ความก้าวหน้าเก็บฝั่งเซิร์ฟเวอร์ในหน่วยความจำชั่วคราว
+       * ใช้ token คนละใบกับเซสชันครู ความก้าวหน้าเก็บในพื้นที่ทดลองฝั่งเซิร์ฟเวอร์
        * จึงไม่แตะข้อมูลนักเรียนจริงเลย
        */
       async function enterTeacherPreview(mode) {
@@ -6743,11 +7014,14 @@
               ? "โหมดทดลองของครู · ข้ามขั้นได้ · ข้อมูลไม่ถูกบันทึกลงชีตนักเรียน"
               : "โหมดทดลองของครู · เดินตามลำดับเหมือนนักเรียน · ข้อมูลไม่ถูกบันทึกลงชีตนักเรียน";
           previewBar.hidden = false;
+          window.requestAnimationFrame(syncPreviewBarOffset);
 
           adminScreen.hidden = true;
           showApp(result.user, true);
+          return true;
         } catch (error) {
           adminStatus.textContent = `เปิดโหมดทดลองไม่สำเร็จ: ${error.message}`;
+          return false;
         }
       }
 
@@ -6757,15 +7031,49 @@
         adminToken = "";
         adminUser = null;
         if (previewBar) previewBar.hidden = true;
+        syncPreviewBarOffset();
       }
 
-      function exitTeacherPreview() {
+      /** อ่านคำขอเริ่มโหมดทดลองใหม่ที่ฝากไว้ระหว่างนำทางออกจาก iframe */
+      function readPreviewRestartRequest() {
+        let raw = "";
+        try {
+          raw = sessionStorage.getItem(PREVIEW_RESTART_KEY) || "";
+        } catch (error) {
+          return null;
+        }
+
+        // รองรับค่ารุ่น DIFF-06C เดิมหนึ่งครั้ง แล้วเริ่ม session ใหม่โดยไม่ cleanup token เก่า
+        if (raw === "normal" || raw === "free") {
+          return { mode: raw, previewToken: "" };
+        }
+
+        try {
+          const parsed = JSON.parse(raw);
+          const mode = parsed && parsed.mode;
+          const previewToken = String(parsed && parsed.previewToken || "");
+          if (
+            (mode === "normal" || mode === "free") &&
+            /^[a-f0-9]{64}$/.test(previewToken)
+          ) {
+            return { mode, previewToken };
+          }
+        } catch (error) {
+          // ข้อมูลเสียหรือไม่ใช่ JSON จะถูกล้างใน restoreSession
+        }
+        return null;
+      }
+
+      async function exitTeacherPreview() {
         if (!previewSession) return;
+        const previewToken = sessionToken;
         const teacher = adminUser;
         sessionToken = adminToken;
         clearPreviewState();
         appShell.hidden = true;
-        void showAdminDashboard(teacher);
+        const cleanup = callServer("logout", previewToken).catch(() => {});
+        await showAdminDashboard(teacher);
+        await cleanup;
       }
 
       const previewExitButton = document.querySelector("#preview-exit");
@@ -6773,20 +7081,38 @@
 
       if (previewExitButton) {
         previewExitButton.addEventListener("click", () => {
-          exitTeacherPreview();
+          void exitTeacherPreview();
         });
       }
 
       if (previewResetButton) {
-        previewResetButton.addEventListener("click", async () => {
-        if (!previewSession) return;
-        try {
-          await callServer("resetTeacherPreview", sessionToken);
-          await refreshLessonNavigation();
-          previewBarText.textContent = "ล้างข้อมูลทดลองแล้ว เริ่มดูใหม่ได้ตั้งแต่ต้น";
-        } catch (error) {
-          previewBarText.textContent = `ล้างข้อมูลไม่สำเร็จ: ${error.message}`;
-        }
+        previewResetButton.addEventListener("click", (event) => {
+          if (!previewSession) {
+            event.preventDefault();
+            return;
+          }
+          const confirmed = window.confirm(
+            "เริ่มทดลองใหม่? คำตอบและคะแนนในโหมดทดลองทั้งหมดจะถูกล้าง แต่ข้อมูลนักเรียนจริงจะไม่เปลี่ยน"
+          );
+          if (!confirmed) {
+            event.preventDefault();
+            return;
+          }
+
+          try {
+            sessionStorage.setItem(
+              PREVIEW_RESTART_KEY,
+              JSON.stringify({
+                mode: previewSession.mode,
+                previewToken: sessionToken
+              })
+            );
+            previewBarText.textContent = "กำลังล้างข้อมูลทดลองและเริ่มใหม่…";
+          } catch (error) {
+            event.preventDefault();
+            previewBarText.textContent =
+              "เริ่มทดลองใหม่ไม่ได้ เพราะเบราว์เซอร์ไม่อนุญาตให้เก็บสถานะชั่วคราว";
+          }
         });
       }
 
@@ -7349,8 +7675,8 @@
 
       /**
        * Item Analysis ตาม Blueprint #76 พร้อมข้อเสนอการช่วยเหลือตาม #196
-       * เซิร์ฟเวอร์ส่งเฉพาะจำนวนครั้งที่แต่ละตัวเลือกถูกเลือก
-       * หน้าเว็บเทียบกับเฉลยเอง จึงไม่มีเฉลยเก็บซ้ำสองที่
+       * เซิร์ฟเวอร์ส่งจำนวนตัวเลือกและเฉลยผ่าน API ที่ตรวจสิทธิ์ admin แล้ว
+       * หน้าเว็บนักเรียนจึงไม่ต้องฝัง answer key ไว้ใน source
        */
       async function showItemAnalysis() {
         adminItemsButton.disabled = true;
@@ -7374,10 +7700,19 @@
 
           const rows = QUIZ_QUESTIONS.map((question, index) => {
             const counts = result.choiceCounts[question.id] || {};
+            const correctChoice = result.correctChoices[question.id];
             const answered = Object.values(counts).reduce((a, b) => a + b, 0);
-            const correct = counts[question.answer] || 0;
+            const correct = counts[correctChoice] || 0;
             const percent = answered ? Math.round((correct / answered) * 100) : 0;
-            return { question, index, counts, answered, correct, percent };
+            return {
+              question,
+              index,
+              counts,
+              correctChoice,
+              answered,
+              correct,
+              percent
+            };
           }).sort((a, b) => a.percent - b.percent);
 
           adminItemsList.replaceChildren();
@@ -7402,7 +7737,7 @@
 
             if (row.percent < 60) {
               const wrongChoices = row.question.choices
-                .filter(([value]) => value !== row.question.answer)
+                .filter(([value]) => value !== row.correctChoice)
                 .map(([value, text]) => ({ text, count: row.counts[value] || 0 }))
                 .filter((item) => item.count > 0)
                 .sort((a, b) => b.count - a.count);
@@ -7461,7 +7796,8 @@
 
         QUIZ_QUESTIONS.forEach((question, index) => {
           const chosen = attempt.answers ? attempt.answers[question.id] : undefined;
-          const correct = chosen === question.answer;
+          const result = attempt.results ? attempt.results[question.id] : null;
+          const correct = Boolean(result && result.correct);
 
           const row = document.createElement("div");
           row.className = `admin-answer ${correct ? "is-right" : "is-wrong"}`;
@@ -7473,7 +7809,7 @@
           const label = document.createElement("span");
           const chosenChoice = question.choices.find(([value]) => value === chosen);
           const answerChoice = question.choices.find(
-            ([value]) => value === question.answer
+            ([value]) => result && value === result.correctChoice
           );
           label.textContent = correct
             ? `ข้อ ${index + 1} · ตอบ "${chosenChoice ? chosenChoice[1] : "-"}"`
@@ -7861,6 +8197,22 @@
         loginMessage.textContent = "กำลังเรียกคืนบทเรียนล่าสุด...";
         try {
           const result = await callServer("getCurrentUser", sessionToken);
+          const restartRequest = readPreviewRestartRequest();
+          if (
+            result.user.role === "admin" &&
+            restartRequest
+          ) {
+            sessionStorage.removeItem(PREVIEW_RESTART_KEY);
+            const cleanup = restartRequest.previewToken
+              ? callServer("logout", restartRequest.previewToken).catch(() => {})
+              : Promise.resolve();
+            currentUser = result.user;
+            const opened = await enterTeacherPreview(restartRequest.mode);
+            await cleanup;
+            if (!opened) await showAdminDashboard(result.user);
+            return;
+          }
+          sessionStorage.removeItem(PREVIEW_RESTART_KEY);
           showAuthenticatedUser(result.user);
         } catch (error) {
           if (sessionToken) {
@@ -7907,6 +8259,7 @@
       let gameIndex = 0;
       let gameScore = 0;
       let gameLocked = false;
+      let gameAnswers = [];
 
       /** สูตรเดียวกับที่ใช้ในบทเรียน map(accel, −600, 600, 0, 4) */
       function mapAccelToPixel(accel) {
@@ -7978,6 +8331,7 @@
         gameOrder = shuffled(GAME_VALUES);
         gameIndex = 0;
         gameScore = 0;
+        gameAnswers = [];
         gameResult.hidden = true;
         gameStage.hidden = false;
         renderGameValue();
@@ -7991,6 +8345,7 @@
         gameLocked = true;
         const verdict = describeGameAnswer(item, saidSafe);
         if (verdict.correct) gameScore += 1;
+        gameAnswers.push({ accel: item.accel, saidSafe: Boolean(saidSafe) });
 
         const chosen = saidSafe ? gameSafeButton : gameOutButton;
         chosen.dataset.result = verdict.correct ? "correct" : "incorrect";
@@ -8026,22 +8381,25 @@
           const result = await callServer("getProgress", sessionToken);
           const state = result.state;
           const previous = (state.worksheet && state.worksheet.miniGame) || {};
-          const best = Math.max(Number(previous.bestScore) || 0, gameScore);
+          const localBest = Math.max(Number(previous.bestScore) || 0, gameScore);
+          const attemptId =
+            `game-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
           // กิจกรรมเสริมต้องไม่แตะ currentSection หรือ completedSections
           // เพราะไม่ได้อยู่ในลำดับบังคับ ถ้าแตะจะทำให้การล็อกขั้นเพี้ยน
           state.worksheet = {
             ...(state.worksheet || {}),
             miniGame: {
-              completed: best >= GAME_PASS_MARK,
-              bestScore: best,
-              total: total,
-              plays: (Number(previous.plays) || 0) + 1
+              attemptId: attemptId,
+              attemptAnswers: gameAnswers.slice()
             }
           };
 
           const saved = await callServer("saveProgress", sessionToken, state);
           renderRewards(saved.rewards);
+          const canonical =
+            saved.state && saved.state.worksheet && saved.state.worksheet.miniGame;
+          const best = canonical ? Number(canonical.bestScore) || 0 : localBest;
           miniGameSync.textContent =
             best > gameScore
               ? `บันทึกแล้ว · สถิติดีที่สุดของหนูยังเป็น ${best}/${total}`
@@ -8185,7 +8543,11 @@
         // เช่นเดียวกับ Mini Game คือห้ามแตะลำดับขั้นบังคับ
         state.worksheet = {
           ...(state.worksheet || {}),
-          mission: { ...previous, ...patch }
+          mission: {
+            ...previous,
+            ...patch,
+            answers: { ...(previous.answers || {}), ...missionChoices }
+          }
         };
         return callServer("saveProgress", sessionToken, state);
       }
@@ -8298,6 +8660,21 @@
 
           const stage = Math.min(Math.max(Number(saved.stage) || 1, 1), MISSION_STAGES);
           showMissionStage(stage);
+
+          missionChoices = { ...(saved.answers || {}) };
+          ["q1", "q2", "q3", "q4"].forEach((key) => {
+            const list = document.querySelector("#mission-" + key);
+            if (!list) return;
+            list.querySelectorAll(".choice-button").forEach((button) => {
+              button.setAttribute(
+                "aria-pressed",
+                String(button.dataset.value === missionChoices[key])
+              );
+            });
+          });
+          refreshMissionCheckButton(1);
+          refreshMissionCheckButton(2);
+          refreshMissionCheckButton(3);
 
           if (saved.letter && missionLetter) {
             missionLetter.value = String(saved.letter);
@@ -8414,7 +8791,8 @@
         }
         if (labSubmit.dataset.lockedByNav === "yes") return;
         const allChecked = labChecks.every((box) => box && box.checked);
-        labSubmit.disabled = !(allChecked && length >= LAB_NOTE_MIN);
+        const pauseCorrect = selectedPauseAnswer() === "bigger";
+        labSubmit.disabled = !(allChecked && pauseCorrect && length >= LAB_NOTE_MIN);
       }
 
       async function saveCodingLab(patch) {
@@ -8454,6 +8832,11 @@
         if (!allChecked) {
           labSync.textContent =
             "ทำครบทุกข้อก่อนนะ ฝึกสองโปรแกรม ปรับจังหวะพัก แล้วลองภารกิจ";
+          return;
+        }
+        if (selectedPauseAnswer() !== "bigger") {
+          labSync.textContent =
+            "ตอบคำถามเรื่อง pause ให้ถูกก่อนนะ ถ้าอยากให้ช้าลงต้องเพิ่มเวลาพัก";
           return;
         }
         if (note.length < LAB_NOTE_MIN) {
@@ -8524,6 +8907,7 @@
         button.addEventListener("click", () => {
           const answer = button.dataset.pauseAnswer;
           renderPauseAnswer(answer);
+          refreshLabSubmit();
           // บันทึกทันทีเพื่อไม่ให้คำตอบหายถ้าปิดหน้าไปก่อน
           void saveCodingLab(collectLabState()).catch(() => {});
         });
@@ -9824,7 +10208,6 @@
             ["acceleration", "ความเร่ง"],
             ["sound", "ระดับเสียง"]
           ],
-          answer: "acceleration",
           hint:
             "หลายคนเข้าใจว่า accelerometer เป็นเซนเซอร์วัดองศาโดยตรง ลองทบทวนว่าจริง ๆ แล้วมันวัดอะไร แล้วเราเอาค่านั้นมาบอกการเอียงได้อย่างไร",
           explanation:
@@ -9838,7 +10221,6 @@
             ["hundred", "100 mg = 1 g"],
             ["equal", "1 mg = 1000 g"]
           ],
-          answer: "one",
           hint:
             "ระวังสับสน mg ในบทนี้ไม่ใช่มิลลิกรัมที่ใช้ชั่งน้ำหนัก ลองนึกว่าบอร์ดวางราบอ่านได้ 0 mg และเอียง 90° อ่านได้ประมาณ 1000 mg",
           explanation:
@@ -9852,7 +10234,6 @@
             ["two", "เกรด 2"],
             ["four", "เกรด 4"]
           ],
-          answer: "two",
           hint:
             "ลองนึกถึงจุดกึ่งกลาง ถ้า 0 คะแนนได้เกรด 0 และ 100 คะแนนได้เกรด 4 แล้วคะแนนที่อยู่ตรงกลางพอดีควรได้เท่าไร",
           explanation:
@@ -9866,7 +10247,6 @@
             ["map-four", "map() ได้ 4.00 และสูตรเดิมได้ประมาณ 4.06"],
             ["both-two", "ทั้งสองสูตรได้ประมาณ 2"]
           ],
-          answer: "map-four",
           hint:
             "ลองแทนค่า 600 ลงในทั้งสองสูตรจริง ๆ แล้วเทียบดูว่าค่าไหนยังอยู่ในช่วง 0–4 และค่าไหนหลุดขอบออกไป",
           explanation:
@@ -9880,7 +10260,6 @@
             ["limit", "เพื่อจำกัดพิกัดให้อยู่ในช่วง 0–4"],
             ["lights", "เพื่อเพิ่มจำนวน LED เป็น 600 จุด"]
           ],
-          answer: "limit",
           hint:
             "หลายคนคิดว่า constrain() ใช้เฉพาะตอนที่สูตรผิด ลองทบทวนว่า map() ตรวจขอบเขตปลายทางให้เราเองหรือเปล่า",
           explanation:
@@ -9894,7 +10273,6 @@
             ["reset", "ลบรหัสโปรแกรมทั้งหมด"],
             ["pace", "เว้นจังหวะไม่ให้ลูปสั่งจอถี่ต่อเนื่องเกินไป"]
           ],
-          answer: "pace",
           hint:
             "ลองนึกว่าถ้าไม่มี pause ลูป forever จะสั่งจอถี่แค่ไหนในหนึ่งวินาที แล้วผลที่เห็นบนจอกับการทำงานของระบบจะเป็นอย่างไร",
           explanation:
@@ -9927,7 +10305,112 @@
       let quizLatest = 0;
       let quizBest = 0;
       let quizRoundLocked = false;
+      let quizResults = {};
       let quizDraftTimer = null;
+      let pendingQuizSubmission = null;
+      const QUIZ_PENDING_SUBMISSION_KEY = "tiltLabQuizPendingSubmissionV2";
+
+      function orderedQuizAnswers(source) {
+        const ordered = {};
+        QUIZ_QUESTIONS.forEach((question) => {
+          const selected = source && source[question.id];
+          if (question.choices.some(([value]) => value === selected)) {
+            ordered[question.id] = selected;
+          }
+        });
+        return ordered;
+      }
+
+      function sameQuizAnswerSet(left, right) {
+        return JSON.stringify(orderedQuizAnswers(left)) ===
+          JSON.stringify(orderedQuizAnswers(right));
+      }
+
+      function createQuizSubmissionId() {
+        if (
+          window.crypto &&
+          typeof window.crypto.randomUUID === "function"
+        ) {
+          return window.crypto.randomUUID().replace(/-/g, "");
+        }
+
+        const randomPart = Math.random().toString(36).slice(2).padEnd(12, "0");
+        return `quiz_${Date.now().toString(36)}_${randomPart}`;
+      }
+
+      function readPendingQuizSubmission() {
+        const owner = currentUser ? String(currentUser.username) : "";
+        if (pendingQuizSubmission && pendingQuizSubmission.owner === owner) {
+          pendingQuizSubmission.syncRevision = progressSyncRevision(
+            pendingQuizSubmission
+          );
+          return pendingQuizSubmission;
+        }
+
+        try {
+          const raw = window.sessionStorage.getItem(
+            QUIZ_PENDING_SUBMISSION_KEY
+          );
+          const saved = raw ? JSON.parse(raw) : null;
+          const validId = saved &&
+            /^[A-Za-z0-9_-]{16,100}$/.test(String(saved.submissionId || ""));
+          const answers = orderedQuizAnswers(saved && saved.answers);
+          if (
+            validId &&
+            saved.owner === owner &&
+            Object.keys(answers).length === QUIZ_QUESTIONS.length
+          ) {
+            pendingQuizSubmission = {
+              owner,
+              submissionId: saved.submissionId,
+              answers,
+              syncRevision: progressSyncRevision(saved)
+            };
+            return pendingQuizSubmission;
+          }
+          window.sessionStorage.removeItem(QUIZ_PENDING_SUBMISSION_KEY);
+        } catch (error) {
+          // sessionStorage อาจถูกปิด แต่ยังใช้ตัวแปรในหน้านี้ส่งซ้ำได้
+        }
+        return null;
+      }
+
+      function getOrCreatePendingQuizSubmission() {
+        const answers = orderedQuizAnswers(quizAnswers);
+        const existing = readPendingQuizSubmission();
+        if (
+          existing &&
+          existing.syncRevision === latestSyncRevision &&
+          sameQuizAnswerSet(existing.answers, answers)
+        ) {
+          return existing;
+        }
+
+        pendingQuizSubmission = {
+          owner: currentUser ? String(currentUser.username) : "",
+          submissionId: createQuizSubmissionId(),
+          answers,
+          syncRevision: latestSyncRevision
+        };
+        try {
+          window.sessionStorage.setItem(
+            QUIZ_PENDING_SUBMISSION_KEY,
+            JSON.stringify(pendingQuizSubmission)
+          );
+        } catch (error) {
+          // เก็บในหน่วยความจำของหน้าแทนเมื่อ storage ใช้ไม่ได้
+        }
+        return pendingQuizSubmission;
+      }
+
+      function clearPendingQuizSubmission() {
+        pendingQuizSubmission = null;
+        try {
+          window.sessionStorage.removeItem(QUIZ_PENDING_SUBMISSION_KEY);
+        } catch (error) {
+          // ไม่มีข้อมูลสำคัญที่ต้องทำต่อเมื่อ storage ใช้ไม่ได้
+        }
+      }
 
       /**
        * ตัวสุ่มที่ให้ผลเหมือนเดิมทุกครั้งเมื่อ seed เท่ากัน
@@ -10013,7 +10496,7 @@
         );
       }
 
-      function renderQuizAnswer(questionId, selectedChoice) {
+      function renderQuizAnswer(questionId, selectedChoice, serverResult) {
         const question = findQuizQuestion(questionId);
         const fieldset = quizList.querySelector(
           `[data-quiz-question="${questionId}"]`
@@ -10025,16 +10508,19 @@
           button.disabled = true;
           delete button.dataset.result;
 
-          if (value === question.answer) {
+          if (serverResult && value === serverResult.correctChoice) {
             button.dataset.result = "correct";
-          } else if (value === selectedChoice) {
+          } else if (serverResult && value === selectedChoice) {
             button.dataset.result = "incorrect";
+          } else if (!serverResult && value === selectedChoice) {
+            button.dataset.result = "selected";
           }
         });
 
-        const correct = selectedChoice === question.answer;
-        fieldset.querySelector(".quiz-feedback").textContent =
-          `${correct ? "ถูกต้อง!" : "ยังไม่ถูก"} ${question.explanation}`;
+        const feedback = fieldset.querySelector(".quiz-feedback");
+        feedback.textContent = serverResult
+          ? `${serverResult.correct ? "ถูกต้อง!" : "ยังไม่ถูก"} ${question.explanation}`
+          : "บันทึกตัวเลือกแล้ว ระบบจะตรวจพร้อมกันเมื่อกดสรุปคะแนน";
       }
 
       function updateQuizSubmitButton() {
@@ -10056,15 +10542,6 @@
         renderQuizAnswer(questionId, choice);
         updateQuizSubmitButton();
         scheduleQuizDraftSave();
-      }
-
-      function calculateQuizScore() {
-        return QUIZ_QUESTIONS.reduce(
-          (score, question) =>
-            score +
-            (quizAnswers[question.id] === question.answer ? 1 : 0),
-          0
-        );
       }
 
       function renderQuizSummary() {
@@ -10114,7 +10591,8 @@
         }
 
         const wrong = QUIZ_QUESTIONS.filter(
-          (question) => quizAnswers[question.id] !== question.answer
+          (question) => quizResults[question.id] &&
+            quizResults[question.id].correct === false
         );
         if (!wrong.length) {
           panel.hidden = true;
@@ -10167,11 +10645,7 @@
           const result = await callServer("getProgress", sessionToken);
           const state = result.state;
           state.quiz = {
-            ...(state.quiz || {}),
             answers: { ...quizAnswers },
-            latestScore: quizLatest,
-            bestScore: quizBest,
-            attempts: quizAttemptCount,
             locked: false
           };
           await callServer("saveProgress", sessionToken, state);
@@ -10194,92 +10668,62 @@
         quizSync.textContent = "กำลังตรวจและบันทึกคะแนน...";
 
         try {
-          const result = await callServer("getProgress", sessionToken);
-          const state = result.state;
-          const glossaryCompleted =
-            state.worksheet &&
-            state.worksheet.glossary &&
-            state.worksheet.glossary.completed;
-
-          if (!glossaryCompleted) {
-            quizSync.textContent =
-              "ตอบครบแล้ว แต่กรุณาผ่านภารกิจ Glossary ใน Section 7 ก่อน";
-            updateQuizSubmitButton();
-            return;
-          }
-
-          const serverAttemptCount = Number(state.quiz.attempts) || 0;
-          if (serverAttemptCount >= QUIZ_MAX_ATTEMPTS) {
-            quizAttemptCount = QUIZ_MAX_ATTEMPTS;
-            quizRoundLocked = true;
-            renderQuizSummary();
-            updateQuizSubmitButton();
-            quizSync.textContent =
-              "ใช้สิทธิ์ทำแบบทดสอบครบ 3 ครั้งแล้ว";
-            return;
-          }
-
-          const score = calculateQuizScore();
-          const attemptNumber = serverAttemptCount + 1;
-          const bestScore = Math.max(
-            Number(state.quiz.bestScore) || 0,
-            score
+          const pending = getOrCreatePendingQuizSubmission();
+          const result = await callServer(
+            "submitQuizAttemptV2",
+            sessionToken,
+            {
+              answers: pending.answers,
+              submissionId: pending.submissionId,
+              syncRevision: pending.syncRevision
+            }
           );
-          const passed = score >= QUIZ_PASSING_SCORE;
-          // ถือว่าทำแบบทดสอบครบเมื่อผ่าน หรือใช้สิทธิ์ครบแล้ว
-          // เพื่อไม่ให้นักเรียนที่ยังไม่ผ่านถูกกันออกจากขั้นสะท้อนผล
-          // การผ่านหรือไม่ผ่านยังแยกเก็บใน quiz.bestScore ตามเดิม
-          const quizStepDone = passed || attemptNumber >= QUIZ_MAX_ATTEMPTS;
 
-          state.currentSection = 8;
-          state.completedSections = Array.from(
-            new Set([
-              ...(state.completedSections || []),
-              1, 2, 3, 4, 5, 6, 7,
-              ...(quizStepDone ? [8] : [])
-            ])
+          clearPendingQuizSubmission();
+          quizAnswers = orderedQuizAnswers(
+            result.state && result.state.quiz
+              ? result.state.quiz.answers
+              : pending.answers
           );
-          state.quiz = {
-            answers: { ...quizAnswers },
-            latestScore: score,
-            bestScore,
-            attempts: attemptNumber,
-            locked: true
-          };
+          quizResults = result.results || {};
+          quizAttemptCount = Number(result.attemptNumber) || 0;
+          quizLatest = Number(result.score) || 0;
+          quizBest = Number(result.bestScore) || 0;
+          quizRoundLocked = Boolean(result.locked);
 
-          await callServer("saveProgress", sessionToken, state);
-
-          let attemptLogSaved = true;
-          try {
-            await callServer("recordQuizAttempt", sessionToken, {
-              answers: { ...quizAnswers },
-              score,
-              maximumScore: QUIZ_QUESTIONS.length,
-              attemptNumber
-            });
-          } catch (error) {
-            attemptLogSaved = false;
-          }
-
-          quizAttemptCount = attemptNumber;
-          quizLatest = score;
-          quizBest = bestScore;
-          quizRoundLocked = true;
+          Object.entries(quizAnswers).forEach(([questionId, choice]) => {
+            renderQuizAnswer(questionId, choice, quizResults[questionId]);
+          });
           renderQuizSummary();
           updateQuizSubmitButton();
+          renderRewards(result.rewards);
 
           quizRetry.hidden =
             quizAttemptCount >= QUIZ_MAX_ATTEMPTS;
-          quizRetry.textContent = passed
+          quizRetry.textContent = result.passed
             ? "ลองใหม่เพื่อเพิ่มคะแนน"
             : "ทบทวนแล้วลองใหม่";
 
-          quizSync.textContent = attemptLogSaved
-            ? "บันทึกคะแนนและรายละเอียดคำตอบลง Google Sheets แล้ว"
-            : "บันทึกคะแนนแล้ว แต่ประวัติรายละเอียดบางส่วนยังซิงก์ไม่สำเร็จ";
+          quizSync.textContent = result.preview
+            ? "ตรวจคำตอบในโหมดทดลองแล้ว ข้อมูลไม่ปะปนกับนักเรียน"
+            : result.duplicate
+              ? "ตรวจคำขอเดิมแล้ว ระบบไม่ได้นับจำนวนครั้งซ้ำ"
+              : "บันทึกคะแนนและรายละเอียดคำตอบลง Google Sheets แล้ว";
         } catch (error) {
+          if (isProgressConflict(error)) {
+            clearPendingQuizSubmission();
+            try {
+              await callServer("getProgress", sessionToken);
+            } catch (refreshError) {
+              // หน้าเว็บยังแสดงสถานะเดิมได้ และจะโหลดใหม่เมื่อเชื่อมต่อสำเร็จ
+            }
+            quizSync.textContent =
+              "ครูเพิ่งรีเซ็ตหรือกู้คืนข้อมูล ระบบยกเลิกคำขอเก่าแล้ว กรุณาตรวจคำตอบล่าสุด";
+            updateQuizSubmitButton();
+            return;
+          }
           quizSync.textContent =
-            "ยังบันทึกคะแนนไม่ได้ ระบบไม่นับครั้ง กรุณาลองใหม่";
+            `ยังยืนยันการบันทึกไม่ได้: ${error.message} กดส่งอีกครั้งเพื่อใช้รหัสเดิม`;
           updateQuizSubmitButton();
         }
       }
@@ -10288,7 +10732,9 @@
         if (quizAttemptCount >= QUIZ_MAX_ATTEMPTS) return;
 
         quizAnswers = {};
+        quizResults = {};
         quizRoundLocked = false;
+        clearPendingQuizSubmission();
         quizRetry.hidden = true;
         renderQuizQuestions();
         updateQuizSubmitButton();
@@ -10302,11 +10748,7 @@
           const result = await callServer("getProgress", sessionToken);
           const state = result.state;
           state.quiz = {
-            ...(state.quiz || {}),
             answers: {},
-            latestScore: quizLatest,
-            bestScore: quizBest,
-            attempts: quizAttemptCount,
             locked: false
           };
           await callServer("saveProgress", sessionToken, state);
@@ -10324,8 +10766,34 @@
         renderQuizQuestions();
 
         try {
-          const result = await callServer("getProgress", sessionToken);
-          const saved = result.state && result.state.quiz;
+          const progressResult = await callServer("getProgress", sessionToken);
+          let saved = progressResult.state && progressResult.state.quiz;
+          let restoreMessage = "เรียกคืนคำตอบและคะแนนล่าสุดแล้ว";
+          const pending = readPendingQuizSubmission();
+
+          if (pending) {
+            try {
+              const submissionResult = await callServer(
+                "submitQuizAttemptV2",
+                sessionToken,
+                {
+                  answers: pending.answers,
+                  submissionId: pending.submissionId,
+                  syncRevision: pending.syncRevision
+                }
+              );
+              clearPendingQuizSubmission();
+              saved = submissionResult.state && submissionResult.state.quiz;
+              renderRewards(submissionResult.rewards);
+              restoreMessage = submissionResult.duplicate
+                ? "ตรวจคำขอที่ค้างแล้ว ระบบไม่ได้นับจำนวนครั้งซ้ำ"
+                : "ส่งคำตอบที่ค้างและบันทึกคะแนนเรียบร้อยแล้ว";
+            } catch (error) {
+              restoreMessage =
+                `ยังมีคำขอส่งคะแนนค้างอยู่: ${error.message} กดส่งอีกครั้งเพื่อใช้รหัสเดิม`;
+            }
+          }
+
           if (!saved) return;
 
           quizAttemptCount = Number(saved.attempts) || 0;
@@ -10333,6 +10801,7 @@
           quizBest = Number(saved.bestScore) || 0;
           quizRoundLocked = Boolean(saved.locked);
           quizAnswers = {};
+          quizResults = {};
 
           Object.entries(saved.answers || {}).forEach(
             ([questionId, choice]) => {
@@ -10344,9 +10813,29 @@
             }
           );
 
+          Object.entries(saved.results || {}).forEach(
+            ([questionId, item]) => {
+              const question = findQuizQuestion(questionId);
+              const selected = quizAnswers[questionId];
+              const validResult =
+                question &&
+                item &&
+                item.selected === selected &&
+                typeof item.correct === "boolean" &&
+                question.choices.some(
+                  ([value]) => value === item.correctChoice
+                );
+              if (validResult) quizResults[questionId] = item;
+            }
+          );
+
           Object.entries(quizAnswers).forEach(
             ([questionId, choice]) => {
-              renderQuizAnswer(questionId, choice);
+              renderQuizAnswer(
+                questionId,
+                choice,
+                quizRoundLocked ? quizResults[questionId] : null
+              );
             }
           );
 
@@ -10359,8 +10848,7 @@
             quizLatest >= QUIZ_PASSING_SCORE
               ? "ลองใหม่เพื่อเพิ่มคะแนน"
               : "ทบทวนแล้วลองใหม่";
-          quizSync.textContent =
-            "เรียกคืนคำตอบและคะแนนล่าสุดแล้ว";
+          quizSync.textContent = restoreMessage;
         } catch (error) {
           quizSync.textContent =
             "ยังเรียกคืนแบบทดสอบไม่ได้ ลองรีเฟรชหน้านี้อีกครั้ง " +

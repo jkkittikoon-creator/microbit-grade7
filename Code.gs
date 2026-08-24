@@ -30,6 +30,9 @@ const APP_CONFIG = Object.freeze({
   adminPasswordProperty: 'INITIAL_ADMIN_PASSWORD',
   stateVersion: 1,
   sessionTtlSeconds: 6 * 60 * 60,
+  sessionPropertyPrefix: 'TILT_LAB_SESSION_',
+  previewStatePropertyPrefix: 'TILT_LAB_PREVIEW_STATE_',
+  previewStateChunkCodePoints: 2000,
   maxFailedLogins: 5,
   failedLoginWindowSeconds: 10 * 60,
   maxProgressJsonLength: 50000,
@@ -85,6 +88,64 @@ const QUIZ_SECTION_ORDER = LESSON_SECTIONS.filter(function (section) {
 const QUIZ_PASS_MARK = Math.ceil(
   APP_CONFIG.quizQuestionCount * APP_CONFIG.quizPassPercent / 100
 );
+
+/**
+ * เฉลยอยู่ฝั่งเซิร์ฟเวอร์เท่านั้น — DIFF-02A
+ * หน้าเว็บจะส่งเพียงรหัสตัวเลือก แล้วให้เซิร์ฟเวอร์ตรวจและคำนวณคะแนน
+ */
+const QUIZ_ANSWER_KEY = Object.freeze({
+  q1: Object.freeze({
+    answer: 'acceleration',
+    choices: Object.freeze(['temperature', 'acceleration', 'sound'])
+  }),
+  q2: Object.freeze({
+    answer: 'one',
+    choices: Object.freeze(['one', 'hundred', 'equal'])
+  }),
+  q3: Object.freeze({
+    answer: 'two',
+    choices: Object.freeze(['one', 'two', 'four'])
+  }),
+  q4: Object.freeze({
+    answer: 'map-four',
+    choices: Object.freeze(['both-four', 'map-four', 'both-two'])
+  }),
+  q5: Object.freeze({
+    answer: 'limit',
+    choices: Object.freeze(['speed', 'limit', 'lights'])
+  }),
+  q6: Object.freeze({
+    answer: 'pace',
+    choices: Object.freeze(['stop', 'reset', 'pace'])
+  })
+});
+
+/**
+ * หลักฐานขั้นต่ำของ Required Sections — DIFF-04A
+ *
+ * completedSections เป็นเพียงผลลัพธ์ที่คำนวณได้ ไม่ใช่หลักฐานในตัวเอง
+ * ค่าชุดนี้ต้องตรงกับตัวเลือกและเงื่อนไขที่หน้าเว็บใช้อยู่ เพื่อให้เซิร์ฟเวอร์
+ * ตรวจคำตอบเดิมได้โดยไม่เปลี่ยนสูตร mg / map() / constrain()
+ */
+const REQUIRED_EVIDENCE_RULES = Object.freeze({
+  sensorGuesses: Object.freeze(['camera', 'sensor', 'gps', 'unsure']),
+  predict800Choices: Object.freeze(['edge', 'missing', 'blink']),
+  mgChoices: Object.freeze(['sensor-max', 'working-range', 'led-count']),
+  debugChoices: Object.freeze(['same', 'map-four', 'wrong-safer']),
+  confidenceChoices: Object.freeze(['high', 'ok', 'unsure', 'help']),
+  glossaryRequired: 6,
+  glossaryAbbreviationsRequired: 2,
+  glossaryIds: Object.freeze([
+    'accelerometer', 'acceleration', 'gravity', 'milli-g', 'map', 'constrain',
+    'sensor', 'range', 'plot', 'forever', 'accel', 'loop', 'variable', 'tilt',
+    'degree', 'abbr-mg', 'abbr-g', 'abbr-axis', 'abbr-ax', 'abbr-ay',
+    'abbr-ms', 'abbr-js', 'abbr-led'
+  ]),
+  glossaryAbbreviationIds: Object.freeze([
+    'abbr-mg', 'abbr-g', 'abbr-axis', 'abbr-ax', 'abbr-ay',
+    'abbr-ms', 'abbr-js', 'abbr-led'
+  ])
+});
 
 const LESSON_SECTION_COUNT = LESSON_SECTIONS.length;
 
@@ -145,6 +206,41 @@ const LESSON_OPTIONAL_STEPS = Object.freeze([
     })
   })
 ]);
+
+/**
+ * หลักฐานกิจกรรมเสริม — DIFF-04B
+ *
+ * XP และ Badge ให้ได้จากผลที่ server คำนวณเท่านั้น ไม่เชื่อ completed,
+ * bestScore, plays หรือ stage ที่ browser ส่งมาโดยตรง
+ */
+const OPTIONAL_EVIDENCE_RULES = Object.freeze({
+  miniGame: Object.freeze({
+    passMark: 6,
+    items: Object.freeze([
+      Object.freeze({ accel: 0, safe: true }),
+      Object.freeze({ accel: 800, safe: false }),
+      Object.freeze({ accel: -600, safe: true }),
+      Object.freeze({ accel: 1000, safe: false }),
+      Object.freeze({ accel: 300, safe: true }),
+      Object.freeze({ accel: -900, safe: false }),
+      Object.freeze({ accel: 600, safe: true }),
+      Object.freeze({ accel: -1023, safe: false })
+    ])
+  }),
+  mission: Object.freeze({
+    stageCount: 4,
+    letterMin: 40,
+    letterMax: 600,
+    choices: Object.freeze(['a', 'b', 'c', 'd']),
+    answers: Object.freeze({ q1: 'b', q2: 'a', q3: 'c', q4: 'a' })
+  }),
+  codingLab: Object.freeze({
+    noteMin: 15,
+    noteMax: 300,
+    pauseChoices: Object.freeze(['bigger', 'smaller', 'remove']),
+    correctPauseAnswer: 'bigger'
+  })
+});
 
 const STUDENT_ROSTER = Object.freeze([
   { username: 'std001', studentNumber: '001', displayName: 'เด็กชายณฐชยนต์  สุขแจ่ม' },
@@ -214,7 +310,7 @@ const SHEET_SCHEMAS = Object.freeze({
   ],
   Attempts: [
     'timestamp', 'username', 'assessment', 'score', 'maximumScore',
-    'attemptNumber', 'answersJson'
+    'attemptNumber', 'answersJson', 'submissionId'
   ],
   Audit: ['timestamp', 'username', 'action', 'result', 'details'],
   QuizArchive: [
@@ -542,7 +638,9 @@ function describeObservation_(scores) {
 
 /** Serves the student and administrator web app. */
 function doGet() {
-  return HtmlService.createTemplateFromFile('index')
+  const template = HtmlService.createTemplateFromFile('index');
+  template.webAppUrl = ScriptApp.getService().getUrl() || '';
+  return template
     .evaluate()
     .setTitle(APP_CONFIG.appTitle)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
@@ -614,6 +712,7 @@ function setupSystem() {
         'กรุณาตั้ง Script property ชื่อ INITIAL_STUDENT_PASSWORD ก่อนเรียก setupSystem()'
       );
     }
+    validateStudentPassword_(initialPassword);
 
     const folder = DriveApp.createFolder(
       'Tilt Lab ม.1 ภาคเรียนที่ 1 ปีการศึกษา 2569'
@@ -739,11 +838,11 @@ function login(payload) {
   };
 }
 
-/** Removes a session token from the server cache. */
+/** Removes a session token from both the durable store and the cache. */
 function logout(token) {
   const normalizedToken = validateTokenFormat_(token);
   if (normalizedToken) {
-    CacheService.getScriptCache().remove('session:' + normalizedToken);
+    deleteSession_(normalizedToken);
   }
   return { ok: true };
 }
@@ -759,7 +858,7 @@ function getProgress(token) {
   const session = requireSession_(token);
 
   if (session.preview) {
-    const previewState = readPreviewState_(token, session);
+    const previewState = ensureProgressSyncMetadata_(readPreviewState_(token, session));
     return {
       ok: true,
       state: previewState,
@@ -788,6 +887,7 @@ function getProgress(token) {
     appendAudit_(session.username, 'progress_read', 'failed', 'progressJson ไม่ถูกต้อง');
     throw new Error('ข้อมูลความก้าวหน้าเสียหาย กรุณาแจ้งครูผู้สอน');
   }
+  ensureProgressSyncMetadata_(state);
 
   return {
     ok: true,
@@ -800,52 +900,48 @@ function getProgress(token) {
 /** Validates and upserts the current student's progress. */
 function saveProgress(token, state) {
   const session = requireSession_(token);
-  if (session.mustChangePassword) {
-    throw new Error('กรุณาเปลี่ยนรหัสผ่านก่อนเริ่มบันทึกบทเรียน');
-  }
-
-  const cleanState = validateProgressState_(state, session);
 
   // โหมดทดลองไม่เขียนลงชีตใด ๆ ตาม Blueprint #113
   if (session.preview) {
+    const trustedPreviewState = readPreviewState_(token, session);
+    const cleanState = validateProgressState_(state, session, trustedPreviewState);
     writePreviewState_(token, cleanState);
     return {
       ok: true,
+      state: cleanState,
       updatedAt: new Date().toISOString(),
       preview: true,
       rewards: computeRewards_(cleanState)
     };
   }
 
-  const json = JSON.stringify(cleanState);
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
-    const sheet = getSpreadsheet_().getSheetByName('Progress');
-    const existing = findRowByValue_(sheet, 1, session.username);
-    const now = new Date();
-    const rowValues = [
-      session.username,
-      APP_CONFIG.stateVersion,
-      json,
-      cleanState.currentSection,
-      cleanState.quiz.latestScore,
-      cleanState.quiz.bestScore,
-      cleanState.quiz.attempts,
-      now
-    ];
-
-    if (existing > 0) {
-      sheet.getRange(existing, 1, 1, rowValues.length).setValues([rowValues]);
-    } else {
-      sheet.appendRow(rowValues);
+    const progressRow = findProgressRow_(session.username);
+    let trustedState = createDefaultProgress_(session);
+    if (progressRow) {
+      try {
+        trustedState = JSON.parse(progressRow.progressJson);
+      } catch (error) {
+        appendAudit_(
+          session.username,
+          'progress_save',
+          'failed',
+          'progressJson ไม่ถูกต้อง'
+        );
+        throw new Error('ข้อมูลความก้าวหน้าเสียหาย กรุณาแจ้งครูผู้สอน');
+      }
     }
 
+    const cleanState = validateProgressState_(state, session, trustedState);
+    const updatedAt = writeProgressStateRow_(session.username, cleanState);
     appendAudit_(session.username, 'progress_save', 'success', 'Section ' + cleanState.currentSection);
     return {
       ok: true,
-      updatedAt: now.toISOString(),
+      state: cleanState,
+      updatedAt: updatedAt,
       rewards: computeRewards_(cleanState)
     };
   } finally {
@@ -853,89 +949,433 @@ function saveProgress(token, state) {
   }
 }
 
-/** Records a completed quiz attempt without accepting an incomplete attempt. */
-function recordQuizAttempt(token, attempt) {
+/** ปิด API รุ่นเดิมซึ่งเคยรับคะแนนและจำนวนครั้งจาก client โดยตรง */
+function recordQuizAttempt(token) {
+  requireSession_(token);
+  throw new Error('API รุ่นเดิมถูกปิดแล้ว กรุณารีเฟรชหน้าเว็บ');
+}
+
+/**
+ * API ส่งแบบทดสอบรุ่นปลอดภัย — DIFF-02A
+ * รับเฉพาะคำตอบกับ submissionId แล้วตรวจคะแนน/จำนวนครั้งที่เซิร์ฟเวอร์
+ * submissionId ทำให้คำขอเดิมส่งซ้ำเพื่อซ่อม Attempts ได้โดยไม่นับครั้งเพิ่ม
+ */
+function submitQuizAttemptV2(token, payload) {
   const session = requireSession_(token);
-  const input = attempt || {};
-  const answers = input.answers;
-  const questionCount = Number(input.maximumScore);
-  const score = Number(input.score);
-  const attemptNumber = Number(input.attemptNumber);
+  const input = payload || {};
+  const submissionId = validateQuizSubmissionId_(input.submissionId);
+  const answers = validateQuizAnswers_(input.answers, true);
 
-  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
-    throw new Error('คำตอบแบบทดสอบไม่ครบ');
-  }
-  if (questionCount !== APP_CONFIG.quizQuestionCount) {
-    throw new Error(
-      'จำนวนข้อไม่ตรงกับที่ระบบกำหนด (' + APP_CONFIG.quizQuestionCount + ' ข้อ)'
-    );
-  }
-  if (Object.keys(answers).length !== questionCount) {
-    throw new Error('ต้องตอบให้ครบทุกข้อก่อนส่ง');
-  }
-  if (!Number.isInteger(score) || score < 0 || score > questionCount) {
-    throw new Error('คะแนนไม่ถูกต้อง');
-  }
-  if (
-    !Number.isInteger(attemptNumber) ||
-    attemptNumber < 1 ||
-    attemptNumber > APP_CONFIG.quizMaxAttempts
-  ) {
-    throw new Error('จำนวนครั้งที่ทำไม่ถูกต้อง');
-  }
-
-  // Prerequisite ฝั่งเซิร์ฟเวอร์ตาม Blueprint #16 และ #141
-  // เดิมตรวจเงื่อนไขนี้ที่หน้าเว็บเท่านั้น จึงข้ามได้ด้วยการเรียก API ตรง
-  let savedState = null;
   if (session.preview) {
-    savedState = readPreviewState_(token, session);
-  } else {
+    const previewState = readPreviewState_(token, session);
+    assertProgressSyncRevision_(input.syncRevision, previewState);
+    const previewOutcome = applyQuizAttemptToState_(
+      previewState,
+      session,
+      answers,
+      submissionId
+    );
+    writePreviewState_(token, previewOutcome.state);
+    return buildQuizSubmitResponse_(previewOutcome, null, true, false);
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
     const progressRow = findProgressRow_(session.username);
+    let savedState = createDefaultProgress_(session);
+
     if (progressRow) {
       try {
         savedState = JSON.parse(progressRow.progressJson);
       } catch (error) {
-        savedState = null;
+        appendAudit_(
+          session.username,
+          'quiz_submit_v2',
+          'failed',
+          'progressJson ไม่ถูกต้อง'
+        );
+        throw new Error('ข้อมูลความก้าวหน้าเสียหาย กรุณาแจ้งครูผู้สอน');
       }
+    }
+
+    assertProgressSyncRevision_(input.syncRevision, savedState);
+
+    const outcome = applyQuizAttemptToState_(
+      savedState,
+      session,
+      answers,
+      submissionId
+    );
+    const attemptsSheet = getSpreadsheet_().getSheetByName('Attempts');
+    if (
+      !outcome.duplicate &&
+      quizSubmissionExists_(attemptsSheet, session.username, submissionId)
+    ) {
+      throw new Error('รหัสการส่งนี้เคยถูกบันทึกแล้ว ระบบจึงไม่นับซ้ำ');
+    }
+
+    const updatedAt = writeProgressStateRow_(session.username, outcome.state);
+    const attemptLogCreated = appendQuizAttemptRow_(
+      attemptsSheet,
+      session.username,
+      outcome
+    );
+
+    appendAudit_(
+      session.username,
+      'quiz_submit_v2',
+      outcome.duplicate ? 'duplicate' : 'success',
+      outcome.score + '/' + APP_CONFIG.quizQuestionCount +
+        ' ครั้งที่ ' + outcome.attemptNumber
+    );
+
+    return buildQuizSubmitResponse_(
+      outcome,
+      updatedAt,
+      false,
+      attemptLogCreated
+    );
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function validateQuizSubmissionId_(value) {
+  const submissionId = String(value || '').trim();
+  if (!/^[A-Za-z0-9_-]{16,100}$/.test(submissionId)) {
+    throw new Error('รหัสการส่งแบบทดสอบไม่ถูกต้อง กรุณาลองส่งอีกครั้ง');
+  }
+  return submissionId;
+}
+
+function validateQuizAnswers_(answers, requireAll) {
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+    throw new Error('รูปแบบคำตอบแบบทดสอบไม่ถูกต้อง');
+  }
+
+  const questionIds = Object.keys(QUIZ_ANSWER_KEY);
+  const submittedIds = Object.keys(answers);
+  submittedIds.forEach(function (questionId) {
+    const question = QUIZ_ANSWER_KEY[questionId];
+    if (!question) {
+      throw new Error('พบข้อคำถามที่ระบบไม่รู้จัก');
+    }
+    if (
+      typeof answers[questionId] !== 'string' ||
+      question.choices.indexOf(answers[questionId]) < 0
+    ) {
+      throw new Error('ตัวเลือกของ ' + questionId + ' ไม่ถูกต้อง');
+    }
+  });
+
+  if (requireAll && submittedIds.length !== questionIds.length) {
+    throw new Error('ต้องตอบให้ครบทุกข้อก่อนส่ง');
+  }
+
+  const cleanAnswers = {};
+  questionIds.forEach(function (questionId) {
+    if (Object.prototype.hasOwnProperty.call(answers, questionId)) {
+      cleanAnswers[questionId] = answers[questionId];
+    } else if (requireAll) {
+      throw new Error('ต้องตอบให้ครบทุกข้อก่อนส่ง');
+    }
+  });
+  return cleanAnswers;
+}
+
+function normalizeStoredQuiz_(quiz) {
+  const source = quiz && typeof quiz === 'object' && !Array.isArray(quiz)
+    ? quiz
+    : {};
+  let answers = {};
+  let lastSubmissionId = '';
+  let lastSubmissionAnswers = {};
+
+  try {
+    answers = validateQuizAnswers_(source.answers || {}, false);
+  } catch (error) {
+    answers = {};
+  }
+  try {
+    lastSubmissionId = source.lastSubmissionId
+      ? validateQuizSubmissionId_(source.lastSubmissionId)
+      : '';
+  } catch (error) {
+    lastSubmissionId = '';
+  }
+  if (lastSubmissionId) {
+    try {
+      lastSubmissionAnswers = validateQuizAnswers_(
+        source.lastSubmissionAnswers || source.answers || {},
+        true
+      );
+    } catch (error) {
+      lastSubmissionAnswers = {};
     }
   }
 
-  // โหมดทดลองแบบ free ให้ครูลองทำแบบทดสอบได้เลยโดยไม่ต้องไล่ทำครบทุกขั้น
-  const doneBeforeQuiz = session.previewMode === 'free'
-    ? QUIZ_SECTION_ORDER - 1
-    : contiguousCompleted_(savedState ? savedState.completedSections : []).length;
+  const latestScore = clampInteger_(
+    source.latestScore,
+    0,
+    APP_CONFIG.quizQuestionCount
+  );
+  const bestScore = clampInteger_(
+    source.bestScore,
+    latestScore,
+    APP_CONFIG.quizQuestionCount
+  );
+  const attempts = clampInteger_(
+    source.attempts,
+    0,
+    APP_CONFIG.quizMaxAttempts
+  );
+  const results = buildQuizResults_(answers);
+
+  return {
+    answers: answers,
+    results: results,
+    latestScore: latestScore,
+    bestScore: bestScore,
+    attempts: attempts,
+    locked: Boolean(source.locked),
+    lastSubmissionId: lastSubmissionId,
+    lastSubmissionAnswers: lastSubmissionAnswers
+  };
+}
+
+function buildQuizResults_(answers) {
+  const results = {};
+  Object.keys(QUIZ_ANSWER_KEY).forEach(function (questionId) {
+    if (!Object.prototype.hasOwnProperty.call(answers || {}, questionId)) return;
+    const selected = answers[questionId];
+    results[questionId] = {
+      selected: selected,
+      correct: selected === QUIZ_ANSWER_KEY[questionId].answer,
+      correctChoice: QUIZ_ANSWER_KEY[questionId].answer
+    };
+  });
+  return results;
+}
+
+function sameQuizAnswers_(left, right) {
+  const questionIds = Object.keys(QUIZ_ANSWER_KEY);
+  return questionIds.every(function (questionId) {
+    return left[questionId] === right[questionId];
+  });
+}
+
+/** Pure helper เพื่อให้ทดสอบกติกาคะแนนได้โดยไม่เรียก Google services */
+function applyQuizAttemptToState_(state, session, answers, submissionId) {
+  const nextState = state && typeof state === 'object' && !Array.isArray(state)
+    ? JSON.parse(JSON.stringify(state))
+    : createDefaultProgress_(session);
+  const cleanAnswers = validateQuizAnswers_(answers, true);
+  const cleanSubmissionId = validateQuizSubmissionId_(submissionId);
+  const previousQuiz = normalizeStoredQuiz_(nextState.quiz);
+  const completedBefore = contiguousCompleted_(nextState.completedSections || []);
   const requiredBeforeQuiz = QUIZ_SECTION_ORDER - 1;
+  const doneBeforeQuiz = session.previewMode === 'free'
+    ? requiredBeforeQuiz
+    : completedBefore.length;
 
   if (doneBeforeQuiz < requiredBeforeQuiz) {
-    appendAudit_(
-      session.username,
-      'quiz_guard',
-      'blocked',
-      'ทำครบ ' + doneBeforeQuiz + '/' + requiredBeforeQuiz + ' ขั้นก่อนแบบทดสอบ'
-    );
     throw new Error(
       'กรุณาทำกิจกรรม Section 1–' + requiredBeforeQuiz +
         ' ให้ครบก่อนส่งแบบทดสอบ (ตอนนี้ครบ ' + doneBeforeQuiz + ' ขั้น)'
     );
   }
 
-  if (session.preview) {
-    // ไม่เขียนประวัติการส่งของโหมดทดลองลงชีตของนักเรียนจริง
-    return { ok: true, preview: true };
+  if (previousQuiz.lastSubmissionId === cleanSubmissionId) {
+    if (!sameQuizAnswers_(previousQuiz.lastSubmissionAnswers, cleanAnswers)) {
+      throw new Error('รหัสการส่งนี้ถูกใช้กับคำตอบชุดอื่นแล้ว กรุณาเริ่มส่งใหม่');
+    }
+    const duplicateResults = buildQuizResults_(cleanAnswers);
+    nextState.quiz = Object.assign({}, previousQuiz, {
+      answers: cleanAnswers,
+      results: duplicateResults,
+      locked: true
+    });
+    return {
+      state: nextState,
+      answers: cleanAnswers,
+      results: duplicateResults,
+      score: previousQuiz.latestScore,
+      bestScore: previousQuiz.bestScore,
+      attemptNumber: previousQuiz.attempts,
+      passed: previousQuiz.latestScore >= QUIZ_PASS_MARK,
+      completed: (nextState.completedSections || []).indexOf(QUIZ_SECTION_ORDER) >= 0,
+      locked: previousQuiz.locked,
+      submissionId: cleanSubmissionId,
+      duplicate: true
+    };
   }
 
-  getSpreadsheet_().getSheetByName('Attempts').appendRow([
-    new Date(),
-    session.username,
-    'final_quiz',
-    score,
-    questionCount,
-    attemptNumber,
-    JSON.stringify(answers)
-  ]);
+  if (previousQuiz.attempts >= APP_CONFIG.quizMaxAttempts) {
+    throw new Error('ใช้สิทธิ์ทำแบบทดสอบครบ ' + APP_CONFIG.quizMaxAttempts + ' ครั้งแล้ว');
+  }
 
-  appendAudit_(session.username, 'quiz_submit', 'success', score + '/' + questionCount);
-  return { ok: true };
+  const results = buildQuizResults_(cleanAnswers);
+  const score = Object.keys(results).reduce(function (total, questionId) {
+    return total + (results[questionId].correct ? 1 : 0);
+  }, 0);
+
+  const attemptNumber = previousQuiz.attempts + 1;
+  const bestScore = Math.max(previousQuiz.bestScore, score);
+  const passed = score >= QUIZ_PASS_MARK;
+  const quizStepDone = passed || attemptNumber >= APP_CONFIG.quizMaxAttempts;
+  const completedSections = session.previewMode === 'free'
+    ? Array.from(new Set((nextState.completedSections || []).map(Number)))
+    : completedBefore.slice();
+
+  if (quizStepDone && completedSections.indexOf(QUIZ_SECTION_ORDER) < 0) {
+    completedSections.push(QUIZ_SECTION_ORDER);
+  }
+  completedSections.sort(function (left, right) { return left - right; });
+
+  nextState.version = APP_CONFIG.stateVersion;
+  nextState.username = session.username;
+  nextState.currentSection = QUIZ_SECTION_ORDER;
+  nextState.completedSections = completedSections;
+  nextState.quiz = {
+    answers: cleanAnswers,
+    results: results,
+    latestScore: score,
+    bestScore: bestScore,
+    attempts: attemptNumber,
+    locked: true,
+    lastSubmissionId: cleanSubmissionId,
+    lastSubmissionAnswers: cleanAnswers
+  };
+
+  return {
+    state: nextState,
+    answers: cleanAnswers,
+    results: results,
+    score: score,
+    bestScore: bestScore,
+    attemptNumber: attemptNumber,
+    passed: passed,
+    completed: quizStepDone,
+    locked: true,
+    submissionId: cleanSubmissionId,
+    duplicate: false
+  };
+}
+
+function writeProgressStateRow_(username, state) {
+  const json = JSON.stringify(state);
+  if (json.length > APP_CONFIG.maxProgressJsonLength) {
+    throw new Error('ข้อมูลความก้าวหน้ามีขนาดใหญ่เกินกำหนด');
+  }
+
+  const sheet = getSpreadsheet_().getSheetByName('Progress');
+  const existing = findRowByValue_(sheet, 1, username);
+  const quiz = normalizeStoredQuiz_(state.quiz);
+  const now = new Date();
+  const rowValues = [
+    username,
+    APP_CONFIG.stateVersion,
+    json,
+    state.currentSection,
+    quiz.latestScore,
+    quiz.bestScore,
+    quiz.attempts,
+    now
+  ];
+
+  if (existing > 0) {
+    sheet.getRange(existing, 1, 1, rowValues.length).setValues([rowValues]);
+  } else {
+    sheet.appendRow(rowValues);
+  }
+  return now.toISOString();
+}
+
+function ensureAttemptsSubmissionIdColumn_(sheet) {
+  const header = 'submissionId';
+  const expectedColumn = SHEET_SCHEMAS.Attempts.indexOf(header) + 1;
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0].map(String);
+  const existingIndex = headers.indexOf(header);
+  if (existingIndex >= 0) return existingIndex + 1;
+
+  const targetColumn = expectedColumn > lastColumn ? expectedColumn : lastColumn + 1;
+  sheet.getRange(1, targetColumn)
+    .setValue(header)
+    .setBackground('#6d1a8d')
+    .setFontColor('#ffffff')
+    .setFontWeight('bold');
+  return targetColumn;
+}
+
+function appendQuizAttemptRow_(sheet, username, outcome) {
+  const submissionColumn = ensureAttemptsSubmissionIdColumn_(sheet);
+  const lastRow = sheet.getLastRow();
+
+  if (quizSubmissionExists_(sheet, username, outcome.submissionId, submissionColumn)) {
+    return false;
+  }
+
+  const width = Math.max(sheet.getLastColumn(), submissionColumn);
+  const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0].map(String);
+  const data = {
+    timestamp: new Date(),
+    username: username,
+    assessment: 'final_quiz',
+    score: outcome.score,
+    maximumScore: APP_CONFIG.quizQuestionCount,
+    attemptNumber: outcome.attemptNumber,
+    answersJson: JSON.stringify(outcome.answers),
+    submissionId: outcome.submissionId
+  };
+  const rowValues = headers.map(function (header) {
+    return Object.prototype.hasOwnProperty.call(data, header) ? data[header] : '';
+  });
+  sheet.getRange(lastRow + 1, 1, 1, rowValues.length).setValues([rowValues]);
+  return true;
+}
+
+function quizSubmissionExists_(sheet, username, submissionId, submissionColumn) {
+  const idColumn = submissionColumn || ensureAttemptsSubmissionIdColumn_(sheet);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return false;
+
+  const usernames = sheet.getRange(2, 2, lastRow - 1, 1).getDisplayValues();
+  const submissionIds = sheet
+    .getRange(2, idColumn, lastRow - 1, 1)
+    .getDisplayValues();
+  for (let index = 0; index < lastRow - 1; index += 1) {
+    if (
+      String(usernames[index][0]) === String(username) &&
+      String(submissionIds[index][0]) === String(submissionId)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function buildQuizSubmitResponse_(outcome, updatedAt, preview, attemptLogCreated) {
+  return {
+    ok: true,
+    preview: Boolean(preview),
+    duplicate: Boolean(outcome.duplicate),
+    attemptLogCreated: Boolean(attemptLogCreated),
+    submissionId: outcome.submissionId,
+    score: outcome.score,
+    maximumScore: APP_CONFIG.quizQuestionCount,
+    attemptNumber: outcome.attemptNumber,
+    bestScore: outcome.bestScore,
+    passed: outcome.passed,
+    completed: outcome.completed,
+    locked: outcome.locked,
+    results: outcome.results,
+    state: outcome.state,
+    updatedAt: updatedAt,
+    rewards: computeRewards_(outcome.state)
+  };
 }
 
 /** Administrator-only roster, progress summary, and storage links. */
@@ -967,7 +1407,8 @@ function getAdminDashboard(token) {
 /**
  * Teacher Preview Mode — Blueprint #78 และ #113
  * สร้าง Synthetic Session ที่แยกขาดจากข้อมูลนักเรียนจริง
- * ความก้าวหน้าของโหมดนี้เก็บใน CacheService ไม่เขียนลงชีตใด ๆ
+ * ความก้าวหน้าของโหมดนี้เก็บใน CacheService และ Script Properties
+ * ไม่เขียนลงชีตใด ๆ และล้างพร้อม synthetic session
  * จึงไม่มีทางไปปนกับ Progress, Attempts หรือคะแนนของนักเรียน
  *
  * mode 'normal' คือเดินตามลำดับเหมือนนักเรียนจริง
@@ -1004,7 +1445,7 @@ function resetTeacherPreview(token) {
   if (!session.preview) {
     throw new Error('ใช้ได้เฉพาะในโหมดทดลอง');
   }
-  CacheService.getScriptCache().remove(previewStateKey_(token));
+  deletePreviewState_(token);
   appendAudit_(session.actor || 'admin', 'preview_reset', 'success', 'ล้างข้อมูลโหมดทดลอง');
   return { ok: true };
 }
@@ -1022,11 +1463,8 @@ function createPreviewSession_(actor, previewMode) {
     actor: actor,
     issuedAt: new Date().toISOString()
   };
-  CacheService.getScriptCache().put(
-    'session:' + token,
-    JSON.stringify(session),
-    APP_CONFIG.sessionTtlSeconds
-  );
+  purgeExpiredSessions_();
+  storeSession_(token, session);
   return token;
 }
 
@@ -1034,29 +1472,194 @@ function previewStateKey_(token) {
   return 'previewState:' + validateTokenFormat_(token);
 }
 
-function readPreviewState_(token, session) {
-  const cached = CacheService.getScriptCache().get(previewStateKey_(token));
-  if (!cached) return createDefaultProgress_(session);
+function previewStatePropertyBase_(token) {
+  const normalizedToken = validateTokenFormat_(token);
+  if (!normalizedToken) {
+    throw new Error('SESSION_EXPIRED');
+  }
+  // ใช้ storage id เดียวกับ session เพื่อให้ purge ลบ state ที่หมดอายุได้
+  // โดยไม่ต้องเก็บ token จริงไว้ในชื่อ property
+  return APP_CONFIG.previewStatePropertyPrefix +
+    hashPassword_(normalizedToken, 'session');
+}
+
+function previewStateMetadataKey_(base) {
+  return base + '_META';
+}
+
+function previewStateChunkKey_(base, index) {
+  return base + '_CHUNK_' + index;
+}
+
+function parsePreviewStateJson_(json) {
+  if (!json) return null;
   try {
-    return JSON.parse(cached);
+    const state = JSON.parse(json);
+    return state && typeof state === 'object' && !Array.isArray(state)
+      ? state
+      : null;
   } catch (error) {
-    return createDefaultProgress_(session);
+    return null;
   }
 }
 
-function writePreviewState_(token, state) {
-  CacheService.getScriptCache().put(
-    previewStateKey_(token),
-    JSON.stringify(state),
-    APP_CONFIG.sessionTtlSeconds
+/** อ่านสำเนาคงทนและตรวจความครบของทุกชิ้นก่อนยอมรับ */
+function readDurablePreviewStateJson_(token) {
+  const properties = PropertiesService.getScriptProperties();
+  const base = previewStatePropertyBase_(token);
+  const metadataJson = properties.getProperty(previewStateMetadataKey_(base));
+  if (!metadataJson) return '';
+
+  try {
+    const metadata = JSON.parse(metadataJson);
+    const chunkCount = Number(metadata.chunks);
+    const expectedLength = Number(metadata.length);
+    const maximumChunks = Math.ceil(
+      APP_CONFIG.maxProgressJsonLength / APP_CONFIG.previewStateChunkCodePoints
+    );
+
+    if (
+      metadata.version !== 1 ||
+      !Number.isInteger(chunkCount) ||
+      chunkCount < 1 ||
+      chunkCount > maximumChunks ||
+      !Number.isInteger(expectedLength) ||
+      expectedLength < 1 ||
+      expectedLength > APP_CONFIG.maxProgressJsonLength
+    ) {
+      return '';
+    }
+
+    let json = '';
+    for (let index = 0; index < chunkCount; index += 1) {
+      const chunk = properties.getProperty(previewStateChunkKey_(base, index));
+      if (chunk === null) return '';
+      json += chunk;
+    }
+
+    if (
+      json.length !== expectedLength ||
+      !constantTimeEqual_(
+        hashPassword_(json, 'preview-state'),
+        String(metadata.digest || '')
+      )
+    ) {
+      return '';
+    }
+    return json;
+  } catch (error) {
+    return '';
+  }
+}
+
+/** เขียน state แบบแบ่งตาม code point เพื่อไม่ตัดอีโมจิและไม่เกิน 9 KB ต่อ property */
+function writeDurablePreviewStateJson_(token, json) {
+  if (json.length > APP_CONFIG.maxProgressJsonLength) {
+    throw new Error('ข้อมูลความก้าวหน้ามีขนาดใหญ่เกินกำหนด');
+  }
+
+  const properties = PropertiesService.getScriptProperties();
+  const base = previewStatePropertyBase_(token);
+  const symbols = Array.from(json);
+  const chunks = [];
+  for (
+    let offset = 0;
+    offset < symbols.length;
+    offset += APP_CONFIG.previewStateChunkCodePoints
+  ) {
+    chunks.push(
+      symbols
+        .slice(offset, offset + APP_CONFIG.previewStateChunkCodePoints)
+        .join('')
+    );
+  }
+
+  const values = {};
+  chunks.forEach(function (chunk, index) {
+    values[previewStateChunkKey_(base, index)] = chunk;
+  });
+  values[previewStateMetadataKey_(base)] = JSON.stringify({
+    version: 1,
+    chunks: chunks.length,
+    length: json.length,
+    digest: hashPassword_(json, 'preview-state')
+  });
+
+  const previousValues = properties.getProperties();
+  properties.setProperties(values, false);
+
+  // ลบชิ้นส่วนเก่าที่เหลือเมื่อ state รอบใหม่สั้นลง
+  Object.keys(previousValues).forEach(function (key) {
+    if (
+      key.indexOf(base + '_CHUNK_') === 0 &&
+      !Object.prototype.hasOwnProperty.call(values, key)
+    ) {
+      properties.deleteProperty(key);
+    }
+  });
+}
+
+function deletePreviewStatePropertiesByBase_(base, properties) {
+  const values = properties.getProperties();
+  const metadataKey = previewStateMetadataKey_(base);
+  Object.keys(values).forEach(function (key) {
+    if (key === metadataKey || key.indexOf(base + '_CHUNK_') === 0) {
+      properties.deleteProperty(key);
+    }
+  });
+}
+
+function deletePreviewState_(token) {
+  const normalizedToken = validateTokenFormat_(token);
+  if (!normalizedToken) return;
+  CacheService.getScriptCache().remove(previewStateKey_(normalizedToken));
+  const properties = PropertiesService.getScriptProperties();
+  deletePreviewStatePropertiesByBase_(
+    previewStatePropertyBase_(normalizedToken),
+    properties
   );
+}
+
+function readPreviewState_(token, session) {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = previewStateKey_(token);
+  const cachedJson = cache.get(cacheKey);
+  const cachedState = parsePreviewStateJson_(cachedJson);
+  if (cachedState) return cachedState;
+  if (cachedJson) cache.remove(cacheKey);
+
+  const durableJson = readDurablePreviewStateJson_(token);
+  const durableState = parsePreviewStateJson_(durableJson);
+  if (!durableState) return createDefaultProgress_(session);
+
+  // Cache เป็นตัวเร่งเท่านั้น ถ้าใส่ไม่ได้ยังใช้ durable state ต่อได้
+  try {
+    cache.put(cacheKey, durableJson, APP_CONFIG.sessionTtlSeconds);
+  } catch (error) {
+    // Durable state is already the source of truth.
+  }
+  return durableState;
+}
+
+function writePreviewState_(token, state) {
+  const json = JSON.stringify(state);
+  writeDurablePreviewStateJson_(token, json);
+
+  // เขียน durable store ก่อนเสมอ ป้องกันการแจ้งว่าบันทึกแล้วทั้งที่มีแต่ cache
+  const cache = CacheService.getScriptCache();
+  const cacheKey = previewStateKey_(token);
+  cache.remove(cacheKey);
+  try {
+    cache.put(cacheKey, json, APP_CONFIG.sessionTtlSeconds);
+  } catch (error) {
+    // Cache มีขีดจำกัดและอาจปฏิเสธค่าได้ แต่ Script Properties บันทึกแล้ว
+  }
 }
 
 /**
  * Administrator-only item analysis — Blueprint #76 Learning Analytics และ #196
  * รวมคำตอบครั้งล่าสุดของนักเรียนแต่ละคน แล้วนับว่าแต่ละตัวเลือกถูกเลือกกี่ครั้ง
- * ไม่ส่งเฉลยกลับไป เพราะหน้าเว็บมีชุดคำถามและเฉลยอยู่แล้ว
- * จึงไม่เพิ่มที่เก็บเฉลยเป็นแหล่งที่สองให้ไม่ตรงกันภายหลัง
+ * เฉลยส่งผ่าน API นี้ได้เฉพาะผู้ดูแลระบบ หน้าเว็บทั่วไปจึงไม่ต้องฝัง answer key
  */
 function getQuizItemStats(token) {
   const session = requireRole_(token, 'admin');
@@ -1106,6 +1709,10 @@ function getQuizItemStats(token) {
   const averageScore = scores.length
     ? scores.reduce(function (sum, value) { return sum + value; }, 0) / scores.length
     : 0;
+  const correctChoices = {};
+  Object.keys(QUIZ_ANSWER_KEY).forEach(function (questionId) {
+    correctChoices[questionId] = QUIZ_ANSWER_KEY[questionId].answer;
+  });
 
   appendAudit_(
     session.username,
@@ -1119,7 +1726,8 @@ function getQuizItemStats(token) {
     respondents: respondents,
     averageScore: Math.round(averageScore * 100) / 100,
     maximumScore: APP_CONFIG.quizQuestionCount,
-    choiceCounts: choiceCounts
+    choiceCounts: choiceCounts,
+    correctChoices: correctChoices
   };
 }
 
@@ -1160,7 +1768,8 @@ function getStudentDetail(token, username) {
         score: Number(row.score) || 0,
         maximumScore: Number(row.maximumScore) || 0,
         attemptNumber: Number(row.attemptNumber) || 0,
-        answers: answers
+        answers: answers,
+        results: buildQuizResults_(answers)
       };
     });
 
@@ -1295,30 +1904,27 @@ function resetStudentQuiz(token, username, reason) {
     // Soft Delete — เก็บสำเนาก่อนเขียนทับเสมอ
     appendQuizArchive_(session.username, target, note, before, snapshot);
 
-    if (state && typeof state === 'object' && !Array.isArray(state)) {
-      state.quiz = {
-        answers: {},
-        latestScore: 0,
-        bestScore: 0,
-        attempts: 0,
-        locked: false
-      };
-      // ถอยขั้นแบบทดสอบเป็นต้นไป เพื่อให้ระบบพานักเรียนกลับมาทำใหม่
-      state.completedSections = contiguousCompleted_(snapshot.completedSections)
-        .filter(function (order) {
-          return order < QUIZ_SECTION_ORDER;
-        });
-      state.currentSection = Math.min(
-        snapshot.currentSection,
-        unlockedSection_(state.completedSections)
-      );
-      // ต้องเขียนคอลัมน์ currentSection คู่กับ progressJson เสมอ
-      // แดชบอร์ดครูอ่านเลขขั้นจากคอลัมน์นี้ ไม่ได้อ่านจากใน JSON
-      // ถ้าเขียนแค่ JSON ครูจะเห็นเลขขั้นเดิมค้างอยู่ แล้วเข้าใจว่ารีเซ็ตไม่สำเร็จ
-      sheet.getRange(row, 3, 1, 2).setValues([[
-        JSON.stringify(state), state.currentSection
-      ]]);
+    if (!state || typeof state !== 'object' || Array.isArray(state)) {
+      state = createDefaultProgress_({ username: target });
     }
+    state.quiz = createEmptyQuizState_();
+    state.syncRevision = nextProgressSyncRevision_(state);
+    state.syncMutation = 'quiz_reset';
+    // ถอยขั้นแบบทดสอบเป็นต้นไป เพื่อให้ระบบพานักเรียนกลับมาทำใหม่
+    state.completedSections = contiguousCompleted_(snapshot.completedSections)
+      .filter(function (order) {
+        return order < QUIZ_SECTION_ORDER;
+      });
+    state.currentSection = Math.min(
+      snapshot.currentSection,
+      unlockedSection_(state.completedSections)
+    );
+    // ต้องเขียนคอลัมน์ currentSection คู่กับ progressJson เสมอ
+    // แดชบอร์ดครูอ่านเลขขั้นจากคอลัมน์นี้ ไม่ได้อ่านจากใน JSON
+    // ถ้าเขียนแค่ JSON ครูจะเห็นเลขขั้นเดิมค้างอยู่ แล้วเข้าใจว่ารีเซ็ตไม่สำเร็จ
+    sheet.getRange(row, 3, 1, 2).setValues([[
+      JSON.stringify(state), state.currentSection
+    ]]);
 
     sheet.getRange(row, 5, 1, 4).setValues([[0, 0, 0, new Date()]]);
 
@@ -1399,18 +2005,14 @@ function resetStudentProgress(token, username, reason) {
     const cleared = {
       version: APP_CONFIG.stateVersion,
       username: target,
+      syncRevision: nextProgressSyncRevision_(state),
+      syncMutation: 'progress_reset',
       currentSection: 1,
       completedSections: [],
       hookAnswers: {},
       worksheet: {},
       reflection: null,
-      quiz: {
-        answers: {},
-        latestScore: 0,
-        bestScore: 0,
-        attempts: 0,
-        locked: false
-      }
+      quiz: createEmptyQuizState_()
     };
 
     sheet.getRange(row, 3, 1, 2).setValues([[JSON.stringify(cleared), 1]]);
@@ -1488,6 +2090,10 @@ function restoreStudentQuiz(token, username) {
     } catch (error) {
       state = null;
     }
+    if (!state || typeof state !== 'object' || Array.isArray(state)) {
+      state = createDefaultProgress_({ username: target });
+    }
+    const restoredSyncRevision = nextProgressSyncRevision_(state);
 
     let snapshot = null;
     try {
@@ -1504,33 +2110,31 @@ function restoreStudentQuiz(token, username) {
     // สำเนารุ่นแรกเก็บเฉพาะก้อน quiz จึงต้องรองรับทั้งสองรูปแบบ
     const beforeQuiz = isSnapshot ? snapshot.quiz : snapshot;
 
-    if (state && typeof state === 'object' && !Array.isArray(state)) {
-      state.quiz = beforeQuiz && typeof beforeQuiz === 'object' && !Array.isArray(beforeQuiz)
-        ? beforeQuiz
-        : {
-            answers: {},
-            latestScore: restored.latestScore,
-            bestScore: restored.bestScore,
-            attempts: restored.attempts,
-            locked: false
-          };
-      if (isSnapshot) {
-        state.completedSections = contiguousCompleted_(snapshot.completedSections);
-        state.currentSection = Math.min(
-          Number(snapshot.currentSection) || 1,
-          unlockedSection_(state.completedSections)
-        );
-        // สำเนารุ่นแรกไม่มีสามช่องนี้ จึงคืนเฉพาะเมื่อมีจริง
-        // ไม่อย่างนั้นจะไปเขียนทับคำตอบปัจจุบันด้วยค่าว่าง
-        if (snapshot.worksheet) state.worksheet = snapshot.worksheet;
-        if (snapshot.hookAnswers) state.hookAnswers = snapshot.hookAnswers;
-        if (snapshot.reflection) state.reflection = snapshot.reflection;
-      }
-      // เขียนเลขขั้นคู่กับ JSON ด้วยเหตุผลเดียวกับตอนรีเซ็ต
-      sheet.getRange(row, 3, 1, 2).setValues([[
-        JSON.stringify(state), Number(state.currentSection) || 1
-      ]]);
+    state.quiz = beforeQuiz && typeof beforeQuiz === 'object' && !Array.isArray(beforeQuiz)
+      ? normalizeStoredQuiz_(beforeQuiz)
+      : Object.assign(createEmptyQuizState_(), {
+          latestScore: restored.latestScore,
+          bestScore: restored.bestScore,
+          attempts: restored.attempts
+        });
+    if (isSnapshot) {
+      state.completedSections = contiguousCompleted_(snapshot.completedSections);
+      state.currentSection = Math.min(
+        Number(snapshot.currentSection) || 1,
+        unlockedSection_(state.completedSections)
+      );
+      // สำเนารุ่นแรกไม่มีสามช่องนี้ จึงคืนเฉพาะเมื่อมีจริง
+      // ไม่อย่างนั้นจะไปเขียนทับคำตอบปัจจุบันด้วยค่าว่าง
+      if (snapshot.worksheet) state.worksheet = snapshot.worksheet;
+      if (snapshot.hookAnswers) state.hookAnswers = snapshot.hookAnswers;
+      if (snapshot.reflection) state.reflection = snapshot.reflection;
     }
+    state.syncRevision = restoredSyncRevision;
+    state.syncMutation = 'restore';
+    // เขียนเลขขั้นคู่กับ JSON ด้วยเหตุผลเดียวกับตอนรีเซ็ต
+    sheet.getRange(row, 3, 1, 2).setValues([[
+      JSON.stringify(state), Number(state.currentSection) || 1
+    ]]);
 
     const now = new Date();
     sheet.getRange(row, 5, 1, 4).setValues([[
@@ -1706,6 +2310,7 @@ function seedStudents_(spreadsheet, initialPassword) {
   const now = new Date();
   const rows = STUDENT_ROSTER.map(function (student) {
     const salt = createSalt_();
+    // D-002: นักเรียนใช้รหัสที่ครูกำหนดและไม่มีขั้นเปลี่ยนรหัสผ่านด้วยตนเอง
     return [
       student.username,
       'student',
@@ -1714,7 +2319,7 @@ function seedStudents_(spreadsheet, initialPassword) {
       hashPassword_(initialPassword, salt),
       salt,
       true,
-      true,
+      false,
       now,
       now
     ];
@@ -1760,11 +2365,8 @@ function createSession_(user) {
     mustChangePassword: user.mustChangePassword,
     issuedAt: new Date().toISOString()
   };
-  CacheService.getScriptCache().put(
-    'session:' + token,
-    JSON.stringify(session),
-    APP_CONFIG.sessionTtlSeconds
-  );
+  purgeExpiredSessions_();
+  storeSession_(token, session);
   return token;
 }
 
@@ -1774,12 +2376,89 @@ function requireSession_(token) {
     throw new Error('SESSION_EXPIRED');
   }
   const cache = CacheService.getScriptCache();
-  const json = cache.get('session:' + normalizedToken);
+  const cacheKey = sessionCacheKey_(normalizedToken);
+  const propertyKey = sessionPropertyKey_(normalizedToken);
+  const properties = PropertiesService.getScriptProperties();
+  const json = cache.get(cacheKey) || properties.getProperty(propertyKey);
   if (!json) {
     throw new Error('SESSION_EXPIRED');
   }
-  cache.put('session:' + normalizedToken, json, APP_CONFIG.sessionTtlSeconds);
-  return JSON.parse(json);
+
+  let session;
+  try {
+    session = JSON.parse(json);
+  } catch (error) {
+    deleteSession_(normalizedToken);
+    throw new Error('SESSION_EXPIRED');
+  }
+
+  if (!Number.isFinite(Number(session.expiresAt)) || Number(session.expiresAt) <= Date.now()) {
+    deleteSession_(normalizedToken);
+    throw new Error('SESSION_EXPIRED');
+  }
+
+  // Sliding expiry remains six hours, while Script Properties is the durable source of truth.
+  storeSession_(normalizedToken, session);
+  return session;
+}
+
+function storeSession_(token, session) {
+  const normalizedToken = validateTokenFormat_(token);
+  if (!normalizedToken) {
+    throw new Error('SESSION_EXPIRED');
+  }
+  const storedSession = Object.assign({}, session, {
+    expiresAt: Date.now() + APP_CONFIG.sessionTtlSeconds * 1000
+  });
+  const json = JSON.stringify(storedSession);
+  PropertiesService.getScriptProperties().setProperty(
+    sessionPropertyKey_(normalizedToken),
+    json
+  );
+  CacheService.getScriptCache().put(
+    sessionCacheKey_(normalizedToken),
+    json,
+    APP_CONFIG.sessionTtlSeconds
+  );
+}
+
+function deleteSession_(token) {
+  const normalizedToken = validateTokenFormat_(token);
+  if (!normalizedToken) return;
+  CacheService.getScriptCache().remove(sessionCacheKey_(normalizedToken));
+  deletePreviewState_(normalizedToken);
+  PropertiesService.getScriptProperties().deleteProperty(
+    sessionPropertyKey_(normalizedToken)
+  );
+}
+
+function purgeExpiredSessions_() {
+  const properties = PropertiesService.getScriptProperties();
+  const values = properties.getProperties();
+  const now = Date.now();
+  Object.keys(values).forEach(function (key) {
+    if (key.indexOf(APP_CONFIG.sessionPropertyPrefix) !== 0) return;
+    try {
+      const session = JSON.parse(values[key]);
+      if (Number(session.expiresAt) > now) return;
+    } catch (error) {
+      // Invalid session records are removed below.
+    }
+    const storageId = key.slice(APP_CONFIG.sessionPropertyPrefix.length);
+    properties.deleteProperty(key);
+    deletePreviewStatePropertiesByBase_(
+      APP_CONFIG.previewStatePropertyPrefix + storageId,
+      properties
+    );
+  });
+}
+
+function sessionCacheKey_(token) {
+  return 'session:' + token;
+}
+
+function sessionPropertyKey_(token) {
+  return APP_CONFIG.sessionPropertyPrefix + hashPassword_(token, 'session');
 }
 
 function requireRole_(token, role) {
@@ -1893,13 +2572,14 @@ function optionalStepsStatus_(state) {
 
   return LESSON_OPTIONAL_STEPS.map(function (step) {
     const saved = worksheet[step.stateKey] || {};
+    const unlocked = completed.indexOf(step.unlockAfter) !== -1;
     return {
       id: step.id,
       title: step.title,
       kind: step.kind,
       unlockAfter: step.unlockAfter,
-      unlocked: completed.indexOf(step.unlockAfter) !== -1,
-      completed: saved.completed === true,
+      unlocked: unlocked,
+      completed: unlocked && saved.completed === true,
       bestScore: Number(saved.bestScore) || 0,
       total: Number(saved.total) || 0,
       xpReward: step.xpReward
@@ -2042,26 +2722,632 @@ function buildEncouragement_(doneCount, quiz, passed, perfect) {
   };
 }
 
+function createEmptyQuizState_() {
+  return {
+    answers: {},
+    results: {},
+    latestScore: 0,
+    bestScore: 0,
+    attempts: 0,
+    locked: false,
+    lastSubmissionId: '',
+    lastSubmissionAnswers: {}
+  };
+}
+
+function progressSyncRevision_(stateOrValue) {
+  const raw = stateOrValue && typeof stateOrValue === 'object'
+    ? stateOrValue.syncRevision
+    : stateOrValue;
+  const revision = Number(raw);
+  return Number.isSafeInteger(revision) && revision >= 0 ? revision : 0;
+}
+
+function progressSyncMutation_(stateOrValue) {
+  const raw = stateOrValue && typeof stateOrValue === 'object'
+    ? stateOrValue.syncMutation
+    : stateOrValue;
+  const mutation = String(raw || 'initial');
+  return ['initial', 'quiz_reset', 'progress_reset', 'restore'].indexOf(mutation) >= 0
+    ? mutation
+    : 'initial';
+}
+
+function ensureProgressSyncMetadata_(state) {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return state;
+  state.syncRevision = progressSyncRevision_(state);
+  state.syncMutation = progressSyncMutation_(state);
+  return state;
+}
+
+function nextProgressSyncRevision_(state) {
+  const current = progressSyncRevision_(state);
+  if (current >= Number.MAX_SAFE_INTEGER) {
+    throw new Error('เลขรุ่นข้อมูลความก้าวหน้าเต็ม กรุณาแจ้งผู้ดูแลระบบ');
+  }
+  return current + 1;
+}
+
+function assertProgressSyncRevision_(incomingRevision, trustedState) {
+  if (progressSyncRevision_(incomingRevision) !== progressSyncRevision_(trustedState)) {
+    throw new Error(
+      'PROGRESS_CONFLICT: ข้อมูลถูกครูรีเซ็ตหรือกู้คืน กรุณาโหลดข้อมูลล่าสุด'
+    );
+  }
+}
+
 function createDefaultProgress_(session) {
   return {
     version: APP_CONFIG.stateVersion,
     username: session.username,
+    syncRevision: 0,
+    syncMutation: 'initial',
     currentSection: 1,
     completedSections: [],
     hookAnswers: {},
     worksheet: {},
     reflection: {},
-    quiz: {
-      answers: {},
-      latestScore: 0,
-      bestScore: 0,
-      attempts: 0,
-      locked: false
-    }
+    quiz: createEmptyQuizState_()
   };
 }
 
-function validateProgressState_(state, session) {
+function isPlainRecord_(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasOwn_(value, key) {
+  return isPlainRecord_(value) && Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function normalizeEvidenceChoice_(value, allowedChoices) {
+  const choice = typeof value === 'string' ? value : '';
+  return allowedChoices.indexOf(choice) >= 0 ? choice : '';
+}
+
+function normalizeHookEvidence_(incomingValue, trustedValue) {
+  const incoming = isPlainRecord_(incomingValue) ? incomingValue : {};
+  const trusted = isPlainRecord_(trustedValue) ? trustedValue : {};
+  const sensorGuess =
+    normalizeEvidenceChoice_(incoming.sensorGuess, REQUIRED_EVIDENCE_RULES.sensorGuesses) ||
+    normalizeEvidenceChoice_(trusted.sensorGuess, REQUIRED_EVIDENCE_RULES.sensorGuesses);
+  const predict800 =
+    normalizeEvidenceChoice_(incoming.predict800, REQUIRED_EVIDENCE_RULES.predict800Choices) ||
+    normalizeEvidenceChoice_(trusted.predict800, REQUIRED_EVIDENCE_RULES.predict800Choices);
+  const clean = {};
+  if (sensorGuess) clean.sensorGuess = sensorGuess;
+  if (predict800) clean.predict800 = predict800;
+  return clean;
+}
+
+function normalizeUnpluggedMapEvidence_(incomingValue, trustedValue) {
+  const sources = [incomingValue, trustedValue];
+  for (let index = 0; index < sources.length; index += 1) {
+    const source = sources[index];
+    if (!isPlainRecord_(source)) continue;
+    const score = Number(source.score);
+    if (!Number.isInteger(score) || score < 0 || score > 100) continue;
+    return {
+      score: score,
+      // สูตรเดียวกับสไลเดอร์ 0–100 → 0–4 ห้ามเชื่อ grade ที่ client ส่งมา
+      grade: score * 4 / 100
+    };
+  }
+  return null;
+}
+
+function normalizeCheckedChoiceEvidence_(
+  incomingValue,
+  trustedValue,
+  allowedChoices,
+  correctChoice,
+  prerequisiteMet,
+  trustedWasComplete
+) {
+  const incoming = isPlainRecord_(incomingValue) ? incomingValue : {};
+  const trusted = isPlainRecord_(trustedValue) ? trustedValue : {};
+  const incomingAnswer = normalizeEvidenceChoice_(incoming.answer, allowedChoices);
+  const trustedAnswer = normalizeEvidenceChoice_(trusted.answer, allowedChoices);
+  let answer = incomingAnswer || trustedAnswer;
+
+  // ขั้นที่ผ่านแล้วต้องไม่ถอยเพราะ request เก่าหรือ client ที่ยังไม่ทัน sync
+  if (trustedWasComplete && answer !== correctChoice && trustedAnswer) {
+    answer = trustedAnswer;
+  }
+  if (!answer) return null;
+
+  const correct = answer === correctChoice;
+  return {
+    answer: answer,
+    correct: correct,
+    completed: Boolean(trustedWasComplete || (prerequisiteMet && correct))
+  };
+}
+
+function normalizeAccelEvidence_(value) {
+  const accel = Number(value);
+  return Number.isInteger(accel) && accel >= -1023 && accel <= 1023
+    ? accel
+    : null;
+}
+
+function normalizeTiltEvidence_(
+  incomingValue,
+  trustedValue,
+  prerequisiteMet,
+  trustedWasComplete
+) {
+  const hasIncoming = isPlainRecord_(incomingValue);
+  const hasTrusted = isPlainRecord_(trustedValue);
+  if (!hasIncoming && !hasTrusted) return null;
+
+  const incoming = hasIncoming ? incomingValue : {};
+  const trusted = hasTrusted ? trustedValue : {};
+  const incomingAccel = normalizeAccelEvidence_(incoming.accel);
+  const trustedAccel = normalizeAccelEvidence_(trusted.accel);
+  const accel = incomingAccel !== null
+    ? incomingAccel
+    : trustedAccel !== null ? trustedAccel : 0;
+  const constrainEnabled = hasOwn_(incoming, 'constrainEnabled')
+    ? incoming.constrainEnabled === true
+    : trusted.constrainEnabled === true;
+
+  // flags สองตัวนี้เป็นหลักฐานประวัติการทดลองและต้องรวมแบบ monotonic
+  // เพื่อให้งานที่ทำออฟไลน์ทั้งสองโหมดไม่หายเมื่อกลับมา sync
+  const seenUnsafe = incoming.seenUnsafe === true || trusted.seenUnsafe === true;
+  const seenSafe = incoming.seenSafe === true || trusted.seenSafe === true;
+
+  return {
+    accel: accel,
+    constrainEnabled: constrainEnabled,
+    seenUnsafe: seenUnsafe,
+    seenSafe: seenSafe,
+    completed: Boolean(
+      trustedWasComplete || (prerequisiteMet && seenUnsafe && seenSafe)
+    )
+  };
+}
+
+function normalizeDebugEvidence_(
+  incomingValue,
+  trustedValue,
+  prerequisiteMet,
+  trustedWasComplete
+) {
+  const checked = normalizeCheckedChoiceEvidence_(
+    incomingValue,
+    trustedValue,
+    REQUIRED_EVIDENCE_RULES.debugChoices,
+    'map-four',
+    prerequisiteMet,
+    trustedWasComplete
+  );
+  if (!checked) return null;
+
+  const incoming = isPlainRecord_(incomingValue) ? incomingValue : {};
+  const trusted = isPlainRecord_(trustedValue) ? trustedValue : {};
+  const incomingAccel = normalizeAccelEvidence_(incoming.lastAccel);
+  const trustedAccel = normalizeAccelEvidence_(trusted.lastAccel);
+  checked.lastAccel = incomingAccel !== null
+    ? incomingAccel
+    : trustedAccel !== null ? trustedAccel : 600;
+  return checked;
+}
+
+function validGlossaryEvidenceIds_(value) {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value.map(String).filter(function (id) {
+    return REQUIRED_EVIDENCE_RULES.glossaryIds.indexOf(id) >= 0;
+  })));
+}
+
+function normalizeGlossaryEvidence_(
+  incomingValue,
+  trustedValue,
+  prerequisiteMet,
+  trustedWasComplete
+) {
+  const hasIncoming = isPlainRecord_(incomingValue);
+  const hasTrusted = isPlainRecord_(trustedValue);
+  if (!hasIncoming && !hasTrusted) return null;
+
+  const incomingOpened = validGlossaryEvidenceIds_(
+    hasIncoming ? incomingValue.opened : []
+  );
+  const trustedOpened = validGlossaryEvidenceIds_(
+    hasTrusted ? trustedValue.opened : []
+  );
+  const opened = Array.from(new Set(trustedOpened.concat(incomingOpened)));
+  const abbreviationCount = opened.filter(function (id) {
+    return REQUIRED_EVIDENCE_RULES.glossaryAbbreviationIds.indexOf(id) >= 0;
+  }).length;
+  const explored =
+    opened.length >= REQUIRED_EVIDENCE_RULES.glossaryRequired &&
+    abbreviationCount >= REQUIRED_EVIDENCE_RULES.glossaryAbbreviationsRequired;
+
+  return {
+    opened: opened,
+    // นับใหม่จาก ID ที่ server รู้จัก ไม่เชื่อตัวเลขที่ client ส่งมา
+    abbreviationCount: abbreviationCount,
+    completed: Boolean(trustedWasComplete || (prerequisiteMet && explored))
+  };
+}
+
+function normalizeReflectionEvidence_(incomingValue, trustedValue, trustedWasComplete) {
+  const incoming = isPlainRecord_(incomingValue) ? incomingValue : {};
+  const trusted = isPlainRecord_(trustedValue) ? trustedValue : {};
+  let summary = hasOwn_(incoming, 'summary')
+    ? sanitizePlainText_(incoming.summary, 500)
+    : sanitizePlainText_(trusted.summary, 500);
+  let confidence = hasOwn_(incoming, 'confidence')
+    ? normalizeEvidenceChoice_(
+        incoming.confidence,
+        REQUIRED_EVIDENCE_RULES.confidenceChoices
+      )
+    : normalizeEvidenceChoice_(
+        trusted.confidence,
+        REQUIRED_EVIDENCE_RULES.confidenceChoices
+      );
+
+  const trustedSummary = sanitizePlainText_(trusted.summary, 500);
+  const trustedConfidence = normalizeEvidenceChoice_(
+    trusted.confidence,
+    REQUIRED_EVIDENCE_RULES.confidenceChoices
+  );
+  if (
+    trustedWasComplete &&
+    (summary.length < 10 || !confidence) &&
+    trustedSummary.length >= 10 &&
+    trustedConfidence
+  ) {
+    summary = trustedSummary;
+    confidence = trustedConfidence;
+  }
+
+  return summary || confidence
+    ? { summary: summary, confidence: confidence }
+    : {};
+}
+
+function reflectionEvidenceComplete_(reflection) {
+  return Boolean(
+    reflection &&
+    sanitizePlainText_(reflection.summary, 500).length >= 10 &&
+    normalizeEvidenceChoice_(
+      reflection.confidence,
+      REQUIRED_EVIDENCE_RULES.confidenceChoices
+    )
+  );
+}
+
+function setNormalizedEvidence_(worksheet, key, value) {
+  if (value) {
+    worksheet[key] = value;
+  } else {
+    delete worksheet[key];
+  }
+}
+
+function sanitizeLearningEvidenceText_(value, maximumLength) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ' ')
+    .trim()
+    .slice(0, maximumLength);
+}
+
+function normalizeMiniGameAttemptId_(value) {
+  const id = typeof value === 'string' ? value.trim() : '';
+  return /^[A-Za-z0-9_-]{8,100}$/.test(id) ? id : '';
+}
+
+function normalizeMiniGameAttemptAnswers_(value) {
+  const rules = OPTIONAL_EVIDENCE_RULES.miniGame;
+  if (!Array.isArray(value) || value.length !== rules.items.length) return null;
+
+  const byAccel = {};
+  for (let index = 0; index < value.length; index += 1) {
+    const answer = value[index];
+    if (!isPlainRecord_(answer) || typeof answer.saidSafe !== 'boolean') return null;
+    const accel = Number(answer.accel);
+    if (!Number.isInteger(accel) || hasOwn_(byAccel, String(accel))) return null;
+    byAccel[String(accel)] = answer.saidSafe;
+  }
+
+  const normalized = [];
+  for (let index = 0; index < rules.items.length; index += 1) {
+    const item = rules.items[index];
+    if (!hasOwn_(byAccel, String(item.accel))) return null;
+    normalized.push({ accel: item.accel, saidSafe: byAccel[String(item.accel)] });
+  }
+  return normalized;
+}
+
+function miniGameScore_(answers) {
+  const items = OPTIONAL_EVIDENCE_RULES.miniGame.items;
+  return answers.reduce(function (score, answer, index) {
+    return score + (answer.saidSafe === items[index].safe ? 1 : 0);
+  }, 0);
+}
+
+function normalizeMiniGameEvidence_(incomingValue, trustedValue, unlocked) {
+  const incoming = isPlainRecord_(incomingValue) ? incomingValue : {};
+  const trusted = isPlainRecord_(trustedValue) ? trustedValue : {};
+  const rules = OPTIONAL_EVIDENCE_RULES.miniGame;
+  const total = rules.items.length;
+  let bestScore = clampInteger_(trusted.bestScore, 0, total);
+  let plays = clampInteger_(trusted.plays, 0, 1000000);
+  let lastAttemptId = normalizeMiniGameAttemptId_(trusted.lastAttemptId);
+  const attemptId = normalizeMiniGameAttemptId_(incoming.attemptId);
+  const attemptAnswers = normalizeMiniGameAttemptAnswers_(incoming.attemptAnswers);
+
+  if (unlocked && attemptId && attemptAnswers && attemptId !== lastAttemptId) {
+    bestScore = Math.max(bestScore, miniGameScore_(attemptAnswers));
+    plays = Math.min(1000000, plays + 1);
+    lastAttemptId = attemptId;
+  }
+
+  if (!Object.keys(incoming).length && !Object.keys(trusted).length) return null;
+  const clean = {
+    completed: Boolean(unlocked && bestScore >= rules.passMark),
+    bestScore: bestScore,
+    total: total,
+    plays: plays
+  };
+  if (lastAttemptId) clean.lastAttemptId = lastAttemptId;
+  return clean;
+}
+
+function normalizeMissionAnswers_(value) {
+  const source = isPlainRecord_(value) ? value : {};
+  const rules = OPTIONAL_EVIDENCE_RULES.mission;
+  const clean = {};
+  Object.keys(rules.answers).forEach(function (questionId) {
+    const answer = normalizeEvidenceChoice_(source[questionId], rules.choices);
+    if (answer) clean[questionId] = answer;
+  });
+  return clean;
+}
+
+function verifiedMissionStage_(answers) {
+  const key = OPTIONAL_EVIDENCE_RULES.mission.answers;
+  let stage = 1;
+  if (answers.q1 === key.q1 && answers.q2 === key.q2) stage = 2;
+  if (stage === 2 && answers.q3 === key.q3) stage = 3;
+  if (stage === 3 && answers.q4 === key.q4) stage = 4;
+  return stage;
+}
+
+function normalizeMissionEvidence_(incomingValue, trustedValue, unlocked) {
+  const incoming = isPlainRecord_(incomingValue) ? incomingValue : {};
+  const trusted = isPlainRecord_(trustedValue) ? trustedValue : {};
+  const rules = OPTIONAL_EVIDENCE_RULES.mission;
+  if (!Object.keys(incoming).length && !Object.keys(trusted).length) return null;
+
+  const trustedAnswers = normalizeMissionAnswers_(trusted.answers);
+  const incomingAnswers = normalizeMissionAnswers_(incoming.answers);
+  const answers = Object.assign({}, trustedAnswers);
+  Object.keys(rules.answers).forEach(function (questionId) {
+    // คำตอบที่ server เคยยืนยันว่าถูกแล้วจะไม่ถอยหลังจากการ sync งานเก่า
+    if (trustedAnswers[questionId] === rules.answers[questionId]) return;
+    if (incomingAnswers[questionId]) answers[questionId] = incomingAnswers[questionId];
+  });
+
+  const trustedLetter = sanitizeLearningEvidenceText_(trusted.letter, rules.letterMax);
+  const incomingLetter = hasOwn_(incoming, 'letter')
+    ? sanitizeLearningEvidenceText_(incoming.letter, rules.letterMax)
+    : '';
+  const letter = incomingLetter || trustedLetter;
+  const verifiedStage = verifiedMissionStage_(answers);
+  const trustedStage = clampInteger_(trusted.stage, 1, rules.stageCount);
+  const trustedWasComplete = trusted.completed === true;
+  const evidenceComplete =
+    verifiedStage >= rules.stageCount && letter.length >= rules.letterMin;
+  const completed = Boolean(unlocked && (trustedWasComplete || evidenceComplete));
+  const stage = completed
+    ? rules.stageCount
+    : Math.max(verifiedStage, trustedStage);
+
+  const clean = { stage: stage, completed: completed, answers: answers };
+  if (letter) clean.letter = letter;
+  return clean;
+}
+
+function normalizeCodingLabEvidence_(incomingValue, trustedValue, unlocked) {
+  const incoming = isPlainRecord_(incomingValue) ? incomingValue : {};
+  const trusted = isPlainRecord_(trustedValue) ? trustedValue : {};
+  const rules = OPTIONAL_EVIDENCE_RULES.codingLab;
+  if (!Object.keys(incoming).length && !Object.keys(trusted).length) return null;
+
+  const clean = {};
+  let allChecked = true;
+  for (let index = 1; index <= 4; index += 1) {
+    const key = 'check' + index;
+    clean[key] = trusted[key] === true || incoming[key] === true;
+    allChecked = allChecked && clean[key];
+  }
+
+  const trustedPause = normalizeEvidenceChoice_(trusted.pauseAnswer, rules.pauseChoices);
+  const incomingPause = normalizeEvidenceChoice_(incoming.pauseAnswer, rules.pauseChoices);
+  const pauseAnswer = incomingPause || trustedPause;
+  if (pauseAnswer) clean.pauseAnswer = pauseAnswer;
+
+  const trustedNote = sanitizeLearningEvidenceText_(trusted.note, rules.noteMax);
+  const incomingNote = hasOwn_(incoming, 'note')
+    ? sanitizeLearningEvidenceText_(incoming.note, rules.noteMax)
+    : '';
+  const note = incomingNote || trustedNote;
+  if (note) clean.note = note;
+
+  const evidenceComplete =
+    allChecked &&
+    pauseAnswer === rules.correctPauseAnswer &&
+    note.length >= rules.noteMin;
+  clean.completed = Boolean(
+    unlocked && (trusted.completed === true || evidenceComplete)
+  );
+  return clean;
+}
+
+function optionalStepUnlocked_(completedSections, stateKey) {
+  const step = LESSON_OPTIONAL_STEPS.filter(function (item) {
+    return item.stateKey === stateKey;
+  })[0];
+  return Boolean(step && completedSections.indexOf(step.unlockAfter) >= 0);
+}
+
+function normalizeOptionalLearningEvidence_(
+  baseWorksheet,
+  incomingValue,
+  trustedValue,
+  completedSections
+) {
+  const worksheet = sanitizeJsonObject_(baseWorksheet);
+  const incoming = sanitizeJsonObject_(incomingValue);
+  const trusted = sanitizeJsonObject_(trustedValue);
+  setNormalizedEvidence_(
+    worksheet,
+    'miniGame',
+    normalizeMiniGameEvidence_(
+      incoming.miniGame,
+      trusted.miniGame,
+      optionalStepUnlocked_(completedSections, 'miniGame')
+    )
+  );
+  setNormalizedEvidence_(
+    worksheet,
+    'mission',
+    normalizeMissionEvidence_(
+      incoming.mission,
+      trusted.mission,
+      optionalStepUnlocked_(completedSections, 'mission')
+    )
+  );
+  setNormalizedEvidence_(
+    worksheet,
+    'codingLab',
+    normalizeCodingLabEvidence_(
+      incoming.codingLab,
+      trusted.codingLab,
+      optionalStepUnlocked_(completedSections, 'codingLab')
+    )
+  );
+  return worksheet;
+}
+
+function rejectedOptionalRewardRequests_(incomingValue, normalizedValue) {
+  const incoming = sanitizeJsonObject_(incomingValue);
+  const normalized = sanitizeJsonObject_(normalizedValue);
+  return LESSON_OPTIONAL_STEPS.filter(function (step) {
+    const requested = isPlainRecord_(incoming[step.stateKey])
+      ? incoming[step.stateKey]
+      : {};
+    const accepted = isPlainRecord_(normalized[step.stateKey])
+      ? normalized[step.stateKey]
+      : {};
+    if (requested.completed === true && accepted.completed !== true) return true;
+    if (
+      step.stateKey === 'miniGame' &&
+      Number(requested.bestScore) > Number(accepted.bestScore || 0)
+    ) return true;
+    return false;
+  }).map(function (step) {
+    return step.id;
+  });
+}
+
+/**
+ * สร้าง canonical evidence และ derive Required Sections จากหลักฐานทีละขั้น
+ * งานเดิมที่ server เคยบันทึกว่าสำเร็จจะคงอยู่เพื่อไม่ทำลายข้อมูลนักเรียน
+ * แต่ client ไม่สามารถเพิ่มขั้นใหม่ด้วย completedSections เพียงอย่างเดียวได้
+ */
+function normalizeRequiredLearningEvidence_(state, trustedState) {
+  const trusted = isPlainRecord_(trustedState) ? trustedState : {};
+  const trustedCompleted = contiguousCompleted_(trusted.completedSections || []);
+  const completedSections = trustedCompleted.slice();
+  const incomingWorksheet = sanitizeJsonObject_(state.worksheet);
+  const trustedWorksheet = sanitizeJsonObject_(trusted.worksheet);
+  const worksheet = Object.assign({}, trustedWorksheet, incomingWorksheet);
+  const hookAnswers = normalizeHookEvidence_(state.hookAnswers, trusted.hookAnswers);
+
+  function trustedHas(order) {
+    return trustedCompleted.indexOf(order) >= 0;
+  }
+  function appendWhenNext(order, condition) {
+    if (completedSections.length === order - 1 && condition) {
+      completedSections.push(order);
+    }
+  }
+
+  appendWhenNext(1, Boolean(hookAnswers.sensorGuess));
+  appendWhenNext(2, Boolean(hookAnswers.predict800));
+
+  const unpluggedMap = normalizeUnpluggedMapEvidence_(
+    incomingWorksheet.unpluggedMap,
+    trustedWorksheet.unpluggedMap
+  );
+  setNormalizedEvidence_(worksheet, 'unpluggedMap', unpluggedMap);
+  appendWhenNext(3, Boolean(unpluggedMap));
+
+  const mgCheck = normalizeCheckedChoiceEvidence_(
+    incomingWorksheet.mgCheck,
+    trustedWorksheet.mgCheck,
+    REQUIRED_EVIDENCE_RULES.mgChoices,
+    'working-range',
+    completedSections.indexOf(3) >= 0,
+    trustedHas(4)
+  );
+  setNormalizedEvidence_(worksheet, 'mgCheck', mgCheck);
+  appendWhenNext(4, Boolean(mgCheck && mgCheck.completed));
+
+  const tiltSimulator = normalizeTiltEvidence_(
+    incomingWorksheet.tiltSimulator,
+    trustedWorksheet.tiltSimulator,
+    completedSections.indexOf(4) >= 0,
+    trustedHas(5)
+  );
+  setNormalizedEvidence_(worksheet, 'tiltSimulator', tiltSimulator);
+  appendWhenNext(5, Boolean(tiltSimulator && tiltSimulator.completed));
+
+  const debugCase = normalizeDebugEvidence_(
+    incomingWorksheet.debugCase,
+    trustedWorksheet.debugCase,
+    completedSections.indexOf(5) >= 0,
+    trustedHas(6)
+  );
+  setNormalizedEvidence_(worksheet, 'debugCase', debugCase);
+  appendWhenNext(6, Boolean(debugCase && debugCase.completed));
+
+  const glossary = normalizeGlossaryEvidence_(
+    incomingWorksheet.glossary,
+    trustedWorksheet.glossary,
+    completedSections.indexOf(6) >= 0,
+    trustedHas(7)
+  );
+  setNormalizedEvidence_(worksheet, 'glossary', glossary);
+  appendWhenNext(7, Boolean(glossary && glossary.completed));
+
+  // Section 8 เพิ่มได้จาก submitQuizAttemptV2 เท่านั้น จึงไม่มี appendWhenNext(8)
+  const reflection = normalizeReflectionEvidence_(
+    state.reflection,
+    trusted.reflection,
+    trustedHas(9)
+  );
+  appendWhenNext(
+    9,
+    completedSections.indexOf(QUIZ_SECTION_ORDER) >= 0 &&
+      reflectionEvidenceComplete_(reflection)
+  );
+
+  return {
+    hookAnswers: hookAnswers,
+    worksheet: worksheet,
+    reflection: reflection,
+    completedSections: contiguousCompleted_(completedSections)
+  };
+}
+
+function validateProgressState_(state, session, trustedState) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) {
     throw new Error('รูปแบบข้อมูลความก้าวหน้าไม่ถูกต้อง');
   }
@@ -2080,11 +3366,14 @@ function validateProgressState_(state, session) {
   }
 
   const quiz = state.quiz || {};
-  const latestScore = clampInteger_(quiz.latestScore, 0, APP_CONFIG.quizQuestionCount);
-  const bestScore = clampInteger_(
-    quiz.bestScore, latestScore, APP_CONFIG.quizQuestionCount
-  );
-  const attempts = clampInteger_(quiz.attempts, 0, APP_CONFIG.quizMaxAttempts);
+  const trusted = trustedState &&
+    typeof trustedState === 'object' &&
+    !Array.isArray(trustedState)
+    ? trustedState
+    : createDefaultProgress_(session);
+  assertProgressSyncRevision_(state.syncRevision, trusted);
+  const trustedQuiz = normalizeStoredQuiz_(trusted.quiz);
+  const draftAnswers = validateQuizAnswers_(quiz.answers || {}, false);
   const rawCompleted = Array.isArray(state.completedSections)
     ? state.completedSections
         .map(Number)
@@ -2097,20 +3386,43 @@ function validateProgressState_(state, session) {
         })
     : [];
 
-  // ตัดขั้นที่ข้ามลำดับทิ้ง แล้วบันทึกไว้ใน Audit เพื่อให้ครูตรวจสอบย้อนหลังได้
   const uniqueCompleted = Array.from(new Set(rawCompleted)).sort(function (a, b) {
     return a - b;
   });
+  const normalizedEvidence = normalizeRequiredLearningEvidence_(state, trusted);
   const completedSections = session.previewMode === 'free'
     ? uniqueCompleted
-    : contiguousCompleted_(rawCompleted);
-  if (!session.preview && new Set(rawCompleted).size !== completedSections.length) {
+    : normalizedEvidence.completedSections;
+  const normalizedWorksheet = normalizeOptionalLearningEvidence_(
+    normalizedEvidence.worksheet,
+    state.worksheet,
+    trusted.worksheet,
+    completedSections
+  );
+  const rejectedCompleted = uniqueCompleted.filter(function (section) {
+    return completedSections.indexOf(section) < 0;
+  });
+  const rejectedOptional = rejectedOptionalRewardRequests_(
+    state.worksheet,
+    normalizedWorksheet
+  );
+
+  // completedSections เป็นผลลัพธ์ ไม่ใช่คำสั่ง: บันทึกเหตุการณ์เมื่อ client ขอเกินหลักฐาน
+  if (!session.preview && rejectedCompleted.length) {
     appendAudit_(
       session.username,
       'progress_guard',
       'blocked',
-      'ข้ามลำดับขั้น ส่งมา [' + Array.from(new Set(rawCompleted)).sort().join(',') +
+      'client ขอเพิ่มขั้นที่ไม่มีหลักฐาน [' + rejectedCompleted.join(',') +
         '] รับได้ [' + completedSections.join(',') + ']'
+    );
+  }
+  if (!session.preview && rejectedOptional.length) {
+    appendAudit_(
+      session.username,
+      'optional_reward_guard',
+      'blocked',
+      'client ขอรางวัลโดยหลักฐานไม่ครบ [' + rejectedOptional.join(',') + ']'
     );
   }
 
@@ -2118,21 +3430,38 @@ function validateProgressState_(state, session) {
   const currentSection = session.previewMode === 'free'
     ? requestedSection
     : Math.min(requestedSection, unlockedSection_(completedSections));
+  const trustedSubmittedAnswers = trustedQuiz.lastSubmissionId
+    ? trustedQuiz.lastSubmissionAnswers
+    : trustedQuiz.answers;
+  const keepTrustedResults = Boolean(
+    trustedQuiz.attempts > 0 &&
+    quiz.locked === true &&
+    Object.keys(draftAnswers).length === APP_CONFIG.quizQuestionCount &&
+    sameQuizAnswers_(trustedSubmittedAnswers, draftAnswers)
+  );
 
   return {
     version: APP_CONFIG.stateVersion,
     username: session.username,
+    syncRevision: progressSyncRevision_(trusted),
+    syncMutation: progressSyncMutation_(trusted),
     currentSection: currentSection,
     completedSections: completedSections,
-    hookAnswers: sanitizeJsonObject_(state.hookAnswers),
-    worksheet: sanitizeJsonObject_(state.worksheet),
-    reflection: sanitizeJsonObject_(state.reflection),
+    hookAnswers: normalizedEvidence.hookAnswers,
+    worksheet: normalizedWorksheet,
+    reflection: normalizedEvidence.reflection,
     quiz: {
-      answers: sanitizeJsonObject_(quiz.answers),
-      latestScore: latestScore,
-      bestScore: bestScore,
-      attempts: attempts,
-      locked: Boolean(quiz.locked)
+      answers: draftAnswers,
+      // เฉลยเปิดได้ต่อเมื่อมี attempt จริงบน server แล้วเท่านั้น
+      results: keepTrustedResults ? buildQuizResults_(draftAnswers) : {},
+      latestScore: trustedQuiz.latestScore,
+      bestScore: trustedQuiz.bestScore,
+      attempts: trustedQuiz.attempts,
+      locked: trustedQuiz.attempts >= APP_CONFIG.quizMaxAttempts
+        ? true
+        : keepTrustedResults,
+      lastSubmissionId: trustedQuiz.lastSubmissionId,
+      lastSubmissionAnswers: trustedQuiz.lastSubmissionAnswers
     }
   };
 }
