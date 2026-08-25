@@ -4162,6 +4162,16 @@
       border-color: var(--purple-700);
     }
 
+    .tilt-feedback:not(:empty) {
+      margin: 0.85rem 0 0;
+      padding: 1rem;
+      color: var(--green-700);
+      background: #edf9f2;
+      border-radius: 0.9rem;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
     .bridge {
       margin: 1.5rem 0 0;
       padding-left: 1rem;
@@ -5555,10 +5565,15 @@
         <h3>ลองทำจริง 20 วินาที</h3>
         <p>หยิบยางลบหรือสมุด วางให้ราบ แล้วค่อย ๆ เอียงด้วยมือ คุณกำลังทดลองระดับใดอยู่?</p>
         <div class="tilt-levels" id="tilt-levels" aria-label="เลือกระดับการเอียงที่ทดลอง">
-          <button type="button" aria-pressed="false">วางราบ</button>
-          <button type="button" aria-pressed="false">เอียงเล็กน้อย</button>
-          <button type="button" aria-pressed="false">เอียงมาก</button>
+          <button type="button" data-tilt-level="flat"
+                  aria-pressed="false">วางราบ</button>
+          <button type="button" data-tilt-level="small"
+                  aria-pressed="false">เอียงเล็กน้อย</button>
+          <button type="button" data-tilt-level="large"
+                  aria-pressed="false">เอียงมาก</button>
         </div>
+        <p class="tilt-feedback" id="tilt-feedback"
+           role="status" aria-live="polite"></p>
         <p class="bridge">ต่อไปเราจะค้นหาว่า micro:bit เปลี่ยนความเอียงที่มองเห็น ให้กลายเป็นตัวเลขได้อย่างไร</p>
       </div>
     </section>
@@ -5846,6 +5861,15 @@
             </p>
           </details>
           <details class="vocab-chip">
+            <summary>🚗 ความเร่ง (acceleration)</summary>
+            <p>
+              อ่านว่า แอ็ก-เซล-เล-เร-ชั่น
+              หมายถึงการที่ความเร็วเปลี่ยนไป
+              เช่นตอนรถออกตัวแล้วเรารู้สึกถูกดันติดเบาะ
+              หรือตอนรถเบรกแล้วตัวเราโถไปข้างหน้า
+            </p>
+          </details>
+          <details class="vocab-chip">
             <summary>🌍 g (แรงโน้มถ่วง)</summary>
             <p>
               แรงที่โลกดึงของทุกอย่างลงพื้น
@@ -5871,7 +5895,22 @@
           </p>
         </article>
         <article class="sensor-concept">
-          <strong>ขั้นที่ 2 · มันตอบมาเป็นตัวเลข</strong>
+          <strong>ขั้นที่ 2 · ชื่อของมันบอกว่ามันวัดอะไร</strong>
+          <p>
+            คำว่า accelerometer มาจากคำว่า <strong>acceleration</strong>
+            ที่แปลว่า <strong>ความเร่ง</strong>
+            สิ่งที่มันวัดจริง ๆ จึงคือความเร่ง ไม่ใช่ความเอียงโดยตรง
+          </p>
+          <p>
+            แล้วทำไมของที่วัดความเร่ง ถึงบอกได้ว่าเราเอียงเครื่องอยู่?
+            เพราะโลกดึงของทุกอย่างลงพื้นตลอดเวลา
+            แม้ตอนวางเครื่องนิ่ง ๆ แรงดึงนี้ก็ยังทำงานอยู่
+            พอเราตะแคงเครื่อง แรงที่เคยกดลงตรง ๆ ก็ไปกดทางด้านข้างแทน
+            เครื่องจึงรู้ได้ว่าตอนนี้ตะแคงไปทางไหน
+          </p>
+        </article>
+        <article class="sensor-concept">
+          <strong>ขั้นที่ 3 · มันตอบมาเป็นตัวเลข</strong>
           <p>
             มันไม่ได้บอกว่า “เอียงนิดหน่อย” หรือ “เอียงเยอะ”
             แต่ตอบออกมาเป็นตัวเลข
@@ -5879,7 +5918,7 @@
           </p>
         </article>
         <article class="sensor-concept">
-          <strong>ขั้นที่ 3 · หน่วยนั้นคือ mg</strong>
+          <strong>ขั้นที่ 4 · หน่วยนั้นคือ mg</strong>
           <p>
             วางเครื่องราบนิ่ง ๆ แรงที่โลกดึงลงเต็มที่ เรียกว่า <strong>1 g</strong>
             แต่ 1 g เป็นก้อนใหญ่ไป เลยซอยย่อยเป็น 1,000 ส่วน ส่วนละ <strong>1 mg</strong>
@@ -11893,10 +11932,25 @@
       });
 
       const tiltButtons = document.querySelectorAll("#tilt-levels button");
+      const tiltFeedback = document.querySelector("#tilt-feedback");
+      const tiltLevelMessages = {
+        flat:
+          "วางราบคือจุดเริ่มต้นที่ดี จำความรู้สึกนี้ไว้ " +
+          "เดี๋ยว Section 4 เราจะเห็นว่าท่านี้เครื่องอ่านได้ประมาณ 0",
+        small:
+          "เอียงเล็กน้อยแบบนี้แหละที่ใช้เล่นจริง " +
+          "เดี๋ยว Section 4 เราจะเห็นว่าเอียงด้วยมือปกติเครื่องอ่านได้ประมาณ 600",
+        large:
+          "เอียงมากจนเกือบตะแคงตั้งฉาก คือปลายสุดของช่วงที่บทนี้ใช้ " +
+          "เดี๋ยว Section 5 เราจะเห็นว่าถ้าเอียงแรงเกินช่วงนั้น ไฟหลุดออกนอกจอได้ด้วย"
+      };
+
       tiltButtons.forEach((button) => {
         button.addEventListener("click", () => {
           tiltButtons.forEach((choice) => choice.setAttribute("aria-pressed", "false"));
           button.setAttribute("aria-pressed", "true");
+          const message = tiltLevelMessages[button.dataset.tiltLevel];
+          if (tiltFeedback && message) tiltFeedback.textContent = message;
         });
       });
 
