@@ -5999,9 +5999,11 @@
         <p class="own-words-lead">ลองพิมพ์สั้น ๆ ว่า <strong>mg คือหน่วยที่บอกอะไร</strong> เขียนแบบที่จะอธิบายให้เพื่อนที่ยังไม่เคยเรียนเรื่องนี้ฟัง ไม่ต้องใช้ศัพท์ยาก และไม่มีคำตอบที่ถูกแบบเดียว</p>
         <label for="own-words-mg">ถ้าเพื่อนถามว่า mg คือหน่วยอะไร เราจะตอบว่าอย่างไร</label>
         <textarea class="reflection-input" id="own-words-mg"
+                  aria-describedby="own-words-mg-count"
                   maxlength="400" rows="3"
                   placeholder="เช่น mg เป็นหน่วยที่บอกว่า..."></textarea>
-        <p class="own-words-count" id="own-words-mg-count"></p>
+        <p class="own-words-count" id="own-words-mg-count"
+           role="status" aria-live="polite"></p>
         <button class="submit-button" id="own-words-mg-save" type="button">
           บันทึกคำอธิบาย
         </button>
@@ -6351,9 +6353,11 @@
           ถ้าเพื่อนถามว่า constrain มีไว้ทำอะไร เราจะตอบว่าอย่างไร
         </label>
         <textarea class="reflection-input" id="own-words-constrain"
+                  aria-describedby="own-words-constrain-count"
                   maxlength="400" rows="3"
                   placeholder="เช่น ถ้าไฟจะเลยขอบจอออกไป constrain จะ..."></textarea>
-        <p class="own-words-count" id="own-words-constrain-count"></p>
+        <p class="own-words-count" id="own-words-constrain-count"
+           role="status" aria-live="polite"></p>
         <button class="submit-button" id="own-words-constrain-save" type="button">
           บันทึกคำอธิบาย
         </button>
@@ -6579,9 +6583,11 @@
         <p class="own-words-lead">ลองพิมพ์สั้น ๆ ว่า <strong>สูตรเดิมมีปัญหาตรงไหน</strong> ทำไมตอนวางราบถึงดูเหมือนใช้ได้ แต่พอเอียงแล้วพัง เขียนจากตารางที่เพิ่งเปรียบเทียบมา</p>
         <label for="own-words-debug">ถ้าเพื่อนถามว่าสูตรเดิมพลาดตรงไหน เราจะตอบว่าอย่างไร</label>
         <textarea class="reflection-input" id="own-words-debug"
+                  aria-describedby="own-words-debug-count"
                   maxlength="400" rows="3"
                   placeholder="เช่น สูตรเดิมใช้ตัวเลขที่ไม่ตรงกับ..."></textarea>
-        <p class="own-words-count" id="own-words-debug-count"></p>
+        <p class="own-words-count" id="own-words-debug-count"
+           role="status" aria-live="polite"></p>
         <button class="submit-button" id="own-words-debug-save" type="button">
           บันทึกคำอธิบาย
         </button>
@@ -12185,10 +12191,12 @@
           const state = result.state;
           const hasUnplugged =
             state.worksheet && state.worksheet.unpluggedMap;
+          const hasOwnWords =
+            ownWordsIsEnough(readSavedOwnWords(state, "mg"));
           const completed = Boolean(
             correct &&
             hasUnplugged &&
-            ownWordsIsEnough(readSavedOwnWords(state, "mg"))
+            hasOwnWords
           );
 
           state.worksheet = {
@@ -12211,9 +12219,12 @@
 
           mgCheckSync.textContent = completed
             ? "ตอบถูกและบันทึกลง Google Sheets แล้ว"
-            : correct
-              ? "ตอบถูกแล้ว แต่กรุณาทำ Section 3 ให้เสร็จก่อน"
-              : "บันทึกคำตอบแล้ว ลองอ่านเรื่องช่วงใช้งานอีกครั้ง";
+            : !correct
+              ? "บันทึกคำตอบแล้ว ลองอ่านเรื่องช่วงใช้งานอีกครั้ง"
+              : !hasUnplugged
+                ? "ตอบถูกแล้ว แต่กรุณาทำ Section 3 ให้เสร็จก่อน"
+                : "ตอบถูกแล้ว เหลืออีกอย่างเดียว คือเขียนช่องอธิบาย" +
+                  "ด้วยคำของตัวเองด้านบนให้ครบ " + OWN_WORDS_MIN + " ตัวอักษร";
         } catch (error) {
           mgCheckSync.textContent =
             "แสดงผลได้ตามปกติ แต่ยังบันทึกไม่ได้ กรุณาตรวจอินเทอร์เน็ต";
