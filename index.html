@@ -12855,10 +12855,12 @@
             state.worksheet &&
             state.worksheet.tiltSimulator &&
             state.worksheet.tiltSimulator.completed;
+          const hasOwnWords =
+            ownWordsIsEnough(readSavedOwnWords(state, "debug"));
           const completed = Boolean(
             correct &&
             hasSimulator &&
-            ownWordsIsEnough(readSavedOwnWords(state, "debug"))
+            hasOwnWords
           );
 
           state.worksheet = {
@@ -12885,9 +12887,12 @@
           renderDebugAnswer(answer, completed);
           debugSync.textContent = completed
             ? "ผ่านกรณีศึกษา Debug และบันทึกลง Google Sheets แล้ว"
-            : correct
-              ? "ตอบถูกแล้ว แต่กรุณาทำภารกิจ Section 5 ให้ครบก่อน"
-              : "บันทึกคำตอบแล้ว ลองเปรียบเทียบค่าที่ 600 mg อีกครั้ง";
+            : !correct
+              ? "บันทึกคำตอบแล้ว ลองเปรียบเทียบค่าที่ 600 mg อีกครั้ง"
+              : !hasSimulator
+                ? "ตอบถูกแล้ว แต่กรุณาทำภารกิจ Section 5 ให้ครบก่อน"
+                : "ตอบถูกแล้ว เหลืออีกอย่างเดียว คือเขียนช่องอธิบาย" +
+                  "ด้วยคำของตัวเองด้านบนให้ครบ " + OWN_WORDS_MIN + " ตัวอักษร";
         } catch (error) {
           debugSync.textContent =
             "คำนวณได้ตามปกติ แต่ยังบันทึกไม่ได้ กรุณาตรวจอินเทอร์เน็ต";
