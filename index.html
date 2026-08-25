@@ -2340,16 +2340,31 @@
       font-weight: 800;
     }
 
+    .predict-card .choice-button[data-result]::after {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
     .predict-card .choice-button[data-result="correct"] {
       color: var(--green-700);
       background: #edf9f2;
       border-color: var(--green-700);
     }
 
+    .predict-card .choice-button[data-result="correct"]::after {
+      content: "✓ ตรงกับผลจริง";
+    }
+
     .predict-card .choice-button[data-result="incorrect"] {
       color: #842029;
       background: #fff1f2;
       border-color: #c0394b;
+    }
+
+    .predict-card .choice-button[data-result="incorrect"]::after {
+      content: "✗ ต่างจากผลจริง";
     }
 
     .predict-card .choice-button:disabled {
@@ -11688,14 +11703,27 @@
         const selected = Array.from(predictButtons).find(
           (button) => button.getAttribute("aria-pressed") === "true"
         );
-        if (selected) {
-          selected.dataset.result =
-            selected.dataset.predict === "missing" ? "correct" : "incorrect";
-        }
+        // ทำเครื่องหมายข้อที่ตรงกับผลจริงเสมอ ไม่ใช่เฉพาะข้อที่นักเรียนเลือก
+        // เพื่อให้เห็นคำตอบที่ถูกแม้ทายผิด
+        predictButtons.forEach((button) => {
+          if (button.dataset.predict === "missing") {
+            button.dataset.result = "correct";
+          } else if (selected && button === selected) {
+            button.dataset.result = "incorrect";
+          } else {
+            delete button.dataset.result;
+          }
+        });
         predictObservation.hidden = false;
         if (predictionEvidenceNote) {
-          predictionEvidenceNote.textContent =
-            "เก็บหลักฐานครบแล้ว เปรียบเทียบคำทำนายเดิมกับผลจริงด้านข้างได้เลย";
+          // บอกผลเป็นข้อความด้วย ไม่พึ่งสีอย่างเดียว ตาม Blueprint #222
+          const matched = Boolean(selected) &&
+            selected.dataset.predict === "missing";
+          predictionEvidenceNote.textContent = matched
+            ? "เก็บหลักฐานครบแล้ว คำทำนายของคุณตรงกับผลจริง คือข้อ B ไฟหายไป " +
+              "อ่านคำอธิบายด้านข้างว่าเพราะอะไร"
+            : "เก็บหลักฐานครบแล้ว ผลจริงคือข้อ B ไฟหายไป ซึ่งต่างจากที่คุณทาย " +
+              "การทายไม่ตรงเป็นเรื่องปกติ อ่านคำอธิบายด้านข้างว่าเพราะอะไร";
         }
       }
 
