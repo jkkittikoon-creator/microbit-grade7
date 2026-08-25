@@ -133,6 +133,12 @@ const REQUIRED_EVIDENCE_RULES = Object.freeze({
   mgChoices: Object.freeze(['sensor-max', 'working-range', 'led-count']),
   debugChoices: Object.freeze(['same', 'map-four', 'wrong-safer']),
   confidenceChoices: Object.freeze(['high', 'ok', 'unsure', 'help']),
+  // อธิบายด้วยคำของตัวเอง — วัดที่ "เขียนจริงจังไหม" ไม่ตัดสินถูกผิด
+  // ข้อความอิสระตรวจความถูกต้องอัตโนมัติไม่ได้ ครูเป็นผู้อ่านตาม Blueprint #199
+  // ค่านี้ต้องตรงกับ OWN_WORDS_MIN ในหน้าเว็บ
+  ownWordsKeys: Object.freeze(['mg', 'constrain', 'debug']),
+  ownWordsMinLength: 25,
+  ownWordsMaxLength: 400,
   glossaryRequired: 6,
   glossaryAbbreviationsRequired: 2,
   glossaryIds: Object.freeze([
@@ -2881,11 +2887,46 @@ function normalizeAccelEvidence_(value) {
     : null;
 }
 
+function normalizeOwnWordsEvidence_(incomingValue, trustedValue) {
+  const incoming = isPlainRecord_(incomingValue) ? incomingValue : {};
+  const trusted = isPlainRecord_(trustedValue) ? trustedValue : {};
+  const rules = REQUIRED_EVIDENCE_RULES;
+  const clean = {};
+
+  rules.ownWordsKeys.forEach(function (key) {
+    const incomingText = sanitizeLearningEvidenceText_(
+      incoming[key], rules.ownWordsMaxLength
+    );
+    const trustedText = sanitizeLearningEvidenceText_(
+      trusted[key], rules.ownWordsMaxLength
+    );
+    // เก็บของเดิมไว้ถ้าคำตอบใหม่สั้นกว่าเกณฑ์ นักเรียนจะได้ไม่เสียงานที่เขียนไว้แล้ว
+    const text = incomingText.length >= rules.ownWordsMinLength
+      ? incomingText
+      : trustedText.length >= rules.ownWordsMinLength
+        ? trustedText
+        : incomingText || trustedText;
+    if (text) clean[key] = text;
+  });
+
+  return Object.keys(clean).length ? clean : null;
+}
+
+/** ถือว่าอธิบายครบเมื่อเขียนถึงความยาวขั้นต่ำ */
+function ownWordsIsEnough_(ownWords, key) {
+  return Boolean(
+    ownWords &&
+    typeof ownWords[key] === 'string' &&
+    ownWords[key].trim().length >= REQUIRED_EVIDENCE_RULES.ownWordsMinLength
+  );
+}
+
 function normalizeTiltEvidence_(
   incomingValue,
   trustedValue,
   prerequisiteMet,
-  trustedWasComplete
+  trustedWasComplete,
+  explanationReady
 ) {
   const hasIncoming = isPlainRecord_(incomingValue);
   const hasTrusted = isPlainRecord_(trustedValue);
@@ -2913,7 +2954,8 @@ function normalizeTiltEvidence_(
     seenUnsafe: seenUnsafe,
     seenSafe: seenSafe,
     completed: Boolean(
-      trustedWasComplete || (prerequisiteMet && seenUnsafe && seenSafe)
+      trustedWasComplete ||
+      (prerequisiteMet && seenUnsafe && seenSafe && explanationReady)
     )
   };
 }
@@ -3394,6 +3436,12 @@ function normalizeRequiredLearningEvidence_(state, trustedState) {
   setNormalizedEvidence_(worksheet, 'unpluggedMap', unpluggedMap);
   appendWhenNext(3, Boolean(unpluggedMap));
 
+  const ownWords = normalizeOwnWordsEvidence_(
+    incomingWorksheet.ownWords,
+    trustedWorksheet.ownWords
+  );
+  setNormalizedEvidence_(worksheet, 'ownWords', ownWords);
+
   const mgCheck = normalizeCheckedChoiceEvidence_(
     incomingWorksheet.mgCheck,
     trustedWorksheet.mgCheck,
@@ -3402,6 +3450,13 @@ function normalizeRequiredLearningEvidence_(state, trustedState) {
     completedSections.indexOf(3) >= 0,
     trustedHas(4)
   );
+  // เพิ่มเงื่อนไขอธิบายด้วยคำตัวเอง เฉพาะคนที่ยังไม่เคยผ่านขั้นนี้
+  // คนที่ผ่านไปแล้วไม่ถูกดึงกลับ ตาม Blueprint #123
+  if (mgCheck && !trustedHas(4)) {
+    mgCheck.completed = Boolean(
+      mgCheck.completed && ownWordsIsEnough_(ownWords, 'mg')
+    );
+  }
   setNormalizedEvidence_(worksheet, 'mgCheck', mgCheck);
   appendWhenNext(4, Boolean(mgCheck && mgCheck.completed));
 
@@ -3409,7 +3464,8 @@ function normalizeRequiredLearningEvidence_(state, trustedState) {
     incomingWorksheet.tiltSimulator,
     trustedWorksheet.tiltSimulator,
     completedSections.indexOf(4) >= 0,
-    trustedHas(5)
+    trustedHas(5),
+    ownWordsIsEnough_(ownWords, 'constrain')
   );
   setNormalizedEvidence_(worksheet, 'tiltSimulator', tiltSimulator);
   appendWhenNext(5, Boolean(tiltSimulator && tiltSimulator.completed));
@@ -3420,6 +3476,11 @@ function normalizeRequiredLearningEvidence_(state, trustedState) {
     completedSections.indexOf(5) >= 0,
     trustedHas(6)
   );
+  if (debugCase && !trustedHas(6)) {
+    debugCase.completed = Boolean(
+      debugCase.completed && ownWordsIsEnough_(ownWords, 'debug')
+    );
+  }
   setNormalizedEvidence_(worksheet, 'debugCase', debugCase);
   appendWhenNext(6, Boolean(debugCase && debugCase.completed));
 

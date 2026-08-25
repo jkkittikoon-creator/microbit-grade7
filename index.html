@@ -2966,6 +2966,14 @@
     }
 
     .simulator-shell {
+      /* ระยะจากขอบบนถึงจุดตรึง คิดรวมแถบ Preview และแถบขั้นถัดไปที่ JS วัดมาให้ */
+      --sim-sticky-top: calc(
+        var(--preview-bar-height, 0px) +
+        var(--next-step-bar-height, 0px) +
+        0.75rem
+      );
+      /* การ์ดที่ตรึงต้องไม่สูงเกินพื้นที่ที่เหลือ ไม่งั้นส่วนล่างจะถูกตัดหาย */
+      --sim-sticky-max: calc(100vh - var(--sim-sticky-top) - 1rem);
       display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
       gap: 1.25rem;
@@ -2996,13 +3004,75 @@
     .sim-device {
       position: sticky;
       /* ตรึงจอจำลองไว้ใต้แถบ Preview/ขั้นถัดไป โดยไม่บังแถบควบคุม */
-      top: calc(
-        var(--preview-bar-height, 0px) +
-        var(--next-step-bar-height, 0px) +
-        0.75rem
-      );
+      top: var(--sim-sticky-top);
+      max-height: var(--sim-sticky-max);
+      overflow-y: auto;
       z-index: 5;
       border-top: 6px solid var(--purple-700);
+    }
+
+    .remember-box {
+      margin-top: 1.1rem;
+      padding: 0.9rem 1.1rem;
+      background: var(--yellow-100);
+      border-radius: 0.9rem;
+    }
+
+    .remember-title {
+      margin: 0 0 0.35rem;
+      color: var(--purple-900);
+      font-weight: 900;
+    }
+
+    .remember-box p:last-child {
+      margin: 0;
+      line-height: 1.7;
+    }
+
+    .own-words {
+      margin-top: 1.5rem;
+      padding: clamp(1.1rem, 3vw, 1.6rem);
+      background: var(--surface);
+      border: 2px dashed var(--purple-500);
+      border-radius: var(--radius-md);
+    }
+
+    .own-words h3 {
+      margin-top: 0;
+      color: var(--purple-900);
+    }
+
+    .own-words-lead {
+      line-height: 1.75;
+    }
+
+    .own-words-count {
+      margin: 0.4rem 0 0.8rem;
+      color: #4b4453;
+      font-size: 0.88rem;
+    }
+
+    .own-words-count[data-state="ready"] {
+      color: var(--green-700);
+      font-weight: 800;
+    }
+
+    .own-words-model {
+      margin-top: 1.1rem;
+      padding: 0.9rem 1.1rem;
+      background: #edf9f2;
+      border-left: 6px solid var(--green-700);
+      border-radius: 0.7rem;
+    }
+
+    .own-words-model h4 {
+      margin: 0 0 0.4rem;
+      color: var(--green-700);
+    }
+
+    .own-words-model p {
+      margin: 0;
+      line-height: 1.75;
     }
 
     .sim-guide {
@@ -4748,24 +4818,27 @@
       }
     }
 
-    @media (min-width: 1280px) and (min-height: 900px) {
+    @media (min-width: 1280px) {
+      /* เดิมตรึงเฉพาะจอสูงตั้งแต่ 900px ทำให้โน้ตบุ๊กทั่วไปไม่ได้ตรึงเลย
+         ตอนนี้ตรึงทุกความสูง แล้วคุมด้วย max-height แทน */
       #tilt-simulator .sim-controls {
         position: sticky;
-        top: calc(
-          var(--preview-bar-height, 0px) +
-          var(--next-step-bar-height, 0px) +
-          0.75rem
-        );
+        top: var(--sim-sticky-top);
+        max-height: var(--sim-sticky-max);
+        overflow-y: auto;
         z-index: 4;
       }
     }
 
-    @media (min-width: 781px) and (max-height: 820px) {
-      /* จอเตี้ยต้องเลื่อนได้ครบทุกส่วน จึงไม่ตรึงการ์ดไว้ */
+    @media (min-width: 781px) and (max-height: 640px) {
+      /* จอเตี้ยมากจนกล่องที่ตรึงจะเหลือพื้นที่น้อยเกินอ่าน จึงปล่อยให้เลื่อนตามปกติ
+         เดิมใช้เกณฑ์ 820px ซึ่งกินโน้ตบุ๊กส่วนใหญ่ไปด้วย */
       #tilt-simulator .sim-controls,
       #tilt-simulator .sim-device {
         position: static;
         top: auto;
+        max-height: none;
+        overflow-y: visible;
       }
     }
 
@@ -4923,6 +4996,8 @@
       .sim-device {
         position: static;
         top: auto;
+        max-height: none;
+        overflow-y: visible;
       }
 
       .sim-guide {
@@ -5432,7 +5507,8 @@
         <p class="section-kicker">Section 1 · Hook</p>
         <h2 id="hook-title">ทำไมเอียงแล้วสิ่งต่าง ๆ จึงขยับ?</h2>
         <p class="section-intro">
-          ก่อนรู้จักโค้ด ลองมองหาเทคโนโลยีรอบตัวที่ “รู้” ว่าเรากำลังเอียงอุปกรณ์
+          ยังไม่ต้องรู้เรื่องโค้ดเลย เริ่มจากของใกล้ตัวก่อน
+          ลองนึกดูว่ามีอะไรบ้างที่ “รู้” ว่าเรากำลังเอียงมันอยู่
         </p>
       </div>
 
@@ -5459,13 +5535,13 @@
         <p class="no-score">เลือกจากความคิดแรกได้เลย ข้อนี้ไม่คิดคะแนน</p>
         <div class="choice-list" id="hook-choices">
           <button class="choice-button" type="button" data-choice="camera" aria-pressed="false">
-            กล้องมองเห็นการเอียง
+            กล้องหน้ามองเห็นว่าเราเอียงเครื่อง
           </button>
           <button class="choice-button" type="button" data-choice="sensor" aria-pressed="false">
-            เซนเซอร์ตรวจจับการเคลื่อนไหวและความเร่ง
+            มีตัวรับรู้ข้างในที่จับได้ว่าเครื่องขยับหรือเอียง
           </button>
           <button class="choice-button" type="button" data-choice="gps" aria-pressed="false">
-            GPS ตรวจจับทิศทาง
+            ใช้ GPS แบบเดียวกับแผนที่นำทาง
           </button>
           <button class="choice-button" type="button" data-choice="unsure" aria-pressed="false">
             ยังไม่แน่ใจ — ขอทดลองก่อน
@@ -5553,6 +5629,7 @@
             จอ micro:bit มีช่องไฟเรียงเป็นแถว
             นับตำแหน่งได้ตั้งแต่ช่อง 0 ถึงช่อง 4 เท่านั้น
             ถ้าเราสั่งให้ไฟไปอยู่ “ช่องที่ 6” ซึ่งเลยขอบจอออกไป
+            <strong>โดยที่โปรแกรมยังไม่มีตัวช่วยอะไรมาคอยกัน</strong>
             คุณคิดว่าจะเกิดอะไรขึ้น?
           </p>
 
@@ -5583,9 +5660,11 @@
         <aside class="predict-observation" id="predict-observation" hidden>
           <h3>เปิดหลักฐานหลังทดลองครบแล้ว</h3>
           <p>
-            ความเอียงมาก ๆ (เช่นค่า 800) พอเข้าสูตรที่เราจะเรียนกันจริง
-            จะกลายเป็น “ช่องที่ประมาณ 4.67” ซึ่งเลยช่อง 4 ไป
-            ไฟจึงหลุดออกนอกจอ
+            เราถามว่าถ้าสั่งไฟไป “ช่องที่ 6” จะเกิดอะไรขึ้น
+            ของจริงไม่ต้องถึงช่อง 6 ด้วยซ้ำ
+            แค่เอียงแรง ๆ (เช่นค่า 800) ก็ได้ตำแหน่งประมาณ
+            <strong>ช่องที่ 4.67</strong> ซึ่งเลยช่อง 4 ที่เป็นขอบสุดไปแล้ว
+            ไฟจึงหายไปเหมือนกัน
           </p>
           <p class="formula-box">
             map(800, −600, 600, 0, 4)<br>
@@ -5610,10 +5689,11 @@
              aria-labelledby="unplugged-title">
       <div class="section-heading">
         <p class="section-kicker">Section 3 · Unplugged map()</p>
-        <h2 id="unplugged-title">แปลงคะแนนสอบ ก่อนแปลงค่าเซนเซอร์</h2>
+        <h2 id="unplugged-title">ซ้อมด้วยคะแนนสอบก่อน แล้วค่อยไปทำกับเครื่องจริง</h2>
         <p class="section-intro">
-          ยังไม่ต้องเขียนโค้ด ลองใช้หลักสัดส่วนแปลงคะแนน 0–100
-          ให้เป็นเกรด 0–4 ก่อน
+          ยังไม่ต้องแตะโค้ดเลย
+          เราจะซ้อมวิธีคิดด้วยเรื่องที่ทุกคนคุ้นอยู่แล้ว คือแปลงคะแนนเต็ม 100 ให้เป็นเกรดเต็ม 4
+          วิธีคิดอันเดียวกันนี้แหละที่จะเอาไปใช้กับเครื่องในส่วนถัดไป
         </p>
       </div>
 
@@ -5746,10 +5826,11 @@
              aria-labelledby="mg-title">
       <div class="section-heading">
         <p class="section-kicker">Section 4 · mg และ g</p>
-        <h2 id="mg-title">micro:bit เปลี่ยนความเอียงให้เป็นตัวเลขอย่างไร?</h2>
+        <h2 id="mg-title">เครื่องรู้ได้ยังไงว่าเรากำลังเอียงมันอยู่</h2>
         <p class="section-intro">
-          ภายในบอร์ดมี accelerometer หรือเซนเซอร์วัดความเร่ง
-          ซึ่งช่วยให้โปรแกรมรับรู้การเอียงผ่านแกน x, y และ z
+          ลองหยิบโทรศัพท์ขึ้นมาแล้วค่อย ๆ ตะแคง ภาพในจอหมุนตามใช่ไหม
+          ส่วนนี้เราจะมาดูว่าเครื่องรู้ได้อย่างไร
+          และมันบอกความเอียงออกมาเป็นตัวเลขแบบไหน
         </p>
       </div>
 
@@ -5775,28 +5856,45 @@
         </div>
       </div>
 
+      <p class="section-lead-steps">
+        ไล่ทีละขั้น ขั้นละเรื่องเดียว ไม่ต้องรีบจำ
+      </p>
+
       <div class="sensor-concepts">
         <article class="sensor-concept">
-          <strong>accelerometer</strong>
+          <strong>ขั้นที่ 1 · มีอะไรอยู่ข้างใน</strong>
           <p>
+            ข้างในโทรศัพท์และในบอร์ด micro:bit
+            มีชิ้นส่วนเล็ก ๆ คอยจับว่าตอนนี้เครื่องเอียงไปทางไหน
+            ชิ้นส่วนนี้ชื่อ <strong>accelerometer</strong>
             อ่านว่า แอ็ก-เซล-เล-โร-มิ-เตอร์
-            คือเซนเซอร์ที่ใช้วัด acceleration หรือความเร่ง
           </p>
         </article>
         <article class="sensor-concept">
-          <strong>1000 mg = 1 g</strong>
+          <strong>ขั้นที่ 2 · มันตอบมาเป็นตัวเลข</strong>
           <p>
-            mg อ่านว่า มิล-ลิ-จี เป็นหน่วยย่อยของ g
-            โดย g เชื่อมโยงกับ gravity หรือแรงโน้มถ่วงโลก
+            มันไม่ได้บอกว่า “เอียงนิดหน่อย” หรือ “เอียงเยอะ”
+            แต่ตอบออกมาเป็นตัวเลข
+            พอเป็นตัวเลขก็ต้องมีหน่วยกำกับ เหมือนน้ำหนักมีหน่วยเป็นกิโลกรัม
           </p>
         </article>
         <article class="sensor-concept">
-          <strong>x / y / z-axis</strong>
+          <strong>ขั้นที่ 3 · หน่วยนั้นคือ mg</strong>
           <p>
-            โปรแกรมเลือกอ่านแต่ละแกนได้ เช่น ax และ ay
-            เพื่อใช้ควบคุมพิกัดแนวนอนและแนวตั้ง
+            วางเครื่องราบนิ่ง ๆ แรงที่โลกดึงลงเต็มที่ เรียกว่า <strong>1 g</strong>
+            แต่ 1 g เป็นก้อนใหญ่ไป เลยซอยย่อยเป็น 1,000 ส่วน ส่วนละ <strong>1 mg</strong>
+            เหมือน 1 กิโลกรัมซอยเป็น 1,000 กรัม
           </p>
         </article>
+      </div>
+
+      <div class="remember-box">
+        <p class="remember-title">💡 จำง่าย ๆ ว่า</p>
+        <p>
+          <strong>mg คือหน่วยบอกว่าเอียงมากแค่ไหน</strong>
+          ตัวเลขยิ่งมาก แปลว่ายิ่งเอียง
+          วางราบได้ประมาณ 0 · เอียงด้วยมือปกติได้ประมาณ 600 · ตะแคง 90 องศาได้ประมาณ 1,000
+        </p>
       </div>
 
       <figure class="angle-comparison"
@@ -5840,12 +5938,14 @@
       </figure>
 
       <aside class="range-note">
-        <strong>อย่าสับสนระหว่าง “ค่าสูงสุด” กับ “ช่วงใช้งาน”</strong>
+        <strong>ทำไมเราถึงเลือกใช้แค่ −600 ถึง 600</strong>
         <p>
-          เซนเซอร์อาจอ่านได้สูงสุดประมาณ ±2048 mg
-          แต่สูตรควบคุมจอไม่จำเป็นต้องใช้ค่าสูงสุดนั้น
-          เราเลือกช่วง −600 ถึง 600 mg เพราะสอดคล้องกับ
-          การเอียงด้วยมือปกติประมาณ 35–40 องศา
+          เซนเซอร์อ่านได้กว้างกว่านั้นมาก คือถึงประมาณ 2,000
+          แต่เราไม่จำเป็นต้องใช้ให้สุด
+          เพราะเวลาเล่นจริง เราเอียงด้วยมือแค่ประมาณ 35–40 องศา
+          ซึ่งได้ค่าราว 600 เท่านั้น
+          <br>
+          ถ้าไปใช้ช่วงกว้างสุด เอียงมือธรรมดาจะขยับไฟได้นิดเดียว เล่นแล้วไม่สนุก
         </p>
       </aside>
 
@@ -5894,6 +5994,25 @@
         </p>
       </div>
 
+      <div class="own-words" id="own-words-mg-block">
+        <h3>✍️ อธิบายด้วยคำของตัวเอง</h3>
+        <p class="own-words-lead">ลองพิมพ์สั้น ๆ ว่า <strong>mg คือหน่วยที่บอกอะไร</strong> เขียนแบบที่จะอธิบายให้เพื่อนที่ยังไม่เคยเรียนเรื่องนี้ฟัง ไม่ต้องใช้ศัพท์ยาก และไม่มีคำตอบที่ถูกแบบเดียว</p>
+        <label for="own-words-mg">ถ้าเพื่อนถามว่า mg คือหน่วยอะไร เราจะตอบว่าอย่างไร</label>
+        <textarea class="reflection-input" id="own-words-mg"
+                  maxlength="400" rows="3"
+                  placeholder="เช่น mg เป็นหน่วยที่บอกว่า..."></textarea>
+        <p class="own-words-count" id="own-words-mg-count"></p>
+        <button class="submit-button" id="own-words-mg-save" type="button">
+          บันทึกคำอธิบาย
+        </button>
+        <p class="quiz-sync" id="own-words-mg-sync" role="status" aria-live="polite"></p>
+        <div class="own-words-model" id="own-words-mg-model" hidden>
+          <h4>📌 คำอธิบายของครู ลองเทียบกับของตัวเอง</h4>
+          <p>mg คือหน่วยที่บอกว่าตอนนี้เครื่องเอียงมากแค่ไหน ตัวเลขยิ่งมากยิ่งเอียง วางราบได้ประมาณ 0 เอียงด้วยมือปกติได้ประมาณ 600 และ 1,000 mg เท่ากับ 1 g พอดี<br><br>
+            เขียนไม่เหมือนกันไม่เป็นไร ถ้าใจความตรงกันแปลว่าเข้าใจแล้ว</p>
+        </div>
+      </div>
+
       <div class="mg-check">
         <h3>ตรวจความเข้าใจหนึ่งข้อ</h3>
         <p>
@@ -5927,10 +6046,12 @@
              aria-labelledby="simulator-title">
       <div class="section-heading">
         <p class="section-kicker">Section 5 · Tilt Simulator</p>
-        <h2 id="simulator-title">ทดลอง map() และ constrain() บนจอ LED 5×5</h2>
+        <h2 id="simulator-title">ทำไมไฟถึงหลุดออกนอกจอ แล้วเราหยุดมันได้ยังไง</h2>
         <p class="section-intro">
-          ลากค่า accel ตั้งแต่ −1023 ถึง 1023 mg
-          แล้วเปรียบเทียบว่าจุดไฟเป็นอย่างไรเมื่อปิดและเปิด constrain
+          ส่วนนี้เราจะเอียงบอร์ดจำลองดูด้วยตาตัวเอง
+          ว่าเอียงแรงจนไฟหลุดออกนอกจอได้จริงไหม
+          แล้วลองเปิดตัวช่วยตัวหนึ่งเพื่อดึงไฟกลับมา
+          ไม่ต้องรู้อะไรมาก่อน ทำตามทีละขั้นได้เลย
         </p>
       </div>
 
@@ -6127,29 +6248,42 @@
                 </figcaption>
               </figure>
 
-              <h4 class="sim-mission-title">🧪 ทดลองตาม 3 จังหวะ</h4>
+              <h4 class="sim-mission-title">🧪 ทำตาม 3 ขั้น แล้วสังเกตจอ</h4>
               <ol class="sim-mission-steps">
                 <li>
                   <span>
-                    กด <code>0</code> — ยืนยันว่าบอร์ดราบได้พิกัด
-                    <strong>2.00</strong> ตรงกลางจอ
+                    <strong>ขั้นที่ 1 · ดูตอนบอร์ดราบก่อน</strong><br>
+                    กดปุ่ม <code>0</code> แล้วมองจอ
+                    ไฟจะอยู่ <strong>ตรงกลางพอดี</strong>
+                    เพราะบอร์ดยังไม่ได้เอียงไปทางไหน
                   </span>
                 </li>
                 <li>
                   <span>
-                    กด <code>ทดลอง 800</code> ขณะปิด constrain —
-                    map() ได้ประมาณ <strong>4.67</strong>
-                    ซึ่งหลุดพิกัด 0–4
+                    <strong>ขั้นที่ 2 · เอียงแรง ๆ ตอนยังไม่เปิดตัวช่วย</strong><br>
+                    กดปุ่ม <code>ทดลอง 800</code>
+                    คราวนี้ <strong>ไฟหายไปจากจอ</strong>
+                    เพราะตำแหน่งที่คำนวณได้เลยขอบจอออกไปแล้ว
                   </span>
                 </li>
                 <li>
                   <span>
-                    เปิด constrain โดยยังใช้ 800 mg — ค่า 4.67
-                    ถูกจำกัดเป็น <strong>4.00</strong>
-                    ไฟจึงกลับมาอยู่ขอบจอ
+                    <strong>ขั้นที่ 3 · เปิดตัวช่วยแล้วดูใหม่</strong><br>
+                    เปิดสวิตช์ <code>constrain</code> โดยยังใช้ค่า 800 เท่าเดิม
+                    <strong>ไฟกลับมาเกาะขอบจอ</strong>
+                    ไม่หายไปไหนอีก
                   </span>
                 </li>
               </ol>
+
+              <div class="remember-box">
+                <p class="remember-title">💡 จำง่าย ๆ ว่า</p>
+                <p>
+                  <strong>constrain คือคนเฝ้าขอบจอ</strong>
+                  ค่าไหนจะเลยขอบออกไป มันจับกลับมาไว้ที่ขอบพอดี
+                  เหมือนเรารูดเสียงโทรศัพท์เลยสุด เสียงก็ไม่ได้ดังเกิน 100
+                </p>
+              </div>
 
               <div class="evidence-list" aria-label="ภารกิจทดลอง">
                 <div class="evidence-item" id="unsafe-evidence">
@@ -6170,16 +6304,17 @@
                 </p>
                 <ol class="work-steps" id="sim-work-steps"></ol>
                 <p class="work-steps-note">
-                  บรรทัดที่ 1 คือขั้นที่ทำให้บอร์ดราบไม่ได้อยู่ที่พิกัด 0
-                  เพราะ 0 mg ไม่ใช่ค่าต่ำสุดของช่วง แต่อยู่กึ่งกลางระหว่าง
-                  −600 กับ 600 พิกัดที่ได้จึงเป็น 2 ซึ่งคือกลางจอพอดี
+                  สังเกตบรรทัดแรก — บอร์ดราบได้พิกัดกลางจอ ไม่ใช่พิกัด 0
+                  เพราะ 0 mg ไม่ใช่ค่าน้อยที่สุด แต่เป็นค่าตรงกลางระหว่าง −600 กับ 600
+                  ตรงกลางของช่วง จึงไปโผล่ตรงกลางจอ
                 </p>
               </div>
 
               <p>
-                จอจำลองเลือกคอลัมน์ที่ใกล้ที่สุด
-                หลังตรวจแล้วว่าค่าอยู่ในช่วง 0–4
-                ค่าที่เกินช่วงจะไม่ถูกปัดกลับเข้าจอ
+                จอมีช่องไฟแค่ 5 ช่อง แต่ตัวเลขที่คำนวณได้มักมีทศนิยม
+                จอจำลองจึงเลือกช่องที่ใกล้ที่สุดให้
+                แต่ถ้าตัวเลขเลยขอบไปแล้ว มันจะไม่ลากกลับเข้าจอให้เอง
+                ต้องมีคนสั่งเท่านั้น — นั่นคือหน้าที่ของ constrain
               </p>
             </div>
           </div>
@@ -6194,11 +6329,46 @@
             <li><span translate="no">pause(50 ms)</span></li>
           </ol>
           <p class="sim-code-flow-note">
-            forever จะวนทำซ้ำเร็วมาก ส่วน pause คือการให้หยุดพักนิดหนึ่ง
-            ก่อนเริ่มรอบใหม่ แล้ววนกลับไปอ่าน accel อีกครั้ง
-            จอจึงไม่ถูกสั่งงานถี่จนเกินไป
+            อ่านจากบนลงล่างคือลำดับที่เครื่องทำงานหนึ่งรอบ
+            พอถึงบรรทัดล่างสุดก็วนกลับขึ้นไปเริ่มใหม่ ทำแบบนี้ไปเรื่อย ๆ
+            <br>
+            บรรทัด <span translate="no">pause</span> คือให้หยุดพักแป๊บหนึ่งก่อนวนรอบใหม่
+            ถ้าไม่พัก เครื่องจะสั่งจอถี่จนเกินจำเป็น
           </p>
         </aside>
+      </div>
+
+      <div class="own-words" id="own-words-constrain-block">
+        <h3>✍️ อธิบายด้วยคำของตัวเอง</h3>
+        <p class="own-words-lead">
+          ทดลองมาแล้วทั้งสองแบบ ลองพิมพ์สั้น ๆ ว่า
+          <strong>constrain ทำหน้าที่อะไร</strong>
+          เขียนแบบที่จะอธิบายให้เพื่อนที่ยังไม่เคยเห็นฟัง
+          ไม่ต้องใช้ศัพท์ยาก และไม่มีคำตอบที่ถูกแบบเดียว
+          ขอแค่เขียนจากสิ่งที่เพิ่งเห็นด้วยตาจริง ๆ
+        </p>
+        <label for="own-words-constrain">
+          ถ้าเพื่อนถามว่า constrain มีไว้ทำอะไร เราจะตอบว่าอย่างไร
+        </label>
+        <textarea class="reflection-input" id="own-words-constrain"
+                  maxlength="400" rows="3"
+                  placeholder="เช่น ถ้าไฟจะเลยขอบจอออกไป constrain จะ..."></textarea>
+        <p class="own-words-count" id="own-words-constrain-count"></p>
+        <button class="submit-button" id="own-words-constrain-save" type="button">
+          บันทึกคำอธิบาย
+        </button>
+        <p class="quiz-sync" id="own-words-constrain-sync" role="status" aria-live="polite"></p>
+        <div class="own-words-model" id="own-words-constrain-model" hidden>
+          <h4>📌 คำอธิบายของครู ลองเทียบกับของตัวเอง</h4>
+          <p>
+            constrain คือคนเฝ้าขอบ เราบอกมันว่าขอบอยู่ตรงไหน
+            ค่าที่จะเลยออกไปมันจะดึงกลับมาไว้ที่ขอบพอดี
+            ในส่วนนี้ขอบคือช่อง 0 ถึง 4 ค่า 4.67 จึงถูกดึงเหลือ 4
+            ไฟเลยไปเกาะขอบจอแทนที่จะหายไป
+            <br><br>
+            เขียนไม่เหมือนกันไม่เป็นไร ถ้าใจความตรงกันแปลว่าเข้าใจแล้ว
+          </p>
+        </div>
       </div>
 
       <fieldset class="formative-check" data-formative-check="constrainEvidence">
@@ -6279,10 +6449,12 @@
              aria-labelledby="debug-title">
       <div class="section-heading">
         <p class="section-kicker">Section 6 · Debug Case Study</p>
-        <h2 id="debug-title">สูตรดูคล้ายกัน แต่ผลต่างกันตรงไหน?</h2>
+        <h2 id="debug-title">สองสูตรหน้าตาคล้ายกัน แต่ทำไมผลไม่เหมือนกัน</h2>
         <p class="section-intro">
-          เปรียบเทียบสูตรจากกรณีทดสอบจริง
-          โดยป้อนค่า accel เดียวกันให้ทั้งสองสูตร
+          มีคนเขียนโปรแกรมนี้มาก่อนเรา แล้วเจอปัญหาว่าไฟเพี้ยน
+          ส่วนนี้เราจะเอาสูตรของเขามาวางข้าง ๆ สูตรของเรา
+          ใส่ค่าเดียวกันเข้าไปทั้งคู่ แล้วดูว่าต่างกันตรงไหน
+          การหาจุดผิดแบบนี้แหละคือสิ่งที่คนเขียนโปรแกรมทำกันจริง ๆ
         </p>
       </div>
 
@@ -6321,8 +6493,8 @@
             <ol class="work-steps" id="correct-work-steps"></ol>
 
             <p>
-              ยังต้องใช้ constrain() ครอบผลลัพธ์
-              เพราะ map() ไม่ตรวจขอบเขตให้อัตโนมัติ
+              ถึงสูตรนี้จะถูก ก็ยังต้องมี constrain คอยเฝ้าขอบอยู่ดี
+              เพราะถ้าเอียงแรงเกินช่วงที่เราตั้งไว้ ตัวเลขก็ยังเลยขอบจอได้
             </p>
           </article>
 
@@ -6340,16 +6512,17 @@
             <ol class="work-steps" id="wrong-work-steps"></ol>
 
             <p>
-              บอร์ดราบดูเหมือนพอใช้ได้ แต่เริ่มเกินขอบ
-              ตั้งแต่การเอียงปานกลาง
+              นี่คือจุดที่หลอกตา — ตอนวางราบดูเหมือนใช้ได้
+              คนเขียนเลยคิดว่าถูกแล้ว
+              แต่พอเอียงมือปกติเท่านั้นแหละ ค่าก็เลยขอบจอทันที
             </p>
           </article>
         </div>
 
         <p class="debug-status" id="debug-status"
            role="status" aria-live="polite">
-          ที่ 600 mg: map() ได้ 4.00 แต่สูตรเดิมได้ 4.06
-          จึงอาจทำให้จอค้างหรือไฟหาย
+          ที่ 600 mg สูตรของเราได้ 4.00 ซึ่งพอดีขอบจอ
+          ส่วนสูตรเดิมได้ 4.06 ซึ่งเลยขอบไปแล้ว ไฟจึงหายหรือค้าง
         </p>
 
         <div class="debug-table-wrap">
@@ -6399,6 +6572,25 @@
           <strong>3. pause ใน forever</strong>
           เช่น pause(50 ms) เพื่อไม่ให้ลูปสั่งจอถี่ต่อเนื่องเกินไป
         </article>
+      </div>
+
+      <div class="own-words" id="own-words-debug-block">
+        <h3>✍️ อธิบายด้วยคำของตัวเอง</h3>
+        <p class="own-words-lead">ลองพิมพ์สั้น ๆ ว่า <strong>สูตรเดิมมีปัญหาตรงไหน</strong> ทำไมตอนวางราบถึงดูเหมือนใช้ได้ แต่พอเอียงแล้วพัง เขียนจากตารางที่เพิ่งเปรียบเทียบมา</p>
+        <label for="own-words-debug">ถ้าเพื่อนถามว่าสูตรเดิมพลาดตรงไหน เราจะตอบว่าอย่างไร</label>
+        <textarea class="reflection-input" id="own-words-debug"
+                  maxlength="400" rows="3"
+                  placeholder="เช่น สูตรเดิมใช้ตัวเลขที่ไม่ตรงกับ..."></textarea>
+        <p class="own-words-count" id="own-words-debug-count"></p>
+        <button class="submit-button" id="own-words-debug-save" type="button">
+          บันทึกคำอธิบาย
+        </button>
+        <p class="quiz-sync" id="own-words-debug-sync" role="status" aria-live="polite"></p>
+        <div class="own-words-model" id="own-words-debug-model" hidden>
+          <h4>📌 คำอธิบายของครู ลองเทียบกับของตัวเอง</h4>
+          <p>สูตรเดิมใช้ตัวเลขคงที่ที่ไม่ตรงกับช่วงที่เราใช้จริง ตอนวางราบค่าที่ได้ยังใกล้กลางจอเลยดูเหมือนใช้ได้ แต่พอเอียงถึง 600 ค่าก็เลยขอบจอทันที ส่วนสูตรที่ถูกจะพอดีขอบที่ 4.00<br><br>
+            เขียนไม่เหมือนกันไม่เป็นไร ถ้าใจความตรงกันแปลว่าเข้าใจแล้ว</p>
+        </div>
       </div>
 
       <div class="debug-question">
@@ -7801,24 +7993,50 @@
         <p class="section-kicker">Section 9 · สะท้อนผลการเรียนรู้</p>
         <h2 id="reflection-title">วันนี้เราได้อะไรกลับไปบ้าง</h2>
         <p class="section-intro">
-          เขียนสรุปสั้น ๆ 2 ประโยค แล้วเลือกระดับความมั่นใจของตัวเอง
-          ครูจะใช้คำตอบนี้ช่วยเหลือในคาบถัดไป ไม่มีถูกไม่มีผิด
+          ก่อนจบ ลองย้อนดูว่าวันนี้เราผ่านอะไรมาบ้าง
+          แล้วเขียนเล่าสั้น ๆ ด้วยคำของตัวเอง
+          ไม่มีถูกไม่มีผิด ครูจะอ่านเพื่อดูว่าจะช่วยใครเรื่องอะไรในคาบหน้า
         </p>
       </div>
 
-      <ul class="learning-summary" aria-label="สรุปแนวคิดสำคัญก่อนสะท้อนผล">
-        <li><strong>รับข้อมูล</strong><span>accelerometer อ่านความเร่งแกน x เป็น mg</span></li>
-        <li><strong>แปลงช่วง</strong><span>map เปลี่ยน −600…600 ให้เป็นพิกัด 0…4</span></li>
-        <li><strong>กันหลุดขอบ</strong><span>constrain จำกัดพิกัดก่อนสั่ง plot</span></li>
-        <li><strong>ควบคุมจังหวะ</strong><span>pause(50 ms) เว้นจังหวะให้ลูป forever</span></li>
+      <ul class="learning-summary" aria-label="สรุปสิ่งที่เรียนวันนี้ เรียงตามลำดับที่เครื่องทำงาน">
+        <li>
+          <strong>1 · เครื่องอ่านความเอียง</strong>
+          <span>
+            ชิ้นส่วนเล็ก ๆ ข้างในบอกออกมาเป็นตัวเลข หน่วยชื่อ mg
+            วางราบได้ราว 0 เอียงด้วยมือปกติได้ราว 600
+          </span>
+        </li>
+        <li>
+          <strong>2 · แปลงตัวเลขให้เข้ากับจอ</strong>
+          <span>
+            จอมีช่องไฟแค่ 0 ถึง 4 เราจึงต้องเปลี่ยนตัวเลขความเอียงให้กลายเป็นเลขช่อง
+            วิธีคิดเดียวกับแปลงคะแนนเต็ม 100 เป็นเกรดเต็ม 4 — คำสั่งนี้ชื่อ map
+          </span>
+        </li>
+        <li>
+          <strong>3 · กันไม่ให้ไฟหลุดขอบ</strong>
+          <span>
+            ถ้าเอียงแรงจนเลขช่องเกิน 4 ไฟจะหายไปจากจอเลย
+            constrain คือคนเฝ้าขอบ ที่ดึงค่ากลับมาไว้ที่ขอบพอดี
+          </span>
+        </li>
+        <li>
+          <strong>4 · ทำซ้ำไปเรื่อย ๆ</strong>
+          <span>
+            เครื่องวนอ่านค่าใหม่ตลอดเวลา แล้วพักนิดหนึ่งก่อนเริ่มรอบใหม่
+            ไฟบนจอจึงขยับตามมือเราได้ทันที
+          </span>
+        </li>
       </ul>
 
       <label for="reflection-summary">
-        ข้อผิดพลาดใดวันนี้ที่ช่วยให้เข้าใจระบบมากที่สุด และเพราะอะไร
+        วันนี้มีเรื่องไหนที่ตอนแรกยังงง ๆ แล้วพอลองทำไปเรื่อย ๆ ถึงเข้าใจ
+        เล่าให้ฟังหน่อยว่าอะไรทำให้เข้าใจขึ้น
       </label>
       <textarea class="reflection-input" id="reflection-summary"
                 maxlength="500" rows="4"
-                placeholder="เขียนอย่างน้อย 2 ประโยค"></textarea>
+                placeholder="เช่น ตอนแรกไม่เข้าใจว่าทำไมไฟหาย แต่พอลอง..."></textarea>
 
       <fieldset>
         <legend>ตอนนี้มั่นใจแค่ไหน</legend>
@@ -11967,7 +12185,11 @@
           const state = result.state;
           const hasUnplugged =
             state.worksheet && state.worksheet.unpluggedMap;
-          const completed = Boolean(correct && hasUnplugged);
+          const completed = Boolean(
+            correct &&
+            hasUnplugged &&
+            ownWordsIsEnough(readSavedOwnWords(state, "mg"))
+          );
 
           state.worksheet = {
             ...(state.worksheet || {}),
@@ -12219,7 +12441,8 @@
           const completed = Boolean(
             hasMgCheck &&
             simulatorEvidence.seenUnsafe &&
-            simulatorEvidence.seenSafe
+            simulatorEvidence.seenSafe &&
+            ownWordsIsEnough(readSavedOwnWords(state, "constrain"))
           );
 
           state.worksheet = {
@@ -12247,8 +12470,10 @@
           if (completed) revealPredictionEvidence();
           simSync.textContent = completed
             ? "ผ่านภารกิจเปรียบเทียบและบันทึกลง Google Sheets แล้ว"
-            : hasMgCheck
-              ? "บันทึกแล้ว ทดลองค่าเกินช่วงให้ครบทั้งสองโหมด"
+            : !hasMgCheck
+              ? "บันทึกการทดลองแล้ว แต่กรุณาผ่าน Section 4 ก่อน"
+              : !(simulatorEvidence.seenUnsafe && simulatorEvidence.seenSafe)
+                ? "บันทึกแล้ว ทดลองค่าเกินช่วงให้ครบทั้งสองโหมด"
               : "บันทึกการทดลองแล้ว แต่กรุณาผ่าน Section 4 ก่อน";
         } catch (error) {
           simSync.textContent =
@@ -12282,6 +12507,9 @@
             renderEvidence();
             renderTiltSimulator();
             if (saved.completed) revealPredictionEvidence();
+            if (ownWordsMg) ownWordsMg.restore(result.state);
+            if (ownWordsConstrain) ownWordsConstrain.restore(result.state);
+            if (ownWordsDebug) ownWordsDebug.restore(result.state);
             simSync.textContent =
               "เรียกคืนผลการทดลองล่าสุดแล้ว";
           }
@@ -12315,6 +12543,163 @@
           renderTiltSimulator();
           void saveTiltSimulator();
         });
+      });
+
+      // ---- อธิบายด้วยคำของตัวเอง ----
+      // ตรวจ "เขียนจริงจังไหม" ด้วยความยาว ไม่ตัดสินถูกผิด
+      // เพราะข้อความอิสระตรวจความถูกต้องอัตโนมัติไม่ได้จริง ครูเป็นคนอ่าน
+      // ค่านี้ต้องตรงกับ ownWordsMinLength ใน Code.gs
+      const OWN_WORDS_MIN = 25;
+
+      function ownWordsIsEnough(text) {
+        return String(text || "").trim().length >= OWN_WORDS_MIN;
+      }
+
+      function readSavedOwnWords(state, key) {
+        return (
+          state &&
+          state.worksheet &&
+          state.worksheet.ownWords &&
+          state.worksheet.ownWords[key]
+        ) || "";
+      }
+
+      function markCompletedThrough(state, order) {
+        const list = [];
+        for (let step = 1; step <= order; step += 1) list.push(step);
+        state.currentSection = order;
+        state.completedSections = Array.from(
+          new Set([...(state.completedSections || []), ...list])
+        );
+      }
+
+      /**
+       * สร้างกล่อง "อธิบายด้วยคำของตัวเอง" หนึ่งชุด
+       * applyCompletion รับ state กับ worksheet แล้วคืนข้อความสถานะ
+       * เพราะเงื่อนไขผ่านของแต่ละ Section ไม่เหมือนกัน
+       */
+      function createOwnWords(key, applyCompletion) {
+        const input = document.querySelector("#own-words-" + key);
+        const saveButton = document.querySelector("#own-words-" + key + "-save");
+        const count = document.querySelector("#own-words-" + key + "-count");
+        const sync = document.querySelector("#own-words-" + key + "-sync");
+        const model = document.querySelector("#own-words-" + key + "-model");
+        if (!input || !saveButton || !count || !sync || !model) return null;
+
+        function text() {
+          return (input.value || "").trim();
+        }
+
+        function render() {
+          const length = text().length;
+          const ready = length >= OWN_WORDS_MIN;
+          count.textContent = ready
+            ? "เขียนแล้ว " + length + " ตัวอักษร พร้อมบันทึก"
+            : "เขียนแล้ว " + length + " ตัวอักษร ยังต้องการอีก " +
+              (OWN_WORDS_MIN - length) + " ตัวอักษร";
+          count.dataset.state = ready ? "ready" : "short";
+          saveButton.disabled = !ready;
+        }
+
+        function restore(state) {
+          const saved = readSavedOwnWords(state, key);
+          if (saved) {
+            input.value = saved;
+            model.hidden = false;
+            sync.textContent = "เรียกคืนคำอธิบายที่เคยเขียนไว้แล้ว";
+          }
+          render();
+        }
+
+        async function save() {
+          const value = text();
+          if (!ownWordsIsEnough(value)) return;
+          saveButton.disabled = true;
+          sync.textContent = "กำลังบันทึก...";
+
+          try {
+            const result = await callServer("getProgress", sessionToken);
+            const state = result.state;
+            const worksheet = { ...(state.worksheet || {}) };
+            worksheet.ownWords = {
+              ...(worksheet.ownWords || {}),
+              [key]: value
+            };
+            const message = applyCompletion(state, worksheet);
+            state.worksheet = worksheet;
+            await callServer("saveProgress", sessionToken, state);
+            model.hidden = false;
+            sync.textContent = message;
+          } catch (error) {
+            sync.textContent =
+              "คำอธิบายยังอยู่ในช่อง แต่บันทึกไม่ได้ กรุณาตรวจอินเทอร์เน็ตแล้วกดใหม่";
+          }
+
+          render();
+        }
+
+        input.addEventListener("input", render);
+        saveButton.addEventListener("click", () => {
+          void save();
+        });
+        render();
+        return { restore: restore, render: render };
+      }
+
+      const ownWordsMg = createOwnWords("mg", (state, worksheet) => {
+        const answered = Boolean(worksheet.mgCheck && worksheet.mgCheck.correct);
+        const hasUnplugged = Boolean(worksheet.unpluggedMap);
+        const completed = Boolean(answered && hasUnplugged);
+        if (worksheet.mgCheck) {
+          worksheet.mgCheck = { ...worksheet.mgCheck, completed };
+        }
+        if (completed) markCompletedThrough(state, 4);
+        return completed
+          ? "บันทึกคำอธิบายแล้ว ทำ Section 4 ครบแล้ว"
+          : answered
+            ? "บันทึกคำอธิบายแล้ว แต่กรุณาผ่าน Section 3 ก่อน"
+            : "บันทึกคำอธิบายแล้ว เหลือเลือกคำตอบด้านล่างให้ถูก";
+      });
+
+      const ownWordsConstrain = createOwnWords("constrain", (state, worksheet) => {
+        const hasMgCheck = Boolean(worksheet.mgCheck && worksheet.mgCheck.completed);
+        const bothModes =
+          simulatorEvidence.seenUnsafe && simulatorEvidence.seenSafe;
+        const completed = Boolean(hasMgCheck && bothModes);
+        worksheet.tiltSimulator = {
+          ...(worksheet.tiltSimulator || {}),
+          accel: Number(accelSlider.value),
+          constrainEnabled: constrainToggle.checked,
+          seenUnsafe: simulatorEvidence.seenUnsafe,
+          seenSafe: simulatorEvidence.seenSafe,
+          completed
+        };
+        if (completed) {
+          markCompletedThrough(state, 5);
+          revealPredictionEvidence();
+        }
+        return completed
+          ? "บันทึกคำอธิบายแล้ว ทำ Section 5 ครบแล้ว"
+          : hasMgCheck
+            ? "บันทึกคำอธิบายแล้ว เหลือทดลองให้ครบทั้งสองโหมดด้านบน"
+            : "บันทึกคำอธิบายแล้ว แต่กรุณาผ่าน Section 4 ก่อน";
+      });
+
+      const ownWordsDebug = createOwnWords("debug", (state, worksheet) => {
+        const answered = Boolean(worksheet.debugCase && worksheet.debugCase.correct);
+        const hasSimulator = Boolean(
+          worksheet.tiltSimulator && worksheet.tiltSimulator.completed
+        );
+        const completed = Boolean(answered && hasSimulator);
+        if (worksheet.debugCase) {
+          worksheet.debugCase = { ...worksheet.debugCase, completed };
+        }
+        if (completed) markCompletedThrough(state, 6);
+        return completed
+          ? "บันทึกคำอธิบายแล้ว ทำ Section 6 ครบแล้ว"
+          : answered
+            ? "บันทึกคำอธิบายแล้ว แต่กรุณาผ่าน Section 5 ก่อน"
+            : "บันทึกคำอธิบายแล้ว เหลือเลือกคำตอบด้านล่างให้ถูก";
       });
 
       renderEvidence();
@@ -12459,7 +12844,11 @@
             state.worksheet &&
             state.worksheet.tiltSimulator &&
             state.worksheet.tiltSimulator.completed;
-          const completed = Boolean(correct && hasSimulator);
+          const completed = Boolean(
+            correct &&
+            hasSimulator &&
+            ownWordsIsEnough(readSavedOwnWords(state, "debug"))
+          );
 
           state.worksheet = {
             ...(state.worksheet || {}),
@@ -12552,77 +12941,77 @@
           id: "accelerometer",
           term: "accelerometer",
           reading: "แอ็ก-เซล-เล-โร-มิ-เตอร์",
-          meaning: "เซนเซอร์วัดความเร่ง",
+          meaning: "ชิ้นส่วนเล็ก ๆ ในเครื่อง ที่คอยรู้ว่าตอนนี้เราเอียงเครื่องไปทางไหน",
           type: "term"
         },
         {
           id: "acceleration",
           term: "acceleration",
           reading: "แอ็ก-เซล-เล-เร-ชั่น",
-          meaning: "ความเร่ง หรือการเปลี่ยนแปลงความเร็ว",
+          meaning: "การที่ความเร็วเปลี่ยนไป เช่น ตอนรถออกตัวแล้วเรารู้สึกถูกดันติดเบาะ",
           type: "term"
         },
         {
           id: "gravity",
           term: "gravity",
           reading: "แกร-วิ-ตี้",
-          meaning: "แรงโน้มถ่วง เช่น แรงโน้มถ่วงของโลก",
+          meaning: "แรงที่โลกดึงของทุกอย่างลงพื้น เป็นเหตุผลที่ของหล่นลงเสมอ ไม่ลอยขึ้น",
           type: "term"
         },
         {
           id: "milli-g",
           term: "milli-g",
           reading: "มิล-ลิ-จี",
-          meaning: "หน่วยหนึ่งในพันของ g โดย 1000 mg = 1 g",
+          meaning: "หน่วยย่อยของ g เหมือนกรัมที่ย่อยมาจากกิโลกรัม โดย 1,000 mg เท่ากับ 1 g",
           type: "term"
         },
         {
           id: "map",
           term: "map",
           reading: "แมพ",
-          meaning: "แปลงค่าจากช่วงหนึ่งไปยังอีกช่วงหนึ่งตามสัดส่วน",
+          meaning: "เปลี่ยนตัวเลขจากช่วงหนึ่งไปอีกช่วงหนึ่ง เหมือนแปลงคะแนนเต็ม 100 เป็นเกรดเต็ม 4",
           type: "term"
         },
         {
           id: "constrain",
           term: "constrain",
           reading: "คอน-สเทรน",
-          meaning: "จำกัดค่าไม่ให้ต่ำหรือสูงเกินช่วงที่กำหนด",
+          meaning: "กันไม่ให้ตัวเลขเลยขอบที่เราตั้งไว้ เหมือนเสียงโทรศัพท์ที่รูดสุดแล้วก็ไม่เกิน 100",
           type: "term"
         },
         {
           id: "sensor",
           term: "sensor",
           reading: "เซน-เซอร์",
-          meaning: "อุปกรณ์ตรวจวัดหรือรับข้อมูลจากสิ่งแวดล้อม",
+          meaning: "ตัวรับรู้ในเครื่อง เช่น ตัวที่รู้ว่ามืดหรือสว่าง ร้อนหรือเย็น เอียงหรือไม่เอียง",
           type: "term"
         },
         {
           id: "range",
           term: "range",
           reading: "เรนจ์",
-          meaning: "ช่วงของค่า ตั้งแต่ค่าต่ำสุดถึงค่าสูงสุด",
+          meaning: "ช่วงตัวเลขที่เราใช้ ตั้งแต่ตัวน้อยสุดถึงตัวมากสุด เช่น 0 ถึง 4",
           type: "term"
         },
         {
           id: "plot",
           term: "plot",
           reading: "พลอต",
-          meaning: "เปิดจุด LED ณ พิกัด x และ y ที่กำหนด",
+          meaning: "สั่งให้ไฟดวงหนึ่งบนจอติดขึ้นมา โดยบอกว่าจะให้ติดที่ช่องไหน",
           type: "term"
         },
         {
           id: "forever",
           term: "forever",
           reading: "ฟอร์-เอ-เวอร์",
-          meaning: "คำสั่งที่ทำให้โปรแกรมวนทำซ้ำไม่หยุด",
+          meaning: "สั่งให้ทำซ้ำวนไปเรื่อย ๆ ไม่มีหยุด ตราบใดที่เครื่องยังเปิดอยู่",
           type: "term"
         },
         {
           id: "accel",
           term: "accel",
           reading: "แอ็ก-เซล",
-          meaning: "คำย่อของ accelerometer ค่า accel คือตัวเลขที่เซนเซอร์อ่านได้",
+          meaning: "คำเรียกสั้น ๆ ของ accelerometer ส่วนคำว่า ค่า accel คือตัวเลขที่มันอ่านได้",
           type: "term"
         },
         {
@@ -12636,70 +13025,70 @@
           id: "variable",
           term: "variable",
           reading: "แว-ริ-เอ-เบิ้ล",
-          meaning: "ตัวแปรหรือพื้นที่เก็บค่าที่เปลี่ยนแปลงได้",
+          meaning: "กล่องเก็บตัวเลขที่เปลี่ยนค่าได้ เหมือนช่องคะแนนที่ลบแล้วเขียนทับใหม่ได้เรื่อย ๆ",
           type: "term"
         },
         {
           id: "tilt",
           term: "tilt",
           reading: "ทิลท์",
-          meaning: "การเอียงหรือทำให้เอียง",
+          meaning: "การเอียง เช่น ตอนเราตะแคงโทรศัพท์ให้ภาพหมุน",
           type: "term"
         },
         {
           id: "degree",
           term: "degree",
           reading: "ดิ-กรี",
-          meaning: "องศา หน่วยที่ใช้บอกขนาดของมุม",
+          meaning: "องศา หน่วยบอกว่าเอียงมากแค่ไหน วางราบคือ 0 องศา ตั้งฉากคือ 90 องศา",
           type: "term"
         },
         {
           id: "abbr-mg",
           term: "mg",
           reading: "เอ็ม-จี · milli-g (มิล-ลิ-จี)",
-          meaning: "หน่วยหนึ่งในพันของ g",
+          meaning: "ย่อมาจาก milli-g เป็นหน่วยบอกความเอียง 1,000 mg เท่ากับ 1 g",
           type: "abbr"
         },
         {
           id: "abbr-g",
           term: "g",
           reading: "จี · gravity (แกร-วิ-ตี้)",
-          meaning: "หน่วยอ้างอิงความเร่งเนื่องจากแรงโน้มถ่วง",
+          meaning: "หน่วยที่เทียบกับแรงที่โลกดึงลง วางเครื่องราบนิ่ง ๆ จะได้ 1 g พอดี",
           type: "abbr"
         },
         {
           id: "abbr-axis",
           term: "x/y/z-axis",
           reading: "เอ็กซ์/วาย/แซด-แอ็กซิส",
-          meaning: "แกนสามทิศทางที่ accelerometer ใช้วัดค่า",
+          meaning: "แกน คือทิศที่ใช้วัด เอียงซ้ายขวาเรียกแกน x เอียงหน้าหลังเรียกแกน y",
           type: "abbr"
         },
         {
           id: "abbr-ax",
           term: "ax",
           reading: "เอ-เอ็กซ์",
-          meaning: "ค่าความเร่งหรือ acceleration บนแกน x",
+          meaning: "ค่าที่อ่านได้บนแกน x คือทิศซ้ายขวา บทนี้เราใช้ตัวนี้ตัวเดียว",
           type: "abbr"
         },
         {
           id: "abbr-ay",
           term: "ay",
           reading: "เอ-วาย",
-          meaning: "ค่าความเร่งหรือ acceleration บนแกน y",
+          meaning: "ค่าที่อ่านได้บนแกน y คือทิศหน้าหลัง",
           type: "abbr"
         },
         {
           id: "abbr-ms",
           term: "ms",
           reading: "เอ็ม-เอส · millisecond (มิล-ลิ-เซคันด์)",
-          meaning: "มิลลิวินาที โดย 1000 ms = 1 วินาที",
+          meaning: "มิลลิวินาที เป็นหน่วยเวลาที่สั้นมาก 1,000 ms เท่ากับ 1 วินาที",
           type: "abbr"
         },
         {
           id: "abbr-led",
           term: "LED",
           reading: "แอล-อี-ดี · Light-Emitting Diode",
-          meaning: "ไดโอดเปล่งแสง จอ micro:bit มี LED แบบตาราง 5×5",
+          meaning: "หลอดไฟเล็ก ๆ บนจอ micro:bit เรียงกันเป็นตาราง 5 แถว 5 ช่อง",
           type: "abbr"
         }
       ];
