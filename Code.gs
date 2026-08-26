@@ -2,8 +2,8 @@
  * Tilt Lab — Google Apps Script backend
  * วิชาเทคโนโลยีสารสนเทศ ชั้น ม.1 ภาคเรียนที่ 1 ปีการศึกษา 2569
  *
- * ทุกรหัสผ่านตั้งผ่าน Project Settings > Script properties เท่านั้น
- * ระบบจะ hash รหัสเก็บลงชีต Users แล้วลบ property ที่เป็นข้อความธรรมดาทิ้งทันที
+ * รหัสเริ่มต้นตั้งผ่าน Project Settings > Script properties เท่านั้น
+ * รหัสสำหรับหมุนเวียนบัญชีนักเรียนรับผ่าน admin API และอยู่ในหน่วยความจำของ execution เท่านั้น
  *
  * ติดตั้งครั้งแรก:
  * 1) ตั้ง INITIAL_STUDENT_PASSWORD แล้วเรียก setupSystem()  — สร้างชีต Drive และบัญชีนักเรียน
@@ -11,10 +11,10 @@
  *
  * ดูแลภายหลัง:
  * - showSetupStatus()        ดูว่าติดตั้งครบหรือยัง มีบัญชีอะไรบ้าง ไม่แสดงรหัสผ่าน
- * - resetStudentPasswords()  รีเซ็ตรหัสนักเรียนที่ลืมรหัส ผ่าน RESET_STUDENT_PASSWORD
+ * - resetStudentPasswords(token, payload)  หมุนเวียนรหัสนักเรียนผ่าน admin API
  * - setupAdminAccount()      เรียกซ้ำได้ ใช้รีเซ็ตรหัสแอดมิน
  *
- * รหัสผ่านต้องยาว 8–128 ตัว และมีทั้งตัวอักษรและตัวเลข
+ * รหัส admin ต้องยาว 8–128 ตัวและมีตัวอักษรกับตัวเลข ส่วนรหัสนักเรียนใช้ D-002
  */
 
 const APP_CONFIG = Object.freeze({
@@ -31,6 +31,7 @@ const APP_CONFIG = Object.freeze({
   stateVersion: 1,
   sessionTtlSeconds: 6 * 60 * 60,
   sessionPropertyPrefix: 'TILT_LAB_SESSION_',
+  studentAuthStatePropertyPrefix: 'TILT_LAB_STUDENT_SESSION_EPOCH_',
   previewStatePropertyPrefix: 'TILT_LAB_PREVIEW_STATE_',
   previewStateChunkCodePoints: 2000,
   maxFailedLogins: 5,
@@ -810,9 +811,14 @@ function setupAdminAccount() {
 
 /** Authenticates a student or administrator and returns a short-lived token. */
 function login(payload) {
-  const input = payload || {};
+  const input = payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? payload
+    : null;
+  if (!input || typeof input.username !== 'string' || typeof input.password !== 'string') {
+    return { ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' };
+  }
   const username = normalizeUsername_(input.username);
-  const password = String(input.password || '');
+  const password = input.password;
 
   if (!/^[a-z0-9._-]{4,40}$/.test(username) || password.length < 1 || password.length > 128) {
     return { ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' };
@@ -829,9 +835,26 @@ function login(payload) {
     };
   }
 
-  const user = findUser_(username);
-  const authenticated = user && user.active &&
-    constantTimeEqual_(hashPassword_(password, user.salt), user.passwordHash);
+  let user = null;
+  let authenticated = false;
+  let authenticationStateFailure = false;
+
+  try {
+    user = findUser_(username);
+    authenticated = Boolean(user && user.active &&
+      constantTimeEqual_(hashPassword_(password, user.salt), user.passwordHash));
+  } catch (error) {
+    authenticationStateFailure = true;
+  }
+
+  if (authenticationStateFailure) {
+    try {
+      appendAudit_(username, 'login', 'blocked', 'ไม่สามารถยืนยันสถานะบัญชีได้');
+    } catch (ignored) {
+      // Authentication state failures must not expose service details to the client.
+    }
+    return { ok: false, message: 'ไม่สามารถเข้าสู่ระบบได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง' };
+  }
 
   if (!authenticated) {
     cache.put(
@@ -843,8 +866,59 @@ function login(payload) {
     return { ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' };
   }
 
+  // Preliminary authentication keeps bogus attempts outside the global lock.
+  // Re-read and reverify under the rotation lock before creating any session.
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) {
+    return { ok: false, message: 'ไม่สามารถเข้าสู่ระบบได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง' };
+  }
+
+  let rotationBlocked = false;
+  let token = '';
+  authenticationStateFailure = false;
+
+  try {
+    user = findUser_(username);
+    authenticated = Boolean(user && user.active &&
+      constantTimeEqual_(hashPassword_(password, user.salt), user.passwordHash));
+
+    if (authenticated && user.role === 'student') {
+      rotationBlocked = getStudentAuthState_(user.username).rotating;
+    }
+    if (authenticated && !rotationBlocked) {
+      token = createSession_(user);
+    }
+  } catch (error) {
+    authenticationStateFailure = true;
+  } finally {
+    lock.releaseLock();
+  }
+
+  if (rotationBlocked || authenticationStateFailure) {
+    try {
+      appendAudit_(username, 'login', 'blocked', 'ไม่สามารถยืนยันสถานะบัญชีได้');
+    } catch (ignored) {
+      // Authentication state failures must not expose service details to the client.
+    }
+    return { ok: false, message: 'ไม่สามารถเข้าสู่ระบบได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง' };
+  }
+
+  if (!authenticated) {
+    cache.put(
+      rateKey,
+      String(failedCount + 1),
+      APP_CONFIG.failedLoginWindowSeconds
+    );
+    appendAudit_(username || 'unknown', 'login', 'failed', 'ข้อมูลเข้าสู่ระบบไม่ถูกต้อง');
+    return { ok: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' };
+  }
+
+  try {
+    purgeExpiredSessions_();
+  } catch (ignored) {
+    // Session cleanup is opportunistic and must not extend the authentication lock.
+  }
   cache.remove(rateKey);
-  const token = createSession_(user);
   appendAudit_(username, 'login', 'success', user.role);
 
   return {
@@ -916,7 +990,7 @@ function getProgress(token) {
 
 /** Validates and upserts the current student's progress. */
 function saveProgress(token, state) {
-  const session = requireSession_(token);
+  let session = requireSession_(token);
 
   // โหมดทดลองไม่เขียนลงชีตใด ๆ ตาม Blueprint #113
   if (session.preview) {
@@ -936,6 +1010,15 @@ function saveProgress(token, state) {
   lock.waitLock(30000);
 
   try {
+    const lockedSession = requireSession_(token);
+    if (
+      lockedSession.username !== session.username ||
+      lockedSession.role !== session.role ||
+      Boolean(lockedSession.preview) !== Boolean(session.preview)
+    ) {
+      throw new Error('SESSION_EXPIRED');
+    }
+    session = lockedSession;
     const progressRow = findProgressRow_(session.username);
     let trustedState = createDefaultProgress_(session);
     if (progressRow) {
@@ -978,7 +1061,7 @@ function recordQuizAttempt(token) {
  * submissionId ทำให้คำขอเดิมส่งซ้ำเพื่อซ่อม Attempts ได้โดยไม่นับครั้งเพิ่ม
  */
 function submitQuizAttemptV2(token, payload) {
-  const session = requireSession_(token);
+  let session = requireSession_(token);
   const input = payload || {};
   const submissionId = validateQuizSubmissionId_(input.submissionId);
   const answers = validateQuizAnswers_(input.answers, true);
@@ -1000,6 +1083,15 @@ function submitQuizAttemptV2(token, payload) {
   lock.waitLock(30000);
 
   try {
+    const lockedSession = requireSession_(token);
+    if (
+      lockedSession.username !== session.username ||
+      lockedSession.role !== session.role ||
+      Boolean(lockedSession.preview) !== Boolean(session.preview)
+    ) {
+      throw new Error('SESSION_EXPIRED');
+    }
+    session = lockedSession;
     const progressRow = findProgressRow_(session.username);
     let savedState = createDefaultProgress_(session);
 
@@ -2382,7 +2474,13 @@ function createSession_(user) {
     mustChangePassword: user.mustChangePassword,
     issuedAt: new Date().toISOString()
   };
-  purgeExpiredSessions_();
+  if (user.role === 'student') {
+    const authState = getStudentAuthState_(user.username);
+    if (authState.rotating) {
+      throw new Error('SESSION_EXPIRED');
+    }
+    session.studentSessionEpoch = authState.epoch;
+  }
   storeSession_(token, session);
   return token;
 }
@@ -2412,6 +2510,15 @@ function requireSession_(token) {
   if (!Number.isFinite(Number(session.expiresAt)) || Number(session.expiresAt) <= Date.now()) {
     deleteSession_(normalizedToken);
     throw new Error('SESSION_EXPIRED');
+  }
+
+  if (session.role === 'student') {
+    const authState = getStudentAuthState_(session.username, properties);
+    const sessionEpoch = String(session.studentSessionEpoch || '');
+    if (authState.rotating || sessionEpoch !== authState.epoch) {
+      deleteSession_(normalizedToken);
+      throw new Error('SESSION_EXPIRED');
+    }
   }
 
   // Sliding expiry remains six hours, while Script Properties is the durable source of truth.
@@ -2476,6 +2583,101 @@ function sessionCacheKey_(token) {
 
 function sessionPropertyKey_(token) {
   return APP_CONFIG.sessionPropertyPrefix + hashPassword_(token, 'session');
+}
+
+function studentAuthStatePropertyKey_(username) {
+  const normalizedUsername = normalizeUsername_(username);
+  if (!normalizedUsername) {
+    throw new Error('ไม่พบบัญชีนักเรียนสำหรับยกเลิกเซสชัน');
+  }
+  return APP_CONFIG.studentAuthStatePropertyPrefix +
+    hashPassword_(normalizedUsername, 'student-session-epoch-key');
+}
+
+function getStudentAuthState_(username, properties) {
+  const store = properties || PropertiesService.getScriptProperties();
+  const raw = String(store.getProperty(studentAuthStatePropertyKey_(username)) || '');
+  if (!raw) {
+    return { epoch: '', rotating: false };
+  }
+
+  // รองรับ numeric epoch จาก implementation รุ่นก่อนหน้า
+  if (/^\d+$/.test(raw)) {
+    return { epoch: raw, rotating: false };
+  }
+
+  try {
+    const state = JSON.parse(raw);
+    const epoch = String(state && state.epoch || '');
+    if (!state || typeof state.rotating !== 'boolean' || (epoch && !/^\d+$/.test(epoch))) {
+      return { epoch: epoch, rotating: true };
+    }
+    return { epoch: epoch, rotating: state.rotating };
+  } catch (error) {
+    // Corrupt authentication state must block student access instead of failing open.
+    return { epoch: '', rotating: true };
+  }
+}
+
+function writeStudentAuthState_(username, state, properties) {
+  const store = properties || PropertiesService.getScriptProperties();
+  store.setProperty(
+    studentAuthStatePropertyKey_(username),
+    JSON.stringify({
+      epoch: String(state.epoch || ''),
+      rotating: state.rotating === true
+    })
+  );
+}
+
+function beginStudentCredentialRotation_(username, properties) {
+  const current = getStudentAuthState_(username, properties);
+  writeStudentAuthState_(username, {
+    epoch: current.epoch,
+    rotating: true
+  }, properties);
+  const verified = getStudentAuthState_(username, properties);
+  if (!verified.rotating || verified.epoch !== current.epoch) {
+    throw new Error('ROTATION_STATE_UNAVAILABLE');
+  }
+  return current.epoch;
+}
+
+function advanceStudentSessionEpoch_(username, properties) {
+  const currentState = getStudentAuthState_(username, properties);
+  if (!currentState.rotating) {
+    throw new Error('ROTATION_STATE_UNAVAILABLE');
+  }
+  const current = Number(currentState.epoch || 0);
+  const next = Math.max(
+    Date.now(),
+    Number.isFinite(current) ? current + 1 : 1
+  );
+  const nextEpoch = String(next);
+  writeStudentAuthState_(username, {
+    epoch: nextEpoch,
+    rotating: true
+  }, properties);
+  const verified = getStudentAuthState_(username, properties);
+  if (!verified.rotating || verified.epoch !== nextEpoch) {
+    throw new Error('ROTATION_STATE_UNAVAILABLE');
+  }
+  return nextEpoch;
+}
+
+function completeStudentCredentialRotation_(username, expectedEpoch, properties) {
+  const current = getStudentAuthState_(username, properties);
+  if (!current.rotating || current.epoch !== String(expectedEpoch || '')) {
+    throw new Error('ROTATION_STATE_UNAVAILABLE');
+  }
+  writeStudentAuthState_(username, {
+    epoch: current.epoch,
+    rotating: false
+  }, properties);
+  const verified = getStudentAuthState_(username, properties);
+  if (verified.rotating || verified.epoch !== current.epoch) {
+    throw new Error('ROTATION_STATE_UNAVAILABLE');
+  }
 }
 
 function requireRole_(token, role) {
