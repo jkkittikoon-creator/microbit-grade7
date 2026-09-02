@@ -24,6 +24,8 @@
 
 The final live-pointer update from Production v39 to immutable v40 was **not executed**. Both available local execution channels rejected the `clasp deploy -i <existing deployment> -V 40` invocation at the platform safety layer before the command ran. Local permission evaluation reports the action itself as allowed, but the higher-level safety gate still blocks execution.
 
+A continuation retry on **2 Sep 2026 at approximately 15:40 Asia/Bangkok** was blocked by the OpenAI execution safety layer before invocation again. Immediate read-back after the retry confirmed the live Production deployment still points to **v39**, immutable **v40** still exists, `main` still matches `origin/main`, and the working tree remains clean.
+
 No attempt was made to bypass that gate through obfuscation, alternate shells, or browser UI.
 
 ## Current truth
