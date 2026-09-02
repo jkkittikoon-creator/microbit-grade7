@@ -161,10 +161,23 @@ _(ปรับ 2 ก.ย. 2569 — ข้อ commit เดิมทำเสร�
 4. **Production deployment ของ v10** ต้องมีคำสั่งที่ระบุคำว่า Production แยกอีกครั้ง
    และต้อง `update-deployment` ทับ deployment ID เดิมเท่านั้น ห้าม `create-deployment`
 5. **Git-history remediation** ยังเป็นงานทำลายล้าง ต้องขออนุมัติแยก
-6. **deployment `@HEAD` ที่ไม่มีคำอธิบาย** (`AKfycbzh5YL7rgXdbSVzKsC-4SeIfwZi9T0NnuPrKVyPS-LX`)
-   ยังค้างอยู่ ควรตรวจว่าเป็น default ของ Apps Script หรือของที่ลืมลบ
-   ข้อควรระวัง: URL แบบ `@HEAD` เสิร์ฟโค้ดล่าสุดทันทีที่ `clasp push`
-   จึงเป็นช่องที่โค้ดยังไม่ทดสอบหลุดออกสู่สาธารณะได้ก่อนขั้นตอน TEST
+6. ~~ตรวจ deployment `@HEAD`~~ **ตรวจแล้ว 2 ก.ย. 2569 — ปิดเรื่องนี้ ไม่ต้องทำอะไร**
+
+   `AKfycbzh5YL7rgXdbSVzKsC-4SeIfwZi9T0NnuPrKVyPS-LX` คือ HEAD deployment
+   ที่ Apps Script สร้างให้เองทุกโปรเจกต์ ไม่ใช่ของที่ใครลืมลบ
+
+   **แก้ความเข้าใจผิดที่เคยเขียนไว้ในข้อนี้:** เคยระบุว่า URL แบบ `@HEAD`
+   เป็นช่องให้โค้ดที่ยังไม่ทดสอบหลุดสู่สาธารณะ — **ไม่จริง** ทดสอบแล้วด้วย
+   curl แบบไม่ล็อกอิน ทั้ง `/exec` และ `/dev` ของ `@HEAD` เด้งไปหน้า
+   Google sign-in ทั้งคู่ เข้าถึงได้เฉพาะบัญชีที่มีสิทธิ์แก้ไขสคริปต์เท่านั้น
+   ต่างจาก Production ที่เปิดให้เข้าแบบไม่ต้องล็อกอินจริง (ตอบ 200 พร้อม
+   `<title>Tilt Lab — ระบบตรวจจับความเอียงกับ micro:bit</title>`)
+
+   ข้อสังเกต: `appsscript.json` ตั้ง `access: ANYONE_ANONYMOUS` ก็จริง
+   แต่ค่านั้นไม่มีผลกับ HEAD/dev deployment ซึ่งบังคับสิทธิ์ผู้แก้ไขเสมอ
+
+   Apps Script ไม่อนุญาตให้ลบ HEAD deployment อยู่แล้ว และไม่ได้ทดลองลบ
+   เพราะไม่มีเหตุผลด้านความปลอดภัยให้ต้องลบ
 
 ## Continuation Safety
 - Never record or reproduce credentials, password hashes, salts, or session tokens.
