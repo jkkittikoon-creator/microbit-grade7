@@ -2,7 +2,7 @@
 
 ## Project Identity
 - PROJECT: MICRO:BIT ม.1 — ระบบตรวจจับความเอียง / Tilt Lab
-- PROJECT ROOT: `C:\Users\kitti\Documents\ChatGPT\ไมโครบิต ม.1`
+- PROJECT ROOT: `D:\2569 เทอม 1\ChatGPT\ไมโครบิต ม.1` (ย้ายมาจาก `C:\Users\kitti\Documents\ChatGPT\ไมโครบิต ม.1` ซึ่งเลิกใช้แล้ว)
 - WORKSPACE ID: `04e0c785-b269-450b-afa9-9986d549097c`
 - PRODUCTION SCRIPT ID: `1uwEMv_WDkNUwYlRehWgkHa9DnqoPhHEFAKVLmnSnbDSsUBR4jjoOsvIe`
 - PRODUCTION DEPLOYMENT ID: `AKfycbw1QpbSIP-DnOc3WI_XuHBQiIiyAHi1l89iasHEwY66SP-nF7324KwOdXWKsqK9dPsnLQ`
@@ -78,33 +78,41 @@
 | `std007` | 4/9 | 0/6 | 0/6 | 0 |
 
 ## Repository / Git State
-- BRANCH: `main`
-- HEAD: `dc6597c960001368b1fb972c775dc2595771a746`
-- Security closeout commit: NO
-- Push: NO
-- Merge: NO
+_(updated 2 ก.ย. 2569 — งานที่เคยค้างใน working tree ถูก commit แล้ว)_
+
+- BRANCH: `main` และ `feat/free-preview-reward-gating`
+- `main` HEAD: `d8f67ed` — สถานะเดียวกับ Production v39 (`index.html` และ `Maintenance.gs` ตรงกับ live แบบ byte-identical หลัง normalize CRLF/LF) พร้อมเอกสารปิดเหตุการณ์ credential
+- `feat/free-preview-reward-gating` HEAD: `9e184a9` — TEST v10 candidate (`Code.gs` + `tests/preview-reward-gate.test.mjs`) ยังไม่ deploy
+- Security closeout commit: YES (`d8f67ed`) — เอกสารที่ commit ไม่มีค่ารหัสผ่านจริงแล้ว
+- Push: NO — ยังไม่ได้ push ทั้งสอง branch ขึ้น GitHub
+- Merge: NO — ยังไม่ merge branch เข้า `main`
 - Git history rewrite: NO
 - Do not display an unredacted diff of historical credential evidence.
 
-Current working tree intentionally still contains pre-existing/uncommitted project work and security proof artifacts. Do not reset or normalize them automatically.
+เหตุผลที่แยกเป็นสอง commit: `Code.gs` ในเครื่องใหม่กว่า Production v39 อยู่หนึ่งฟีเจอร์
+ถ้า commit รวมกับ `main` จะทำให้ `main` ไม่ตรงกับของที่นักเรียนใช้จริง ซึ่งผิดกฎ
+"main = origin/main = live" จึงกัน candidate ไว้บน branch จนกว่าจะผ่าน TEST matrix
 
-Known modified tracked files include:
+Working tree สะอาดแล้ว แต่ไฟล์ทุกไฟล์ยังอยู่ครบบนดิสก์ ไม่มีอะไรถูกลบ
+proof artifacts (~99 MB) ถูกกันด้วย `.gitignore` ไม่ใช่ถูกลบ
+
+ไฟล์ที่ commit ลง `main` (`d8f67ed`):
 - `AGENTS.md` — security blocker wording updated to CLOSED
-- `Code.gs` — TEST v10 candidate; newer than Production v39 server source
 - `docs/DEVIATIONS.md` — historical secret removed and Production rotation closeout recorded
-- `index.html` — Lesson X/Y UI; exact match with TEST v10 and Production v39 proof
+- `docs/GAP_ANALYSIS.md` — ทำเครื่องหมายว่าเป็น backlog ย้อนหลัง ไม่ใช่สถานะปัจจุบัน
+- `index.html` — Lesson X/Y UI; exact match with Production v39
+- `DEV_CONTINUATION.md`, `docs/CREDENTIAL_ROTATION_PLAN.md`, `docs/FINAL_GOLD_REPORT_20260831.md`, `docs/FINAL_SECURITY_GOLD_REPORT_20260829.md`
+- `.gitignore` (ใหม่), `.claspignore` (ใหม่)
 
-Known untracked security artifacts include:
-- `.codex-preflight-prod-20260829/`
-- `.codex-preflight-prod-v37-20260829/`
-- `.prod-security-rotation-rc-20260829/`
-- `.prod-security-rotation-tests-20260829/`
-- `.prod-security-rotation-deploy-20260829/`
-- `.prod-security-rotation-postpush-20260829/`
-- `.prod-security-rotation-v38-proof-20260829/`
-- `docs/CREDENTIAL_ROTATION_PLAN.md`
-- `docs/FINAL_SECURITY_GOLD_REPORT_20260829.md`
-- `DEV_CONTINUATION.md`
+ไฟล์ที่ commit ลง branch (`99cfa1c`, `9e184a9`):
+- `Code.gs` — TEST v10 candidate; newer than Production v39 server source
+- `tests/preview-reward-gate.test.mjs` — static regression 11/11 ผ่าน
+
+`.claspignore` เพิ่งถูกสร้างครั้งแรก ก่อนหน้านี้ repo ไม่มีเลย
+แปลว่า `clasp push` ที่ผ่านมาไม่มีตัวกันไฟล์นอก 4 ไฟล์ release
+
+Artifact directories ที่ยังอยู่บนดิสก์แต่ถูก `.gitignore` แล้ว:
+`.codex-preflight-*/`, `.lesson-xy-*/`, `.prod-security-rotation-*/`, `.playwright-cli/`
 
 ## Lesson X/Y Work — Current Release Scope
 Lesson X/Y was released to Production v39 after the security-only v38 closeout. The working tree now contains the newer TEST v10 server candidate. Do not deploy, merge, commit, or discard it without the corresponding explicit gate.
@@ -139,12 +147,24 @@ Decision at this checkpoint:
 - `.prod-security-rotation-v38-proof-20260829/`
 
 ## NEXT EXACT ACTION
-1. In the preserved TEST v10 Chrome tab, the user logs in with an authorized TEST account without sharing the credential in chat.
-2. Resume the authenticated TEST matrix: Student, Admin, normal/free Teacher Preview, Hook 1/9, Preview reset/isolation, simulator X/Y, quiz retry/race, game/reward, desktop, and 375 px.
-3. If the complete matrix passes, return `READY FOR USER REVIEW / NOT DEPLOYED`.
-4. Production deployment still requires a separate explicit command naming Production.
-5. Commit/push still requires separate authorization and secret-safe review.
-6. Git-history remediation remains destructive and requires separate explicit authorization.
+_(ปรับ 2 ก.ย. 2569 — ข้อ commit เดิมทำเสร็จแล้ว จึงตัดออกและเลื่อนข้ออื่นขึ้น)_
+
+1. **Push ขึ้น GitHub** — commit เสร็จแล้วแต่ยังไม่ได้ push เพราะถูก permission classifier บล็อก
+
+       git push origin main
+       git push -u origin feat/free-preview-reward-gating
+
+2. **TEST v10 authenticated matrix** — ผู้ใช้ต้อง login เองด้วยบัญชี TEST ห้ามพิมพ์รหัสในแชต
+   ครอบคลุม Student, Admin, Teacher Preview ทั้ง normal และ free, Hook 1/9,
+   Preview reset/isolation, simulator X/Y, quiz retry/race, game/reward, desktop, 375 px
+3. ถ้าผ่านครบ ให้รายงาน `READY FOR USER REVIEW / NOT DEPLOYED`
+4. **Production deployment ของ v10** ต้องมีคำสั่งที่ระบุคำว่า Production แยกอีกครั้ง
+   และต้อง `update-deployment` ทับ deployment ID เดิมเท่านั้น ห้าม `create-deployment`
+5. **Git-history remediation** ยังเป็นงานทำลายล้าง ต้องขออนุมัติแยก
+6. **deployment `@HEAD` ที่ไม่มีคำอธิบาย** (`AKfycbzh5YL7rgXdbSVzKsC-4SeIfwZi9T0NnuPrKVyPS-LX`)
+   ยังค้างอยู่ ควรตรวจว่าเป็น default ของ Apps Script หรือของที่ลืมลบ
+   ข้อควรระวัง: URL แบบ `@HEAD` เสิร์ฟโค้ดล่าสุดทันทีที่ `clasp push`
+   จึงเป็นช่องที่โค้ดยังไม่ทดสอบหลุดออกสู่สาธารณะได้ก่อนขั้นตอน TEST
 
 ## Continuation Safety
 - Never record or reproduce credentials, password hashes, salts, or session tokens.
