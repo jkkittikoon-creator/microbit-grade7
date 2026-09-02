@@ -8,16 +8,34 @@
 - PRODUCTION DEPLOYMENT ID: `AKfycbw1QpbSIP-DnOc3WI_XuHBQiIiyAHi1l89iasHEwY66SP-nF7324KwOdXWKsqK9dPsnLQ`
 
 ## Current State
-- CURRENT STATUS: **LESSON_XY_V10_FINAL_GATE_PARTIAL**
-- CURRENT PHASE: Lesson X/Y v10 release validation; authenticated TEST browser matrix remains
-- PRODUCTION VERSION: **v39 Lesson X/Y**
-- TEST VERSION: **v10 candidate**
-- CURRENT GOLD REPORT: `docs/FINAL_GOLD_REPORT_20260831.md`
+- CURRENT STATUS: **FINAL_PRODUCTION_GOLD_PASS_CLOSED**
+- CURRENT PHASE: **CLOSED — Lesson X/Y TEST v10 promoted and verified on Production v40**
+- PRODUCTION VERSION: **v40 — TEST v10 GOLD source**
+- TEST VERSION: **v10 GOLD**
+- CURRENT GOLD REPORT: `docs/FINAL_PRODUCTION_GOLD_REPORT_20260902.md`
 - FINAL SECURITY REPORT: `docs/FINAL_SECURITY_GOLD_REPORT_20260829.md`
 - PRODUCTION CREDENTIAL/SESSION BLOCKER: **CLOSED**
-- USER ACTION REQUIRED FOR SECURITY CLOSEOUT: **NONE**
+- USER ACTION REQUIRED FOR RELEASE CLOSEOUT: **NONE**
 
-## Lesson X/Y v10 Final Gate Checkpoint — 31 Aug 2026
+## Production v40 Final GOLD Closeout — 2 Sep 2026
+- TEST v10 authenticated release matrix: **PASS**.
+- Candidate branch push: **YES**.
+- Merge to `main`: **YES** — merge commit `f90af38`.
+- Main push: **YES**.
+- Immutable Production version **40** created from TEST v10 GOLD source.
+- Existing Production deployment ID was updated in Google Apps Script Manage deployments; no new Production deployment was created.
+- `clasp deployments` read-back confirms Production pointer **@40**.
+- Live Production `/exec` loads the actual Tilt Lab app successfully.
+- Post-deploy console/network regression: **0 console errors, 0 runtime exceptions, 0 log errors, 0 HTTP >=400, 0 loading failures**.
+- Four Google Apps Script sandbox warnings observed; these are wrapper security warnings, not Tilt Lab runtime errors.
+- Production responsive **375 × 812 PASS** with no unintended horizontal overflow and no visible interactive control outside the app viewport.
+- Browser restored to **1920 × 1040** after responsive regression.
+- Post-deploy smoke was intentionally no-write; no student progress, quiz, reset, credential, or Preview mutation was performed.
+- Rollback boundary: same Production deployment ID pointed back to immutable **v39** if ever required.
+- Final report: `docs/FINAL_PRODUCTION_GOLD_REPORT_20260902.md`.
+- **FINAL PRODUCTION GOLD: PASS / CLOSED**.
+
+## Lesson X/Y v10 Final Gate Checkpoint — 31 Aug 2026 (historical)
 - Local release files match immutable RC v10 and TEST post-push proof by SHA-256 across `Code`, `Maintenance`, `index.html`, and `appsscript.json`.
 - TEST deployment pointer: **@10**.
 - Production deployment pointer: **@39**; no Production mutation was performed in this checkpoint.
@@ -77,65 +95,54 @@
 | `std006` | 4/9 | 0/6 | 0/6 | 0 |
 | `std007` | 4/9 | 0/6 | 0/6 | 0 |
 
-## Repository / Git State
-_(updated 2 ก.ย. 2569 — งานที่เคยค้างใน working tree ถูก commit แล้ว)_
+## Repository / Git State — Final Closeout
+_(updated 2 ก.ย. 2569 after Production v40 deployment)_
 
 - BRANCH: `main` และ `feat/free-preview-reward-gating`
-- `main` HEAD: `d8f67ed` — สถานะเดียวกับ Production v39 (`index.html` และ `Maintenance.gs` ตรงกับ live แบบ byte-identical หลัง normalize CRLF/LF) พร้อมเอกสารปิดเหตุการณ์ credential
-- `feat/free-preview-reward-gating` HEAD: `9e184a9` — TEST v10 candidate (`Code.gs` + `tests/preview-reward-gate.test.mjs`) ยังไม่ deploy
-- Security closeout commit: YES (`d8f67ed`) — เอกสารที่ commit ไม่มีค่ารหัสผ่านจริงแล้ว
-- Push: NO — ยังไม่ได้ push ทั้งสอง branch ขึ้น GitHub
-- Merge: NO — ยังไม่ merge branch เข้า `main`
-- Git history rewrite: NO
+- `feat/free-preview-reward-gating` HEAD: `4e6f764`; branch pushed to `origin/feat/free-preview-reward-gating`.
+- Candidate merged into `main`: **YES** — merge commit `f90af38`.
+- `main` pushed to `origin/main`: **YES**.
+- Production source and merged `main` carry the TEST v10 GOLD server change and regression test.
+- Production deployment pointer: **@40**.
+- Commit: **YES**.
+- Push: **YES**.
+- Merge: **YES**.
+- Deploy: **YES**.
+- Production mutation: **YES** — existing deployment updated to immutable v40.
+- Git history rewrite: **NO**.
 - Do not display an unredacted diff of historical credential evidence.
 
-เหตุผลที่แยกเป็นสอง commit: `Code.gs` ในเครื่องใหม่กว่า Production v39 อยู่หนึ่งฟีเจอร์
-ถ้า commit รวมกับ `main` จะทำให้ `main` ไม่ตรงกับของที่นักเรียนใช้จริง ซึ่งผิดกฎ
-"main = origin/main = live" จึงกัน candidate ไว้บน branch จนกว่าจะผ่าน TEST matrix
+The branch split was a temporary release-safety measure while TEST v10 was newer than Production v39. That gate is now closed: TEST v10 passed, the branch was pushed and merged, and the same release source is live on Production v40.
 
-Working tree สะอาดแล้ว แต่ไฟล์ทุกไฟล์ยังอยู่ครบบนดิสก์ ไม่มีอะไรถูกลบ
-proof artifacts (~99 MB) ถูกกันด้วย `.gitignore` ไม่ใช่ถูกลบ
+Working tree is expected to be clean after the final closeout commit. Files remain on disk; proof artifacts (~99 MB) stay excluded by `.gitignore` rather than being deleted.
 
-ไฟล์ที่ commit ลง `main` (`d8f67ed`):
-- `AGENTS.md` — security blocker wording updated to CLOSED
-- `docs/DEVIATIONS.md` — historical secret removed and Production rotation closeout recorded
-- `docs/GAP_ANALYSIS.md` — ทำเครื่องหมายว่าเป็น backlog ย้อนหลัง ไม่ใช่สถานะปัจจุบัน
-- `index.html` — Lesson X/Y UI; exact match with Production v39
-- `DEV_CONTINUATION.md`, `docs/CREDENTIAL_ROTATION_PLAN.md`, `docs/FINAL_GOLD_REPORT_20260831.md`, `docs/FINAL_SECURITY_GOLD_REPORT_20260829.md`
-- `.gitignore` (ใหม่), `.claspignore` (ใหม่)
-
-ไฟล์ที่ commit ลง branch (`99cfa1c`, `9e184a9`):
-- `Code.gs` — TEST v10 candidate; newer than Production v39 server source
-- `tests/preview-reward-gate.test.mjs` — static regression 11/11 ผ่าน
-
-`.claspignore` เพิ่งถูกสร้างครั้งแรก ก่อนหน้านี้ repo ไม่มีเลย
-แปลว่า `clasp push` ที่ผ่านมาไม่มีตัวกันไฟล์นอก 4 ไฟล์ release
-
-Artifact directories ที่ยังอยู่บนดิสก์แต่ถูก `.gitignore` แล้ว:
+Artifact directories retained locally and ignored by Git:
 `.codex-preflight-*/`, `.lesson-xy-*/`, `.prod-security-rotation-*/`, `.playwright-cli/`
 
-## Lesson X/Y Work — Current Release Scope
-Lesson X/Y was released to Production v39 after the security-only v38 closeout. The working tree now contains the newer TEST v10 server candidate. Do not deploy, merge, commit, or discard it without the corresponding explicit gate.
+## Lesson X/Y Work — Released Scope
+Production v40 now carries the TEST v10 GOLD server behavior, including Free Preview reward session gating, X/Y evidence handling, and quiz race/retry protections, together with the existing Lesson X/Y frontend.
 
-Previously validated TEST evidence for X/Y includes:
-- X/Y lesson route/content candidate
+Validated release evidence includes:
+- X/Y lesson route/content
 - independent X/Y simulator
 - `worksheet.tiltSimulator.accelY` save/restore
-- Teacher Preview save/reset/isolation
-- authenticated Student save→reload/resume
-- desktop and 375 px affected-path checks
+- Teacher Preview normal/free save/reset/isolation
+- authenticated TEST Student save→reload/resume
+- quiz 6/6 release validation and retry/race protection
+- desktop and 375 px checks
+- Production public post-deploy smoke, console/network regression, and 375 px regression
 
-Production v39 contains the Lesson X/Y frontend and v9 server source. TEST v10 contains the later server-side Free Preview reward, X/Y evidence, and quiz race/retry corrections.
+This Lesson X/Y v10 scope is **deployed and closed on Production v40**.
 
 ## Residual Repository Risk
 The old credential evidence may still exist in current Git HEAD/history even though the working-tree document is sanitized and the affected Production credential has been rotated.
 
-Decision at this checkpoint:
+Decision at final closeout:
 - Production runtime security blocker: CLOSED
 - Historical credential: treat as compromised forever; never reuse
-- Commit/push: deferred; requires separate authorization
-- Git history rewrite: deferred; destructive and requires explicit authorization with branch/remote/clone coordination
-- This residual repository-history item is **not** an active Production credential/session blocker after successful rotation and session revocation.
+- Release commit/push/merge/deploy: **COMPLETED**
+- Git history rewrite: still deferred; destructive and requires separate explicit authorization with branch/remote/clone coordination
+- This residual repository-history item is **not** an active Production credential/session blocker and does not block the v40 Production GOLD closeout.
 
 ## Files That Define Security Closeout
 - `AGENTS.md`
@@ -146,51 +153,26 @@ Decision at this checkpoint:
 - `.prod-security-rotation-tests-20260829/runtime_regression_test.js`
 - `.prod-security-rotation-v38-proof-20260829/`
 
-## NEXT EXACT ACTION
-_(ปรับ 2 ก.ย. 2569 — ข้อ commit เดิมทำเสร็จแล้ว จึงตัดออกและเลื่อนข้ออื่นขึ้น)_
+## NEXT EXACT ACTION — NONE FOR THIS RELEASE
+Lesson X/Y v10 / Production v40 is fully deployed, verified, documented, merged, and pushed. No release-blocking action remains.
 
-1. **Push ขึ้น GitHub** — commit เสร็จแล้วแต่ยังไม่ได้ push เพราะถูก permission classifier บล็อก
-
-       git push origin main
-       git push -u origin feat/free-preview-reward-gating
-
-2. **TEST v10 authenticated matrix** — ผู้ใช้ต้อง login เองด้วยบัญชี TEST ห้ามพิมพ์รหัสในแชต
-   ครอบคลุม Student, Admin, Teacher Preview ทั้ง normal และ free, Hook 1/9,
-   Preview reset/isolation, simulator X/Y, quiz retry/race, game/reward, desktop, 375 px
-3. ถ้าผ่านครบ ให้รายงาน `READY FOR USER REVIEW / NOT DEPLOYED`
-4. **Production deployment ของ v10** ต้องมีคำสั่งที่ระบุคำว่า Production แยกอีกครั้ง
-   และต้อง `update-deployment` ทับ deployment ID เดิมเท่านั้น ห้าม `create-deployment`
-5. **Git-history remediation** ยังเป็นงานทำลายล้าง ต้องขออนุมัติแยก
-6. ~~ตรวจ deployment `@HEAD`~~ **ตรวจแล้ว 2 ก.ย. 2569 — ปิดเรื่องนี้ ไม่ต้องทำอะไร**
-
-   `AKfycbzh5YL7rgXdbSVzKsC-4SeIfwZi9T0NnuPrKVyPS-LX` คือ HEAD deployment
-   ที่ Apps Script สร้างให้เองทุกโปรเจกต์ ไม่ใช่ของที่ใครลืมลบ
-
-   **แก้ความเข้าใจผิดที่เคยเขียนไว้ในข้อนี้:** เคยระบุว่า URL แบบ `@HEAD`
-   เป็นช่องให้โค้ดที่ยังไม่ทดสอบหลุดสู่สาธารณะ — **ไม่จริง** ทดสอบแล้วด้วย
-   curl แบบไม่ล็อกอิน ทั้ง `/exec` และ `/dev` ของ `@HEAD` เด้งไปหน้า
-   Google sign-in ทั้งคู่ เข้าถึงได้เฉพาะบัญชีที่มีสิทธิ์แก้ไขสคริปต์เท่านั้น
-   ต่างจาก Production ที่เปิดให้เข้าแบบไม่ต้องล็อกอินจริง (ตอบ 200 พร้อม
-   `<title>Tilt Lab — ระบบตรวจจับความเอียงกับ micro:bit</title>`)
-
-   ข้อสังเกต: `appsscript.json` ตั้ง `access: ANYONE_ANONYMOUS` ก็จริง
-   แต่ค่านั้นไม่มีผลกับ HEAD/dev deployment ซึ่งบังคับสิทธิ์ผู้แก้ไขเสมอ
-
-   Apps Script ไม่อนุญาตให้ลบ HEAD deployment อยู่แล้ว และไม่ได้ทดลองลบ
-   เพราะไม่มีเหตุผลด้านความปลอดภัยให้ต้องลบ
+Optional future work is **out of scope for this closed release**:
+1. Git-history remediation for the historical credential evidence, only with separate explicit destructive-operation approval.
+2. Any new lesson feature or Production change must start a new scoped gate.
+3. Apps Script `@HEAD` remains the editor-only development deployment; prior verification showed it is not an anonymous Production endpoint and requires no cleanup.
 
 ## Continuation Safety
 - Never record or reproduce credentials, password hashes, salts, or session tokens.
 - Never use the historical credential again.
 - Do not show unredacted Git history/diff containing the historical value.
-- Preserve hardened Admin rotation + session-epoch behavior and Production v39 controls in future releases.
+- Preserve hardened Admin rotation + session-epoch behavior and Production v40 controls in future releases.
 - Do not alter Production data without explicit authority.
 - Do not commit, push, merge, rewrite history, or deploy unless explicitly authorized for that exact action.
 - Do not fold lesson X/Y changes into a security-only release without a new scope decision.
 
 ## Scheduled Continuation
 - SCHEDULED CONTINUATION: NOT_CREATED
-- REASON: Security work is complete and there is no blocked or pending security step requiring an automatic continuation loop.
+- REASON: Security and Lesson X/Y release work are complete; no blocked or pending release step remains.
 
 ## Final Checkpoint Statement
-**SECURITY GOLD: CLOSED/PASS · LESSON X/Y v10 FINAL GATE: PARTIAL · PRODUCTION: v39 UNCHANGED**
+**SECURITY GOLD: CLOSED/PASS · LESSON X/Y v10 GOLD: PASS · PRODUCTION v40: DEPLOYED/PASS · FINAL PRODUCTION GOLD: CLOSED**

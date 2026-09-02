@@ -1,5 +1,7 @@
 # FINAL GOLD REPORT — Tilt Lab ม.1
 
+> **SUPERSEDED 2 Sep 2026:** This 31 Aug checkpoint records the earlier PARTIAL state only. The release later completed TEST v10 GOLD, was promoted to Production v40, passed post-deploy smoke/regression, and is now **FINAL PRODUCTION GOLD — PASS / CLOSED**. Current authority: `docs/FINAL_PRODUCTION_GOLD_REPORT_20260902.md` and `DEV_CONTINUATION.md`.
+
 **Date:** 31 Aug 2026  
 **Scope:** Lesson X/Y TEST v10 final gate and Production readiness  
 **Decision:** **PARTIAL — AUTHENTICATED TEST MATRIX REQUIRED**
