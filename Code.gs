@@ -956,7 +956,7 @@ function getProgress(token) {
       updatedAt: null,
       preview: true,
       previewMode: session.previewMode,
-      rewards: computeRewards_(previewState)
+      rewards: computeRewardsForSession_(previewState, session)
     };
   }
 
@@ -1002,7 +1002,7 @@ function saveProgress(token, state) {
       state: cleanState,
       updatedAt: new Date().toISOString(),
       preview: true,
-      rewards: computeRewards_(cleanState)
+      rewards: computeRewardsForSession_(cleanState, session)
     };
   }
 
@@ -1076,7 +1076,7 @@ function submitQuizAttemptV2(token, payload) {
       submissionId
     );
     writePreviewState_(token, previewOutcome.state);
-    return buildQuizSubmitResponse_(previewOutcome, null, true, false);
+    return buildQuizSubmitResponse_(previewOutcome, null, true, false, session);
   }
 
   const lock = LockService.getScriptLock();
@@ -1144,7 +1144,8 @@ function submitQuizAttemptV2(token, payload) {
       outcome,
       updatedAt,
       false,
-      attemptLogCreated
+      attemptLogCreated,
+      session
     );
   } finally {
     lock.releaseLock();
@@ -1466,7 +1467,7 @@ function quizSubmissionExists_(sheet, username, submissionId, submissionColumn) 
   return false;
 }
 
-function buildQuizSubmitResponse_(outcome, updatedAt, preview, attemptLogCreated) {
+function buildQuizSubmitResponse_(outcome, updatedAt, preview, attemptLogCreated, session) {
   return {
     ok: true,
     preview: Boolean(preview),
@@ -1483,7 +1484,7 @@ function buildQuizSubmitResponse_(outcome, updatedAt, preview, attemptLogCreated
     results: outcome.results,
     state: outcome.state,
     updatedAt: updatedAt,
-    rewards: computeRewards_(outcome.state)
+    rewards: computeRewardsForSession_(outcome.state, session)
   };
 }
 
@@ -2785,13 +2786,14 @@ function unlockedSection_(completedSections) {
  * สรุปสถานะกิจกรรมเสริมจาก worksheet โดยไม่แตะลำดับขั้นบังคับ
  * เปิดได้เมื่อทำขั้นที่กำหนดใน unlockAfter สำเร็จแล้วเท่านั้น ตาม Blueprint #16
  */
-function optionalStepsStatus_(state) {
+function optionalStepsStatus_(state, unlockAllOptionalSteps) {
   const completed = contiguousCompleted_(state ? state.completedSections : []);
   const worksheet = (state && state.worksheet) || {};
 
   return LESSON_OPTIONAL_STEPS.map(function (step) {
     const saved = worksheet[step.stateKey] || {};
-    const unlocked = completed.indexOf(step.unlockAfter) !== -1;
+    const unlocked = unlockAllOptionalSteps === true ||
+      completed.indexOf(step.unlockAfter) !== -1;
     return {
       id: step.id,
       title: step.title,
@@ -2806,7 +2808,7 @@ function optionalStepsStatus_(state) {
   });
 }
 
-function computeRewards_(state) {
+function computeRewards_(state, unlockAllOptionalSteps) {
   const completed = contiguousCompleted_(state ? state.completedSections : []);
   const quiz = (state && state.quiz) || {};
   const bestScore = Number(quiz.bestScore) || 0;
@@ -2815,7 +2817,7 @@ function computeRewards_(state) {
   const perfect = bestScore >= APP_CONFIG.quizQuestionCount;
 
   // นับจากสถานะจริงทุกครั้ง ไม่สะสม เล่นซ้ำจึงไม่ได้ XP เพิ่ม ตาม Blueprint #89
-  const optionalSteps = optionalStepsStatus_(state);
+  const optionalSteps = optionalStepsStatus_(state, unlockAllOptionalSteps === true);
 
   let xp = completed.length * APP_CONFIG.xpPerSection;
   if (passed) xp += APP_CONFIG.xpQuizPass;
@@ -2868,6 +2870,17 @@ function computeRewards_(state) {
     optionalSteps: optionalSteps,
     encouragement: buildEncouragement_(completed.length, quiz, passed, perfect)
   };
+}
+
+/**
+ * Free Preview อาจข้ามลำดับบทเรียน แต่สิทธิ์นี้ต้องมาจาก session ฝั่ง server เท่านั้น
+ * ห้ามอนุมานจาก state หรือค่าที่ client ส่งมา เพื่อไม่ให้กระทบ reward ของนักเรียนจริง
+ */
+function computeRewardsForSession_(state, session) {
+  const unlockAllOptionalSteps = Boolean(
+    session && session.preview === true && session.previewMode === 'free'
+  );
+  return computeRewards_(state, unlockAllOptionalSteps);
 }
 
 /**
