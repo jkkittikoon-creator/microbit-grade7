@@ -70,14 +70,14 @@ const APP_CONFIG = Object.freeze({
  * แก้ลำดับหรือเพิ่มขั้นตอนได้โดยไม่ต้องไล่แก้เงื่อนไขกระจายในโค้ด
  */
 const LESSON_SECTIONS = Object.freeze([
-  Object.freeze({ order: 1, id: 'hook', title: 'Hook', required: true }),
-  Object.freeze({ order: 2, id: 'predict', title: 'Predict–Observe', required: true }),
-  Object.freeze({ order: 3, id: 'unplugged', title: 'Unplugged map()', required: true }),
-  Object.freeze({ order: 4, id: 'mg-concept', title: 'mg และ g', required: true }),
-  Object.freeze({ order: 5, id: 'tilt-simulator', title: 'Tilt Simulator', required: true }),
-  Object.freeze({ order: 6, id: 'debug-case', title: 'Debug Case Study', required: true }),
-  Object.freeze({ order: 7, id: 'glossary', title: 'Glossary', required: true }),
-  Object.freeze({ order: 8, id: 'quiz', title: 'Self-check Quiz', required: true }),
+  Object.freeze({ order: 1, id: 'hook', title: 'รู้จักการเอียง', required: true }),
+  Object.freeze({ order: 2, id: 'predict', title: 'รู้จักตัวอ่านการเอียงและสองทิศทาง', required: true }),
+  Object.freeze({ order: 3, id: 'unplugged', title: 'อ่านค่าและเตรียมจอไฟ', required: true }),
+  Object.freeze({ order: 4, id: 'mg-concept', title: 'เปลี่ยนค่าการเอียงเป็นพิกัด', required: true }),
+  Object.freeze({ order: 5, id: 'tilt-simulator', title: 'ทดลองระบบบนจอจำลอง', required: true }),
+  Object.freeze({ order: 6, id: 'debug-case', title: 'ประกอบระบบและวิเคราะห์ผล', required: true }),
+  Object.freeze({ order: 7, id: 'glossary', title: 'สรุประบบและคำสำคัญ', required: true }),
+  Object.freeze({ order: 8, id: 'quiz', title: 'ประเมินความเข้าใจ', required: true }),
   Object.freeze({ order: 9, id: 'reflection', title: 'สะท้อนผลการเรียนรู้', required: true })
 ]);
 
@@ -3141,6 +3141,11 @@ function normalizeTiltEvidence_(
   const accel = incomingAccel !== null
     ? incomingAccel
     : trustedAccel !== null ? trustedAccel : 0;
+  const incomingAccelY = normalizeAccelEvidence_(incoming.accelY);
+  const trustedAccelY = normalizeAccelEvidence_(trusted.accelY);
+  const accelY = incomingAccelY !== null
+    ? incomingAccelY
+    : trustedAccelY !== null ? trustedAccelY : 0;
   const constrainEnabled = hasOwn_(incoming, 'constrainEnabled')
     ? incoming.constrainEnabled === true
     : trusted.constrainEnabled === true;
@@ -3152,6 +3157,7 @@ function normalizeTiltEvidence_(
 
   return {
     accel: accel,
+    accelY: accelY,
     constrainEnabled: constrainEnabled,
     seenUnsafe: seenUnsafe,
     seenSafe: seenSafe,
@@ -3761,11 +3767,17 @@ function validateProgressState_(state, session, trustedState) {
   const completedSections = session.previewMode === 'free'
     ? uniqueCompleted
     : normalizedEvidence.completedSections;
+  // Free Preview เป็นข้อมูลจำลองที่ server ออก session ให้ครูเท่านั้น
+  // จึงต้องเปิดกิจกรรมเสริมให้บันทึกหลักฐาน/รางวัลได้จริงด้วย ไม่ใช่เปิดแค่ UI
+  // โดยไม่เติม completedSections ปลอมลงในสถานะ Preview ที่แสดงบนหน้า
+  const optionalEvidenceCompletedSections = session.previewMode === 'free'
+    ? LESSON_SECTIONS.map(function (section) { return section.order; })
+    : completedSections;
   const normalizedWorksheet = normalizeOptionalLearningEvidence_(
     normalizedEvidence.worksheet,
     state.worksheet,
     trusted.worksheet,
-    completedSections
+    optionalEvidenceCompletedSections
   );
   const rejectedCompleted = uniqueCompleted.filter(function (section) {
     return completedSections.indexOf(section) < 0;
@@ -3801,9 +3813,14 @@ function validateProgressState_(state, session, trustedState) {
   const trustedSubmittedAnswers = trustedQuiz.lastSubmissionId
     ? trustedQuiz.lastSubmissionAnswers
     : trustedQuiz.answers;
+  const explicitQuizRetry = Boolean(
+    trustedQuiz.attempts > 0 &&
+    quiz.locked === false &&
+    Object.keys(draftAnswers).length === 0
+  );
   const keepTrustedResults = Boolean(
     trustedQuiz.attempts > 0 &&
-    quiz.locked === true &&
+    !explicitQuizRetry &&
     Object.keys(draftAnswers).length === APP_CONFIG.quizQuestionCount &&
     sameQuizAnswers_(trustedSubmittedAnswers, draftAnswers)
   );
@@ -3827,7 +3844,7 @@ function validateProgressState_(state, session, trustedState) {
       attempts: trustedQuiz.attempts,
       locked: trustedQuiz.attempts >= APP_CONFIG.quizMaxAttempts
         ? true
-        : keepTrustedResults,
+        : Boolean(keepTrustedResults),
       lastSubmissionId: trustedQuiz.lastSubmissionId,
       lastSubmissionAnswers: trustedQuiz.lastSubmissionAnswers
     }
