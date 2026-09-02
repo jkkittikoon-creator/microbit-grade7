@@ -64,11 +64,11 @@ For this repository, use `search -> relevant files -> minimal diff`: inspect onl
 - Preserve server-side validation. Admin APIs require a server-side role guard; never trust client-provided role or identity alone.
 - Do not expose credentials, secrets, or session tokens; do not log sensitive values, write credentials into documentation, or commit new credentials.
 - If a credential is found, report only `SECRET/CREDENTIAL PRESENT`, its path, and approximate type. Never reproduce the value.
-- **SECURITY DEBT / PRODUCTION BLOCKER:** Git-tracked documentation, including `docs/DEVIATIONS.md`, contains evidence of a real student credential/password. Do not remediate, rotate, delete, or rewrite it without explicit authorization.
+- **SECURITY INCIDENT / PRODUCTION CLOSEOUT:** Evidence of a real student credential/password was removed from the working-tree copy of `docs/DEVIATIONS.md` on 29 Aug 2026 under explicit user authorization. Production student credentials were then rotated through the hardened admin path on Production v38 for all 7 student accounts, all 7 prior student sessions were revoked, fresh student login was verified, and learning data was preserved. The Production credential/session blocker is therefore CLOSED as of 29 Aug 2026. The current Git HEAD/history still retains the old evidence until separately authorized commit/history remediation; treat that historical value as compromised, never record or reproduce it, and handle Git-history remediation as a separate destructive operation requiring explicit approval.
 
 ## Validation strategy
 
-No reproducible automated test harness is currently verified. During development, prefer:
+No full-system reproducible automated test harness is currently verified. A narrow security-specific isolated harness exists at `.prod-security-rotation-tests-20260829/runtime_regression_test.js` and was verified 13/13 for the Production v38 credential-rotation/session-revocation scope only. Do not generalize that harness to unrelated lesson or product behavior. During development, prefer:
 
 1. Targeted static inspection
 2. Targeted functional validation
@@ -88,8 +88,8 @@ The Apps Script Web App is the production target, but this repository has no con
 
 ## Known documentation conflicts
 
-- Password-storage documentation conflicts with plaintext credential evidence. Use the secure interpretation and retain the production blocker until explicitly remediated.
+- Historical password-storage documentation contained plaintext credential evidence. The value has been removed from the working-tree document but remains in the current Git HEAD/history. Production credential rotation and session revocation were verified on Production v38 on 29 Aug 2026, so the Production blocker is closed. Git-history remediation remains a separate destructive operation requiring explicit approval.
 - A password-minimum comment conflicts with the D-002 implementation. Preserve the approved deviation and current implementation; do not guess a new policy.
-- Historical static-test claims conflict with the absence of a current reproducible test harness. Treat only reproducible current checks as evidence.
+- Historical static-test claims must not be treated as current whole-system evidence. Use only reproducible current checks for the scope they actually cover; the 29 Aug 2026 isolated security harness is valid only for the credential-rotation/session-revocation scope.
 
 Report unresolved conflicts rather than silently normalizing documentation or implementation.

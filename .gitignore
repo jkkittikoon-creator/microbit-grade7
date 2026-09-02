@@ -1,0 +1,14 @@
+# clasp project settings — recreated per machine, holds no source
+.clasp.json
+
+# Release/verification proof snapshots pulled from Apps Script.
+# These are evidence artifacts (~99 MB of duplicated Code/index.html copies),
+# not source. Kept on disk on purpose; never committed.
+.codex-preflight-*/
+.lesson-xy-*/
+.prod-security-rotation-*/
+.playwright-cli/
+
+# Teaching materials kept locally, never pushed to Apps Script or GitHub
+lesson-plan.docx
+slides.pptx

@@ -4579,6 +4579,71 @@
       color: var(--muted);
     }
 
+    .credential-rotation-form {
+      display: grid;
+      gap: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    .credential-rotation-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+      gap: 0.85rem;
+    }
+
+    .credential-rotation-field {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .credential-rotation-field label,
+    .credential-confirmation {
+      font-weight: 800;
+    }
+
+    .credential-rotation-field input {
+      width: 100%;
+      min-height: 44px;
+      padding: 0.65rem 0.8rem;
+      border: 2px solid var(--border);
+      border-radius: 0.8rem;
+      font: inherit;
+    }
+
+    .credential-rotation-field input:focus-visible {
+      border-color: var(--purple-900);
+    }
+
+    .credential-confirmation {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      line-height: 1.5;
+    }
+
+    .credential-confirmation input {
+      flex: 0 0 auto;
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-top: 0.15rem;
+    }
+
+    .credential-rotation-status {
+      min-height: 1.5rem;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .credential-rotation-status[data-tone="ok"] {
+      color: #14532d;
+      font-weight: 800;
+    }
+
+    .credential-rotation-status[data-tone="error"] {
+      color: #8a1c1c;
+      font-weight: 800;
+    }
+
     /* แผงแสดงวิธีคิดทีละบรรทัด ใช้ซ้ำได้ทุกส่วนที่มีการคำนวณ */
     .work-steps-panel {
       margin: 1rem 0 0;
@@ -5324,6 +5389,43 @@
         </div>
       </section>
 
+      <section class="admin-panel" aria-labelledby="credential-rotation-title">
+        <h2 id="credential-rotation-title">หมุนเวียนรหัสผ่านนักเรียน</h2>
+        <p>
+          ตั้งรหัสใหม่ให้บัญชีนักเรียนทุกบัญชีและยกเลิกเซสชันเดิมทันที
+          ความก้าวหน้า คะแนน และงานที่บันทึกไว้จะไม่ถูกลบ
+        </p>
+        <form class="credential-rotation-form" id="credential-rotation-form" novalidate>
+          <div class="credential-rotation-fields">
+            <div class="credential-rotation-field">
+              <label for="credential-new-password">รหัสนักเรียนใหม่</label>
+              <input id="credential-new-password" type="password"
+                     autocomplete="new-password" minlength="4" maxlength="128"
+                     spellcheck="false" required>
+            </div>
+            <div class="credential-rotation-field">
+              <label for="credential-confirm-password">ยืนยันรหัสใหม่</label>
+              <input id="credential-confirm-password" type="password"
+                     autocomplete="new-password" minlength="4" maxlength="128"
+                     spellcheck="false" required>
+            </div>
+          </div>
+          <label class="credential-confirmation" for="credential-confirm-all">
+            <input id="credential-confirm-all" type="checkbox" required>
+            <span>
+              ยืนยันว่าต้องการเปลี่ยนรหัสของนักเรียนทุกบัญชี
+              และให้นักเรียนเข้าสู่ระบบใหม่ด้วยรหัสชุดนี้
+            </span>
+          </label>
+          <button class="admin-reset is-confirm" id="credential-rotate-submit"
+                  type="submit" disabled>
+            หมุนเวียนรหัสนักเรียนทั้งหมด
+          </button>
+          <p class="credential-rotation-status" id="credential-rotation-status"
+             role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
       <section class="admin-panel" aria-labelledby="admin-roster-title">
         <h2 id="admin-roster-title">รายชื่อนักเรียนและความก้าวหน้า</h2>
         <div class="admin-toolbar">
@@ -5454,8 +5556,8 @@
         <p class="eyebrow">micro:bit · Active Learning · 120 นาที</p>
         <h1 id="lesson-title" tabindex="-1">Tilt Lab</h1>
         <p class="hero-lead">
-          ระบบตรวจจับความเอียงกับ micro:bit — ลองทาย ทดลอง และแก้บั๊ก
-          จนควบคุมจุดไฟบนจอ LED ได้ด้วยตัวเอง
+          ระบบตรวจจับความเอียงกับ micro:bit — เริ่มจากสังเกตการเอียง
+          แล้วค่อยเปลี่ยนตัวเลขให้เป็นตำแหน่งจุดบนจอไฟ 5×5
         </p>
         <ul class="hero-meta" aria-label="ข้อมูลบทเรียน">
           <li>เริ่มจากศูนย์</li>
@@ -5482,39 +5584,39 @@
 
     <nav class="learning-route" id="learning-route"
          aria-labelledby="learning-route-title">
-      <h2 id="learning-route-title">เส้นทางนักสืบความเอียง 7 จังหวะ</h2>
+      <h2 id="learning-route-title">เส้นทางจากการเอียงสู่จุดไฟ 7 จังหวะ</h2>
       <p>
-        เรียนเหมือนนักวิทยาศาสตร์: คิดก่อน ดูหลักฐาน แล้วค่อยอธิบายด้วยโค้ด
+        เริ่มจากสิ่งที่มองเห็น แล้วเพิ่มแนวคิดทีละเรื่องจนประกอบเป็นระบบได้
         กรอบสีเหลืองคือจังหวะที่กำลังเรียนอยู่
       </p>
       <ol>
         <li data-route-orders="1" data-state="current">
-          <strong>1 · กระตุ้น</strong><span>สงสัยจากของใกล้ตัว</span>
+          <strong>1 · สังเกต</strong><span>ลองเอียงของใกล้ตัว</span>
         </li>
         <li data-route-orders="2" data-state="locked">
-          <strong>2 · ทำนาย</strong><span>เลือกคำตอบก่อนเห็นผล</span>
+          <strong>2 · รู้จักตัวอ่านการเอียง</strong><span>แยกทิศซ้าย–ขวากับหน้า–หลัง</span>
         </li>
-        <li data-route-orders="3,4,5" data-state="locked">
-          <strong>3 · ทดลอง</strong><span>ลากค่าและเปิด–ปิดตัวช่วย</span>
+        <li data-route-orders="3" data-state="locked">
+          <strong>3 · เตรียมคำสั่ง</strong><span>อ่านค่าซ้ำ ล้างจอ และวาดจุด</span>
+        </li>
+        <li data-route-orders="4" data-state="locked">
+          <strong>4 · แปลงค่า</strong><span>เปลี่ยนค่าการเอียงให้พอดีกับช่อง 0–4</span>
         </li>
         <li data-route-orders="5" data-state="locked">
-          <strong>4 · สังเกต</strong><span>เก็บหลักฐานสองโหมด</span>
+          <strong>5 · ทดลอง</strong><span>ขยับจุดสองทิศและลองค่าที่เลยขอบจอ</span>
         </li>
         <li data-route-orders="6,7" data-state="locked">
-          <strong>5 · อธิบาย</strong><span>หาสาเหตุและใช้คำศัพท์</span>
+          <strong>6 · ประกอบระบบ</strong><span>ตรวจลำดับและสรุปคำสำคัญ</span>
         </li>
-        <li data-route-orders="8" data-state="locked">
-          <strong>6 · ประยุกต์</strong><span>เขียนโค้ดและแก้โจทย์ใหม่</span>
-        </li>
-        <li data-route-orders="9" data-state="locked">
-          <strong>7 · สรุป</strong><span>ตรวจตนเองและสะท้อนผล</span>
+        <li data-route-orders="8,9" data-state="locked">
+          <strong>7 · ประเมิน</strong><span>ทำแบบทดสอบและสะท้อนคิด</span>
         </li>
       </ol>
     </nav>
 
     <section class="lesson-section" id="hook" aria-labelledby="hook-title">
       <div class="section-heading">
-        <p class="section-kicker">Section 1 · Hook</p>
+        <p class="section-kicker">Section 1 · ชวนสังเกต</p>
         <h2 id="hook-title">ทำไมเอียงแล้วสิ่งต่าง ๆ จึงขยับ?</h2>
         <p class="section-intro">
           ยังไม่ต้องรู้เรื่องโค้ดเลย เริ่มจากของใกล้ตัวก่อน
@@ -5536,7 +5638,7 @@
         <article class="example-card">
           <span class="example-icon" aria-hidden="true">💡</span>
           <h3>จุดไฟบน micro:bit</h3>
-          <p>จุด LED เคลื่อนที่ตามทิศทางที่เราเอียงบอร์ด</p>
+          <p>จุดไฟเคลื่อนที่ตามทิศทางที่เราเอียงบอร์ด</p>
         </article>
       </div>
 
@@ -5580,58 +5682,50 @@
 
     <section class="lesson-section" id="predict" aria-labelledby="predict-title">
       <div class="section-heading">
-        <p class="section-kicker">Section 2 · Predict — รอ Observe ใน Section 5</p>
-        <h2 id="predict-title">ทายก่อนทดลอง: ถ้าสั่งไฟไปนอกจอ จะเกิดอะไรขึ้น?</h2>
+        <p class="section-kicker">Section 2 · รู้จักตัวอ่านการเอียงและสองทิศทาง</p>
+        <h2 id="predict-title">micro:bit เปลี่ยนการเอียงให้เป็นตัวเลขอย่างไร?</h2>
         <p class="section-intro">
-          ยังไม่ต้องรู้คำตอบที่ถูก เดาจากความรู้สึกแรกได้เลย
-          ข้อนี้ไม่คิดคะแนน ระบบเก็บคำตอบไว้เทียบกับตอนท้ายบท
-          ว่าเราเข้าใจเพิ่มขึ้นแค่ไหน
+          จาก Section 1 เรามองเห็นว่าบอร์ดเอียงได้
+          ตอนนี้จะรู้จักชิ้นส่วนที่อ่านการเอียง และแยกทิศซ้าย–ขวากับหน้า–หลัง
+          ยังไม่ต้องรู้สูตรหรือโค้ด
         </p>
       </div>
 
       <div class="vocab-primer">
-        <h3>📖 คำที่จะได้ยินบ่อยวันนี้</h3>
+        <h3>📖 รู้จักทีละคำ</h3>
         <p class="vocab-primer-lead">
-          ยังไม่ต้องจำ กดเปิดดูความหมายง่าย ๆ ไว้ก่อน
-          แล้วเราจะค่อย ๆ เรียนของจริงในแต่ละส่วน
+          เปิดอ่านทีละการ์ด แล้วลองขยับมือไปตามทิศที่อธิบาย
         </p>
         <div class="vocab-primer-grid">
           <details class="vocab-chip">
-            <summary>💡 จอ micro:bit</summary>
+            <summary>📱 ตัวอ่านการเอียง</summary>
             <p>
-              หน้าจอเป็นหลอดไฟเล็ก ๆ เรียงเป็นตาราง
-              นับตำแหน่งช่องได้ตั้งแต่ช่อง 0 ถึงช่อง 4 เท่านั้น
+              เรียกว่า <strong>Accelerometer</strong> อ่านว่า แอ็ก-เซล-เล-โร-มิ-เตอร์
+              คือชิ้นส่วนรับรู้หรือ <strong>เซนเซอร์</strong> ใน micro:bit
+              ที่ส่งตัวเลขออกมาเมื่อบอร์ดเอียงหรือเคลื่อนที่
+              ในบทนี้จะเขียนสั้น ๆ ว่า <strong>accel</strong>
             </p>
           </details>
           <details class="vocab-chip">
-            <summary>📱 accelerometer (accel)</summary>
+            <summary>↔️ ทิศซ้าย–ขวา</summary>
             <p>
-              อ่านว่า แอ็ก-เซล-เล-โร-มิ-เตอร์
-              คือเซนเซอร์ในเครื่องที่รู้ว่าเรากำลังเอียงไปทางไหน
-              เหมือนที่ทำให้จอมือถือหมุนตามการถือของเรา
-              ในบทเรียนจะเขียนสั้น ๆ ว่า <strong>accel</strong>
-              ส่วนคำว่า <strong>ค่า accel</strong> คือตัวเลขที่เซนเซอร์ตัวนี้อ่านได้
+              เรียกว่า <strong>แกน X</strong> ใช้อ่านการเอียงซ้าย–ขวา
+              ลองนึกถึงเส้นแนวนอนที่พาดผ่านบอร์ด
             </p>
           </details>
           <details class="vocab-chip">
-            <summary>📏 mg (มิลลิจี)</summary>
+            <summary>↕️ ทิศหน้า–หลัง</summary>
             <p>
-              หน่วยบอกว่าเอียงมากแค่ไหน
-              ตัวเลขยิ่งมากแปลว่ายิ่งเอียง
+              เรียกว่า <strong>แกน Y</strong> ใช้อ่านการเอียงหน้า–หลัง
+              ลองนึกถึงเส้นแนวตั้งที่พาดผ่านบอร์ด
             </p>
           </details>
           <details class="vocab-chip">
-            <summary>🔢 map (แม็พ)</summary>
+            <summary>➕ 0 และ ➖</summary>
             <p>
-              การแปลงตัวเลขจากช่วงหนึ่งไปอีกช่วงหนึ่ง
-              เหมือนแปลงคะแนนเต็ม 100 ให้กลายเป็นเกรดเต็ม 4
-            </p>
-          </details>
-          <details class="vocab-chip">
-            <summary>🚧 constrain (คอนสเทรน)</summary>
-            <p>
-              ตัวช่วยจำกัดไม่ให้ตัวเลขเกินขอบที่กำหนด
-              เหมือนกันไม่ให้ไฟหลุดออกนอกจอ
+              ค่าประมาณ <strong>0</strong> หมายถึงบอร์ดอยู่กึ่งกลางของแกนนั้น
+              ค่าบวกกับค่าลบบอกทิศตรงข้ามกัน
+              ส่วนขนาดของตัวเลขบอกว่าเอียงน้อยหรือเอียงมาก
             </p>
           </details>
         </div>
@@ -5639,61 +5733,51 @@
 
       <div class="predict-grid">
         <article class="predict-card">
-          <h3>สถานการณ์ท้าทาย</h3>
+          <h3>ตรวจความเข้าใจก่อนอ่านค่า</h3>
           <p class="predict-condition">
-            จอ micro:bit มีช่องไฟเรียงเป็นแถว
-            นับตำแหน่งได้ตั้งแต่ช่อง 0 ถึงช่อง 4 เท่านั้น
-            ถ้าเราสั่งให้ไฟไปอยู่ “ช่องที่ 6” ซึ่งเลยขอบจอออกไป
-            <strong>โดยที่โปรแกรมยังไม่มีตัวช่วยอะไรมาคอยกัน</strong>
-            คุณคิดว่าจะเกิดอะไรขึ้น?
+            ถ้าต้องการให้จุดไฟเคลื่อนไปทางซ้ายและขวา
+            โปรแกรมควรเริ่มจากอ่านค่าการเอียงแกนใด?
           </p>
 
           <div class="choice-list" id="predict-choices">
             <button class="choice-button" type="button"
                     data-predict="edge" aria-pressed="false">
-              A — ไฟไปโผล่ที่ช่องขอบสุด (ช่อง 4)
+              A — แกน X
             </button>
             <button class="choice-button" type="button"
                     data-predict="missing" aria-pressed="false">
-              B — ไฟหายไป เพราะไม่มีช่องที่ 6 อยู่จริง
+              B — แกน Y
             </button>
             <button class="choice-button" type="button"
                     data-predict="blink" aria-pressed="false">
-              C — ไฟกระพริบไปมา
+              C — จำนวนไฟที่ติดอยู่
             </button>
           </div>
 
           <p class="predict-feedback" id="predict-feedback"
              role="status" aria-live="polite"></p>
           <p class="prediction-evidence-note" id="prediction-evidence-note">
-            ระบบจะยังไม่บอกว่าถูกหรือผิด จนกว่าจะเก็บหลักฐานทั้งสองโหมดใน Section 5
+            เลือกคำตอบแล้ว ระบบจะอธิบายเหตุผลทันที ข้อนี้ไม่คิดคะแนน
           </p>
           <p class="predict-sync" id="predict-sync"
              role="status" aria-live="polite"></p>
         </article>
 
         <aside class="predict-observation" id="predict-observation" hidden>
-          <h3>เปิดหลักฐานหลังทดลองครบแล้ว</h3>
+          <h3>หลักฐานที่ต้องจำก่อนเขียนโปรแกรม</h3>
           <p>
-            เราถามว่าถ้าสั่งไฟไป “ช่องที่ 6” จะเกิดอะไรขึ้น
-            ของจริงไม่ต้องถึงช่อง 6 ด้วยซ้ำ
-            แค่เอียงแรง ๆ (เช่นค่า 800) ก็ได้ตำแหน่งประมาณ
-            <strong>ช่องที่ 4.67</strong> ซึ่งเลยช่อง 4 ที่เป็นขอบสุดไปแล้ว
-            ไฟจึงหายไปเหมือนกัน
+            แกน X ใช้กับซ้าย–ขวา และแกน Y ใช้กับหน้า–หลัง
+            เมื่อบอร์ดอยู่กึ่งกลาง ค่าของแกนนั้นจะใกล้ 0
+            เอียงคนละทิศจะได้เครื่องหมายต่างกัน
           </p>
           <p class="formula-box">
-            map(800, −600, 600, 0, 4)<br>
-            = ((800 − (−600)) × 4) ÷ 1200<br>
-            ≈ 4.67
-          </p>
-          <p>
-            ยังไม่ต้องเข้าใจสูตรตอนนี้นะ
-            เราจะค่อย ๆ เรียนทีละขั้นในส่วนต่อ ๆ ไป
+            ซ้าย ↔ ขวา = ค่า X<br>
+            หน้า ↔ หลัง = ค่า Y<br>
+            กึ่งกลาง ≈ 0
           </p>
           <p class="bridge">
-            เปรียบเทียบคำทำนายเดิมกับสิ่งที่เห็นจริง:
-            ถ้าไม่ใช้ constrain() พิกัดจะหลุดขอบ แต่เมื่อใช้ constrain()
-            จุดจะถูกดึงกลับมาอยู่ที่ขอบจอ
+            ต่อไปเราจะลองอ่านค่าบวก ค่าลบ และค่ากลาง
+            แล้วรู้จักคำสั่งที่ใช้วาดจุดบนจอไฟ 5×5
           </p>
         </aside>
       </div>
@@ -5703,30 +5787,84 @@
     <section class="lesson-section" id="unplugged"
              aria-labelledby="unplugged-title">
       <div class="section-heading">
-        <p class="section-kicker">Section 3 · Unplugged map()</p>
-        <h2 id="unplugged-title">ซ้อมด้วยคะแนนสอบก่อน แล้วค่อยไปทำกับเครื่องจริง</h2>
+        <p class="section-kicker">Section 3 · อ่านค่าและเตรียมจอไฟ 5×5</p>
+        <h2 id="unplugged-title">จากค่า + / − / 0 สู่จุดไฟหนึ่งจุด</h2>
         <p class="section-intro">
-          ยังไม่ต้องแตะโค้ดเลย
-          เราจะซ้อมวิธีคิดด้วยเรื่องที่ทุกคนคุ้นอยู่แล้ว คือแปลงคะแนนเต็ม 100 ให้เป็นเกรดเต็ม 4
-          วิธีคิดอันเดียวกันนี้แหละที่จะเอาไปใช้กับเครื่องในส่วนถัดไป
+          Section 2 บอกว่า X คือซ้าย–ขวา และ Y คือหน้า–หลัง
+          ตอนนี้เราจะอ่านค่าที่ได้ทีละแบบ แล้วรู้จักคำสั่งพื้นฐานก่อนใช้สูตรแปลงค่า
+        </p>
+      </div>
+
+      <p class="section-lead-steps">
+        เรียนทีละช่วง: อ่านค่า → ทำซ้ำ → ล้างจอ → วาดจุด → รู้พิกัด
+      </p>
+
+      <div class="sensor-concepts">
+        <article class="sensor-concept">
+          <strong>ขั้นที่ 1 · อ่านค่า Accelerometer</strong>
+          <p>
+            บอร์ดอยู่กึ่งกลางของแกนจะอ่านได้ใกล้ <strong>0</strong>
+            เอียงไปด้านหนึ่งได้ค่าบวก และเอียงกลับอีกด้านได้ค่าลบ
+            เครื่องหมายบอกทิศ ส่วนขนาดของตัวเลขบอกว่าเอียงมากแค่ไหน
+          </p>
+        </article>
+        <article class="sensor-concept">
+          <strong>ขั้นที่ 2 · ใช้คำสั่งทำซ้ำตลอดเวลา</strong>
+          <p>
+            ค่า Accelerometer เปลี่ยนทุกครั้งที่มือขยับ
+            คำสั่งนี้ชื่อ <strong>forever</strong>
+            ทำให้โปรแกรมกลับมาอ่าน X และ Y ใหม่ตลอดเวลา
+          </p>
+        </article>
+        <article class="sensor-concept">
+          <strong>ขั้นที่ 3 · ปิดจุดเดิมก่อนวาดใหม่</strong>
+          <p>
+            ถ้าไม่ล้างจุดเดิม ไฟอาจค้างเป็นทางยาว
+            คำสั่ง <strong>clear screen</strong> จะปิดไฟเดิมก่อนวาดตำแหน่งรอบใหม่
+          </p>
+        </article>
+        <article class="sensor-concept">
+          <strong>ขั้นที่ 4 · ใช้คำสั่งวาดจุดหนึ่งตำแหน่ง</strong>
+          <p>
+            คำสั่งนี้ชื่อ <strong>plot(x, y)</strong> ใช้เปิดไฟที่ตำแหน่งซึ่งเราบอก
+            ค่า x เลื่อนไปซ้าย–ขวา และค่า y เลื่อนไปหน้า–หลังบนจอจำลอง
+          </p>
+        </article>
+        <article class="sensor-concept">
+          <strong>ขั้นที่ 5 · พิกัดจอมีแค่ 0–4</strong>
+          <p>
+            จอไฟของ micro:bit เรียกว่า <strong>LED</strong> มี 5 แถวและ 5 คอลัมน์
+            แต่เริ่มนับจาก 0
+            มุมซ้ายบนคือ (0,0) ตรงกลางคือ (2,2) และมุมขวาล่างคือ (4,4)
+          </p>
+        </article>
+      </div>
+
+      <div class="remember-box">
+        <p class="remember-title">💡 จำลำดับหนึ่งรอบ</p>
+        <p>
+          <strong>forever → อ่าน X/Y → clear screen → plot(x,y)</strong>
+          แต่ค่า Accelerometer มีช่วงกว้างกว่าพิกัด 0–4
+          เราจึงยังขาดวิธีแปลงช่วงตัวเลขให้พอดีกับจอ
         </p>
       </div>
 
       <div class="vocab-primer">
-        <h3>📖 สองคำที่จะใช้ในส่วนนี้</h3>
+        <h3>📖 ก่อนเรียนวิธีแปลงช่วงตัวเลข รู้จักสองคำนี้</h3>
         <div class="vocab-primer-grid">
           <details class="vocab-chip">
             <summary>⚖️ สัดส่วน</summary>
             <p>
-              การเทียบว่าของสองอย่างมากน้อยกันแค่ไหน
-              เช่นได้ครึ่งหนึ่งของคะแนนเต็ม ก็ควรได้ครึ่งหนึ่งของเกรดเต็ม
+              การเทียบตำแหน่งที่สอดคล้องกันของสองช่วง
+              เช่นค่ากลางของช่วงหนึ่งควรไปอยู่ตรงกลางของอีกช่วง
             </p>
           </details>
           <details class="vocab-chip">
-            <summary>📍 พิกัด</summary>
+            <summary>📍 วิธีแปลงช่วงตัวเลข</summary>
             <p>
-              ตัวเลขบอกตำแหน่ง เหมือนเลขที่นั่งในโรงหนัง
-              บอกว่าอยู่ช่องไหน
+              คำสั่งนี้ชื่อ <strong>map</strong> อ่านว่า แม็พ
+              ใช้แปลงตัวเลขจากช่วงหนึ่งไปอีกช่วงหนึ่ง
+              ตัวอย่างต่อไปจะใช้คะแนน 0–100 เพื่อให้เห็นวิธีคิดก่อนนำไปใช้กับค่า accel
             </p>
           </details>
         </div>
@@ -5734,10 +5872,10 @@
 
       <div class="unplugged-lab">
         <article class="unplugged-panel">
-          <h3>กิจกรรม: เครื่องแปลงคะแนนของห้อง ม.1</h3>
+          <h3>ตัวอย่างก่อนลงมือ: map คะแนนให้ดูทีละขั้น</h3>
           <p>
-            ครูเจมต้องการย่อคะแนนเต็ม 100 ให้เป็นเกรดเต็ม 4
-            ตำแหน่งต้นทางและปลายทางจึงจับคู่กันดังนี้
+            เราเริ่มจากเรื่องคุ้นเคยก่อน: ย่อคะแนนเต็ม 100 ให้เป็นช่วง 0–4
+            ดูตัวอย่างให้เข้าใจ แล้ว Section 4 จะเปลี่ยนคะแนนเป็นค่า accel
           </p>
 
           <div class="scale-points" aria-label="ตัวอย่างการแปลงคะแนนเป็นเกรด">
@@ -5784,8 +5922,8 @@
             <p class="work-steps-note">
               บรรทัดที่ 1 ตอนนี้ดูเหมือนไม่ได้ทำอะไร เพราะคะแนนต่ำสุดคือ 0
               การลบ 0 จึงได้เลขเดิม แต่จำบรรทัดนี้ไว้ให้ดี
-              เพราะใน Section 5 ค่าต่ำสุดจะกลายเป็น −600
-              บรรทัดนี้จะกลายเป็นขั้นที่สำคัญที่สุด
+              เพราะใน Section 4 ค่าต่ำสุดจะกลายเป็น −600
+              บรรทัดนี้จะช่วยให้ค่าการเอียงที่อยู่กึ่งกลางไปอยู่ตรงกลางจอได้พอดี
             </p>
           </div>
 
@@ -5813,8 +5951,8 @@
             <li>พิกัดจอ LED ก็มีช่วง 0–4 เช่นกัน</li>
           </ul>
           <p class="bridge">
-            ขั้นต่อไป เราจะเปลี่ยน “คะแนนสอบ” เป็นค่า accel
-            แล้วเปลี่ยน “เกรด” เป็นพิกัดจอ LED
+            ขั้นต่อไป เราจะใช้ map เปลี่ยน “ค่า accel” เป็นพิกัด x และ y
+            แล้วทดลองให้จุดเคลื่อนบนจอ LED 5×5
           </p>
         </aside>
       </div>
@@ -5840,99 +5978,82 @@
     <section class="lesson-section" id="mg-concept"
              aria-labelledby="mg-title">
       <div class="section-heading">
-        <p class="section-kicker">Section 4 · mg และ g</p>
-        <h2 id="mg-title">เครื่องรู้ได้ยังไงว่าเรากำลังเอียงมันอยู่</h2>
+        <p class="section-kicker">Section 4 · map ค่า Accelerometer</p>
+        <h2 id="mg-title">เชื่อมค่า X/Y ให้กลายเป็นตำแหน่ง LED</h2>
         <p class="section-intro">
-          ลองหยิบโทรศัพท์ขึ้นมาแล้วค่อย ๆ ตะแคง ภาพในจอหมุนตามใช่ไหม
-          ส่วนนี้เราจะมาดูว่าเครื่องรู้ได้อย่างไร
-          และมันบอกความเอียงออกมาเป็นตัวเลขแบบไหน
+          เรารู้ต้นทางแล้วว่าค่า X/Y อยู่ราว −600 ถึง 600
+          และรู้ปลายทางว่าพิกัดจออยู่ 0 ถึง 4
+          ส่วนนี้จะเชื่อมสองช่วงเข้าด้วยกันทีละแกน
         </p>
       </div>
 
       <div class="vocab-primer">
-        <h3>📖 คำที่จะใช้ในส่วนนี้</h3>
+        <h3>📖 คำที่ใช้ในขั้นนี้</h3>
         <div class="vocab-primer-grid">
           <details class="vocab-chip">
-            <summary>↔️ แกน x, y, z</summary>
+            <summary>📏 หน่วยของค่าการเอียง</summary>
             <p>
-              ทิศทางสามแบบที่เซนเซอร์วัดแยกกันได้ —
-              แกน x คือเอียงซ้ายขวา แกน y คือเอียงหน้าหลัง
-              แกน z คือคว่ำหรือหงาย บทนี้เราใช้แค่แกน x
+              เรียกหน่วยนี้ว่า <strong>mg</strong> อ่านว่า มิลลิจี
+              เป็นหน่วยของตัวเลขที่ Accelerometer ส่งมา
+              ในกิจกรรมนี้ 0 คือกึ่งกลาง และประมาณ ±600 คือการเอียงมือปกติ
             </p>
           </details>
           <details class="vocab-chip">
-            <summary>🚗 ความเร่ง (acceleration)</summary>
+            <summary>🔢 map (แม็พ)</summary>
             <p>
-              อ่านว่า แอ็ก-เซล-เล-เร-ชั่น
-              หมายถึงการที่ความเร็วเปลี่ยนไป
-              เช่นตอนรถออกตัวแล้วเรารู้สึกถูกดันติดเบาะ
-              หรือตอนรถเบรกแล้วตัวเราโถไปข้างหน้า
+              แปลงตำแหน่งในช่วง −600…600 ให้ไปอยู่ตำแหน่งที่สอดคล้องกันในช่วง 0…4
             </p>
           </details>
           <details class="vocab-chip">
-            <summary>🌍 g (แรงโน้มถ่วง)</summary>
+            <summary>🎯 ช่วงใช้งาน</summary>
             <p>
-              แรงที่โลกดึงของทุกอย่างลงพื้น
-              ค่า 1 g คือแรงดึงเต็มที่ ส่วน mg คือหน่วยย่อยของมัน
-              1000 mg เท่ากับ 1 g
+              ช่วงตัวเลขที่เลือกให้เหมาะกับท่าจริงของผู้ใช้
+              เราเลือก ±600 เพราะเอียงได้สบายและทำให้จุดเคลื่อนเต็มจอ
             </p>
           </details>
         </div>
       </div>
 
       <p class="section-lead-steps">
-        ไล่ทีละขั้น ขั้นละเรื่องเดียว ไม่ต้องรีบจำ
+        ใช้กติกาเดียวกันทั้งสองแกน แล้วค่อยรวมเป็นจุด (x,y)
       </p>
 
       <div class="sensor-concepts">
         <article class="sensor-concept">
-          <strong>ขั้นที่ 1 · มีอะไรอยู่ข้างใน</strong>
+          <strong>ขั้นที่ 1 · กำหนดต้นทางและปลายทาง</strong>
           <p>
-            ข้างในโทรศัพท์และในบอร์ด micro:bit
-            มีชิ้นส่วนเล็ก ๆ คอยจับว่าตอนนี้เครื่องเอียงไปทางไหน
-            ชิ้นส่วนนี้ชื่อ <strong>accelerometer</strong>
-            อ่านว่า แอ็ก-เซล-เล-โร-มิ-เตอร์
+            ต้นทางคือค่า accel <strong>−600 ถึง 600 mg</strong>
+            ปลายทางคือพิกัด LED <strong>0 ถึง 4</strong>
           </p>
         </article>
         <article class="sensor-concept">
-          <strong>ขั้นที่ 2 · ชื่อของมันบอกว่ามันวัดอะไร</strong>
+          <strong>ขั้นที่ 2 · map แกน X เป็นพิกัด x</strong>
           <p>
-            คำว่า accelerometer มาจากคำว่า <strong>acceleration</strong>
-            ที่แปลว่า <strong>ความเร่ง</strong>
-            สิ่งที่มันวัดจริง ๆ จึงคือความเร่ง ไม่ใช่ความเอียงโดยตรง
-          </p>
-          <p>
-            แล้วทำไมของที่วัดความเร่ง ถึงบอกได้ว่าเราเอียงเครื่องอยู่?
-            เพราะโลกดึงของทุกอย่างลงพื้นตลอดเวลา
-            แม้ตอนวางเครื่องนิ่ง ๆ แรงดึงนี้ก็ยังทำงานอยู่
-            พอเราตะแคงเครื่อง แรงที่เคยกดลงตรง ๆ ก็ไปกดทางด้านข้างแทน
-            เครื่องจึงรู้ได้ว่าตอนนี้ตะแคงไปทางไหน
+            ค่า X = −600 ไปที่ x = 0, ค่า X = 0 ไปที่ x = 2
+            และค่า X = 600 ไปที่ x = 4 จุดจึงเคลื่อนซ้าย–ขวา
           </p>
         </article>
         <article class="sensor-concept">
-          <strong>ขั้นที่ 3 · มันตอบมาเป็นตัวเลข</strong>
+          <strong>ขั้นที่ 3 · map แกน Y เป็นพิกัด y</strong>
           <p>
-            มันไม่ได้บอกว่า “เอียงนิดหน่อย” หรือ “เอียงเยอะ”
-            แต่ตอบออกมาเป็นตัวเลข
-            พอเป็นตัวเลขก็ต้องมีหน่วยกำกับ เหมือนน้ำหนักมีหน่วยเป็นกิโลกรัม
+            ใช้กติกาเดียวกันกับค่า Y
+            จุดจึงเคลื่อนหน้า–หลังบนบอร์ด ซึ่งแสดงเป็นขึ้น–ลงบนจอจำลอง
           </p>
         </article>
         <article class="sensor-concept">
-          <strong>ขั้นที่ 4 · หน่วยนั้นคือ mg</strong>
+          <strong>ขั้นที่ 4 · รวมสองคำตอบเป็น plot(x,y)</strong>
           <p>
-            วางเครื่องราบนิ่ง ๆ แรงที่โลกดึงลงเต็มที่ เรียกว่า <strong>1 g</strong>
-            แต่ 1 g เป็นก้อนใหญ่ไป เลยซอยย่อยเป็น 1,000 ส่วน ส่วนละ <strong>1 mg</strong>
-            เหมือน 1 กิโลกรัมซอยเป็น 1,000 กรัม
+            เมื่อได้ x และ y แล้ว โปรแกรมล้างจุดเดิมด้วย clear screen
+            จากนั้นใช้ plot(x,y) เปิดไฟตรงตำแหน่งใหม่
           </p>
         </article>
       </div>
 
       <div class="remember-box">
-        <p class="remember-title">💡 จำง่าย ๆ ว่า</p>
+        <p class="remember-title">💡 จำเป็นลูกศร</p>
         <p>
-          <strong>mg คือหน่วยบอกว่าเอียงมากแค่ไหน</strong>
-          ตัวเลขยิ่งมาก แปลว่ายิ่งเอียง
-          วางราบได้ประมาณ 0 · เอียงด้วยมือปกติได้ประมาณ 600 · ตะแคง 90 องศาได้ประมาณ 1,000
+          <strong>Accelerometer X/Y → map → พิกัด x/y → plot บน LED 5×5</strong>
+          Section 5 จะให้ทดลองทั้งสองแกน แล้วลองค่าที่เกินช่วงอย่าง 800 mg
         </p>
       </div>
 
@@ -5989,58 +6110,54 @@
       </aside>
 
       <div class="work-steps-panel">
-        <p class="work-steps-title">🔍 แปลง mg เป็น g ทีละบรรทัด</p>
+        <p class="work-steps-title">🔍 ตัวอย่างเชื่อมค่า accel กับพิกัด</p>
         <p class="work-steps-lead">
-          เพราะ 1000 mg เท่ากับ 1 g การเปลี่ยนหน่วยจึงคือการหารด้วย 1000
-          ตัวเลขที่ได้บอกว่าแรงตามแกนนั้นเป็นกี่เท่าของแรงโน้มถ่วง
+          ดูสามจุดหลักก่อน ไม่ต้องท่องสูตร
+          ถ้าค่ากลางตรงกัน จุดอื่น ๆ ระหว่างทางจะเรียงตามสัดส่วน
         </p>
         <ol class="work-steps">
           <li class="work-step">
             <span class="work-step-order">1</span>
             <div>
-              <p class="work-step-math">0 ÷ 1000 = 0</p>
+              <p class="work-step-math">map(−600) → 0</p>
               <p class="work-step-meaning">
-                วางบอร์ดราบ แกนที่เลือกไม่ได้เอียงตามแรงโน้มถ่วงเลย
-                จึงได้ 0 เท่า
+                เอียงไปด้านหนึ่งจนถึงช่วงใช้งาน จุดไปอยู่ขอบแรกของจอ
               </p>
             </div>
           </li>
           <li class="work-step">
             <span class="work-step-order">2</span>
             <div>
-              <p class="work-step-math">600 ÷ 1000 = 0.6</p>
+              <p class="work-step-math">map(0) → 2</p>
               <p class="work-step-meaning">
-                เอียงมือปกติประมาณ 35–40 องศา ได้ 0.6 เท่าของแรงโน้มถ่วง
-                หรือมากกว่าครึ่งหนึ่งเล็กน้อยเมื่อเทียบกับการเอียง 90 องศา
+                บอร์ดอยู่กึ่งกลางของช่วง จุดจึงอยู่กลางจอที่พิกัด 2
               </p>
             </div>
           </li>
           <li class="work-step">
             <span class="work-step-order">3</span>
             <div>
-              <p class="work-step-math">1000 ÷ 1000 = 1</p>
+              <p class="work-step-math">map(600) → 4</p>
               <p class="work-step-meaning">
-                เอียง 90 องศา แกนที่เลือกหันตามแรงโน้มถ่วงพอดี
-                จึงได้ 1 เท่าเต็ม หรือเขียนว่า 1 g
+                เอียงไปอีกด้านจนถึงช่วงใช้งาน จุดไปอยู่ขอบตรงข้าม
               </p>
             </div>
           </li>
         </ol>
         <p class="work-steps-note">
-          จำง่าย ๆ ว่า ตัวเลข mg ยิ่งมาก แปลว่าเอียงมาก
-          และเครื่องหมาย + หรือ − บอกว่าเอียงไปทางไหน
-          ส่วนสูตรควบคุมจอจะใช้ตัวเลข mg ตรง ๆ ไม่ต้องแปลงเป็น g ก่อน
+          ใช้ชุดนี้กับค่า X เพื่อหาพิกัด x และใช้ซ้ำกับค่า Y เพื่อหาพิกัด y
+          จากนั้นจึง plot(x,y) เป็นจุดเดียวบนจอ 5×5
         </p>
       </div>
 
       <div class="own-words" id="own-words-mg-block">
         <h3>✍️ อธิบายด้วยคำของตัวเอง</h3>
-        <p class="own-words-lead">ลองพิมพ์สั้น ๆ ว่า <strong>mg คือหน่วยที่บอกอะไร</strong> เขียนแบบที่จะอธิบายให้เพื่อนที่ยังไม่เคยเรียนเรื่องนี้ฟัง ไม่ต้องใช้ศัพท์ยาก และไม่มีคำตอบที่ถูกแบบเดียว</p>
-        <label for="own-words-mg">ถ้าเพื่อนถามว่า mg คือหน่วยอะไร เราจะตอบว่าอย่างไร</label>
+        <p class="own-words-lead">ลองอธิบายว่า <strong>ค่า mg กับเครื่องหมาย + / − / 0 ช่วยบอกการเอียงอย่างไร</strong> เขียนให้เพื่อนที่ยังไม่เคยเรียนอ่านแล้วเห็นภาพ</p>
+        <label for="own-words-mg">ค่าที่อ่านได้บอกทั้งทิศและระดับการเอียงอย่างไร</label>
         <textarea class="reflection-input" id="own-words-mg"
                   aria-describedby="own-words-mg-count"
                   maxlength="400" rows="3"
-                  placeholder="เช่น mg เป็นหน่วยที่บอกว่า..."></textarea>
+                  placeholder="เช่น 0 หมายถึงกึ่งกลาง ส่วน + กับ − บอกว่า..."></textarea>
         <p class="own-words-count" id="own-words-mg-count"
            role="status" aria-live="polite"></p>
         <button class="submit-button" id="own-words-mg-save" type="button">
@@ -6049,7 +6166,7 @@
         <p class="quiz-sync" id="own-words-mg-sync" role="status" aria-live="polite"></p>
         <div class="own-words-model" id="own-words-mg-model" hidden>
           <h4>📌 คำอธิบายของครู ลองเทียบกับของตัวเอง</h4>
-          <p>mg คือหน่วยที่บอกว่าตอนนี้เครื่องเอียงมากแค่ไหน ตัวเลขยิ่งมากยิ่งเอียง วางราบได้ประมาณ 0 เอียงด้วยมือปกติได้ประมาณ 600 และ 1,000 mg เท่ากับ 1 g พอดี<br><br>
+          <p>ค่าใกล้ 0 หมายถึงบอร์ดอยู่กึ่งกลางของแกนนั้น เครื่องหมาย + และ − บอกทิศตรงข้ามกัน ส่วนขนาดของตัวเลขบอกว่าเอียงน้อยหรือมาก เราใช้ค่าประมาณ −600 ถึง 600 เป็นช่วงทำงานของกิจกรรมนี้<br><br>
             เขียนไม่เหมือนกันไม่เป็นไร ถ้าใจความตรงกันแปลว่าเข้าใจแล้ว</p>
         </div>
       </div>
@@ -6086,51 +6203,46 @@
     <section class="lesson-section" id="tilt-simulator"
              aria-labelledby="simulator-title">
       <div class="section-heading">
-        <p class="section-kicker">Section 5 · Tilt Simulator</p>
-        <h2 id="simulator-title">ทำไมไฟถึงหลุดออกนอกจอ แล้วเราหยุดมันได้ยังไง</h2>
+        <p class="section-kicker">Section 5 · ทดลองระบบบนจอจำลอง</p>
+        <h2 id="simulator-title">เอียงซ้าย–ขวา หน้า–หลัง แล้วดูจุดเคลื่อน</h2>
         <p class="section-intro">
-          ส่วนนี้เราจะเอียงบอร์ดจำลองดูด้วยตาตัวเอง
-          ว่าเอียงแรงจนไฟหลุดออกนอกจอได้จริงไหม
-          แล้วลองเปิดตัวช่วยตัวหนึ่งเพื่อดึงไฟกลับมา
-          ไม่ต้องรู้อะไรมาก่อน ทำตามทีละขั้นได้เลย
+          เริ่มจากค่าในช่วงปกติให้จุดเคลื่อนสองแกนก่อน
+          จากนั้นทดลอง 800 mg เพื่อดูว่าทำไมค่าจึงเกินพิกัด 0–4
+          แล้วเปรียบเทียบผลเดิมกับตอนเปิดตัวช่วยจำกัดค่า
         </p>
       </div>
 
       <div class="vocab-primer">
-        <h3>📖 คำสั่งที่จะเห็นในส่วนนี้</h3>
+        <h3>📖 ทบทวนคำสั่งก่อนทดลอง</h3>
         <p class="vocab-primer-lead">
-          ส่วนนี้มีคำใหม่หลายคำ กดเปิดดูความหมายไว้ก่อนได้เลย
-          ยังไม่ต้องจำ เดี๋ยวเราจะได้ใช้จริงตอนเขียนโค้ด
+          คำเหล่านี้เรียนแล้วใน Section 3
+          ตอนนี้ให้ดูว่าทุกคำทำงานต่อกันอย่างไรในระบบจริง
         </p>
         <div class="vocab-primer-grid">
           <details class="vocab-chip">
-            <summary>🔁 ลูป</summary>
-            <p>
-              การสั่งให้ทำงานซ้ำวนไปเรื่อย ๆ ไม่หยุด
-              เหมือนตั้งเพลงให้เล่นวนซ้ำ พอจบเพลงก็เริ่มใหม่เอง
-            </p>
-          </details>
-          <details class="vocab-chip">
             <summary>♾️ forever</summary>
+            <p>ทำคำสั่งข้างในซ้ำ เพื่ออ่าน X/Y ใหม่ทุกครั้งที่มือขยับ</p>
+          </details>
+          <details class="vocab-chip">
+            <summary>🧹 clear screen</summary>
+            <p>ปิดไฟตำแหน่งเดิมก่อนวาดจุดใหม่ ไม่ให้ไฟค้างเป็นทาง</p>
+          </details>
+          <details class="vocab-chip">
+            <summary>💡 plot(x,y)</summary>
+            <p>เปิดไฟหนึ่งจุดที่พิกัด x และ y หลังแปลงค่าแล้ว</p>
+          </details>
+          <details class="vocab-chip">
+            <summary>⏸️ พักสั้น ๆ ก่อนเริ่มรอบใหม่</summary>
             <p>
-              อ่านว่า ฟอร์-เอ-เว่อร์ แปลว่า ตลอดไป
-              เป็นคำสั่งที่ทำให้โปรแกรมวนซ้ำไม่หยุด
-              ทุกอย่างที่ใส่ไว้ข้างในจะถูกทำซ้ำเรื่อย ๆ
+              คำสั่งนี้ชื่อ <strong>pause(50 ms)</strong>
+              ใช้พักสั้น ๆ ก่อนเริ่มรอบใหม่ เพื่อไม่ให้สั่งจอถี่เกินไป
             </p>
           </details>
           <details class="vocab-chip">
-            <summary>💡 plot</summary>
+            <summary>🛡️ ตัวช่วยกันค่าหลุดขอบ</summary>
             <p>
-              อ่านว่า พลอต แปลว่า จุดลงไป
-              เป็นคำสั่งให้เปิดไฟดวงหนึ่งบนจอ ตรงตำแหน่งที่เราบอก
-            </p>
-          </details>
-          <details class="vocab-chip">
-            <summary>⏸️ pause</summary>
-            <p>
-              อ่านว่า พอส แปลว่า หยุดพัก
-              เป็นคำสั่งให้โปรแกรมรอสักครู่ก่อนทำรอบถัดไป
-              เขียน pause(50) คือรอ 50 มิลลิวินาที
+              คำสั่งนี้ชื่อ <strong>constrain</strong>
+              ใช้ดึงค่าที่ต่ำกว่า 0 กลับเป็น 0 และค่าที่สูงกว่า 4 กลับเป็น 4
             </p>
           </details>
         </div>
@@ -6138,7 +6250,7 @@
 
       <div class="simulator-shell">
         <article class="sim-controls">
-          <h3>1. ปรับค่า accelerometer</h3>
+          <h3>1. ปรับค่า Accelerometer แกน X และ Y</h3>
 
           <label class="slider-label" for="accel-slider">
             <span>ค่า accel แกน x</span>
@@ -6152,18 +6264,45 @@
             <span>1023 mg</span>
           </div>
 
-          <div class="preset-row" aria-label="ค่าทดลองแนะนำ">
+          <div class="preset-row" aria-label="ค่าทดลองแกน X">
             <button class="preset-button" type="button" data-accel="-600">
-              −600
+              X = −600
             </button>
             <button class="preset-button" type="button" data-accel="0">
-              0
+              X = 0
             </button>
             <button class="preset-button" type="button" data-accel="600">
-              600
+              X = 600
             </button>
             <button class="preset-button" type="button" data-accel="800">
-              ทดลอง 800
+              ทดลอง X = 800
+            </button>
+          </div>
+
+          <label class="slider-label" for="accel-y-slider">
+            <span>ค่า accel แกน y</span>
+            <output id="accel-y-output" for="accel-y-slider">0 mg</output>
+          </label>
+          <input class="accel-slider" id="accel-y-slider" type="range"
+                 min="-1023" max="1023" step="1" value="0">
+          <div class="slider-ends" aria-hidden="true">
+            <span>−1023 mg</span>
+            <span>0</span>
+            <span>1023 mg</span>
+          </div>
+
+          <div class="preset-row" aria-label="ค่าทดลองแกน Y">
+            <button class="preset-button" type="button" data-accel-y="-600">
+              Y = −600
+            </button>
+            <button class="preset-button" type="button" data-accel-y="0">
+              Y = 0
+            </button>
+            <button class="preset-button" type="button" data-accel-y="600">
+              Y = 600
+            </button>
+            <button class="preset-button" type="button" data-accel-y="800">
+              ทดลอง Y = 800
             </button>
           </div>
 
@@ -6181,12 +6320,20 @@
 
           <div class="sim-values">
             <div class="sim-value">
-              <span>ผลจาก map() ดิบ</span>
+              <span>map() แกน X</span>
               <output id="mapped-output">2.00</output>
             </div>
             <div class="sim-value">
-              <span>ค่าที่ส่งไป plot</span>
+              <span>map() แกน Y</span>
+              <output id="mapped-y-output">2.00</output>
+            </div>
+            <div class="sim-value">
+              <span>ค่าที่ส่งไป plot แกน X</span>
               <output id="safe-output">2.00</output>
+            </div>
+            <div class="sim-value">
+              <span>ค่าที่ส่งไป plot แกน Y</span>
+              <output id="safe-y-output">2.00</output>
             </div>
             <div class="sim-value">
               <span>พิกัด LED จำลอง</span>
@@ -6196,7 +6343,7 @@
 
           <p class="sim-status" id="sim-status"
              data-state="safe" role="status" aria-live="polite">
-            บอร์ดราบ: 0 mg ถูก map เป็นพิกัด 2 ตรงกลางจอ
+            บอร์ดอยู่กึ่งกลาง: X = 0 และ Y = 0 ถูก map เป็นพิกัด (2,2)
           </p>
           <p class="sim-sync" id="sim-sync"
              role="status" aria-live="polite"></p>
@@ -6211,8 +6358,8 @@
             </div>
 
             <p class="sim-formula">
-              map(accel, −600, 600, 0, 4)<br>
-              <span id="sim-formula-result">map(0) = 2.00</span>
+              ใช้สูตรเดียวกันกับแกน X และ Y<br>
+              <span id="sim-formula-result">map X(0) = 2.00 · map Y(0) = 2.00</span>
             </p>
           </div>
         </aside>
@@ -6289,30 +6436,35 @@
                 </figcaption>
               </figure>
 
-              <h4 class="sim-mission-title">🧪 ทำตาม 3 ขั้น แล้วสังเกตจอ</h4>
+              <h4 class="sim-mission-title">🧪 ทำตาม 4 ขั้น แล้วสังเกตจอ</h4>
               <ol class="sim-mission-steps">
                 <li>
                   <span>
-                    <strong>ขั้นที่ 1 · ดูตอนบอร์ดราบก่อน</strong><br>
-                    กดปุ่ม <code>0</code> แล้วมองจอ
-                    ไฟจะอยู่ <strong>ตรงกลางพอดี</strong>
-                    เพราะบอร์ดยังไม่ได้เอียงไปทางไหน
+                    <strong>ขั้นที่ 1 · ดูตอนบอร์ดอยู่กึ่งกลาง</strong><br>
+                    กด <code>X = 0</code> และ <code>Y = 0</code>
+                    จุดจะอยู่ตรงกลางที่ <strong>(2,2)</strong>
                   </span>
                 </li>
                 <li>
                   <span>
-                    <strong>ขั้นที่ 2 · เอียงแรง ๆ ตอนยังไม่เปิดตัวช่วย</strong><br>
-                    กดปุ่ม <code>ทดลอง 800</code>
-                    คราวนี้ <strong>ไฟหายไปจากจอ</strong>
-                    เพราะตำแหน่งที่คำนวณได้เลยขอบจอออกไปแล้ว
+                    <strong>ขั้นที่ 2 · ทดลองสองแกนในช่วงปกติ</strong><br>
+                    เปลี่ยน X เป็น −600 และ 600 เพื่อดูซ้าย–ขวา
+                    แล้วเปลี่ยน Y เป็น −600 และ 600 เพื่อดูขึ้น–ลง
                   </span>
                 </li>
                 <li>
                   <span>
-                    <strong>ขั้นที่ 3 · เปิดตัวช่วยแล้วดูใหม่</strong><br>
-                    เปิดสวิตช์ <code>constrain</code> โดยยังใช้ค่า 800 เท่าเดิม
-                    <strong>ไฟกลับมาเกาะขอบจอ</strong>
-                    ไม่หายไปไหนอีก
+                    <strong>ขั้นที่ 3 · ทดลอง 800 ตอนยังปิด constrain</strong><br>
+                    กด <code>ทดลอง X = 800</code>
+                    ค่า map จะเป็นประมาณ 4.67 ซึ่งเกินพิกัด 0–4
+                    จุดจึงหายไปจากจอ
+                  </span>
+                </li>
+                <li>
+                  <span>
+                    <strong>ขั้นที่ 4 · เปิด constrain แล้วเทียบค่าเดิม</strong><br>
+                    เปิดสวิตช์โดยยังใช้ 800 เท่าเดิม
+                    ค่า 4.67 ถูกจำกัดเหลือ 4 จุดจึงกลับมาอยู่ที่ขอบ
                   </span>
                 </li>
               </ol>
@@ -6366,7 +6518,8 @@
             <li>อ่าน <span translate="no">accel</span></li>
             <li><span translate="no">map</span></li>
             <li><span translate="no">constrain</span></li>
-            <li><span translate="no">plot</span></li>
+            <li><span translate="no">clear screen</span></li>
+            <li><span translate="no">plot(x,y)</span></li>
             <li><span translate="no">pause(50 ms)</span></li>
           </ol>
           <p class="sim-code-flow-note">
@@ -6491,18 +6644,17 @@
     <section class="lesson-section" id="debug-case"
              aria-labelledby="debug-title">
       <div class="section-heading">
-        <p class="section-kicker">Section 6 · Debug Case Study</p>
-        <h2 id="debug-title">สองสูตรหน้าตาคล้ายกัน แต่ทำไมผลไม่เหมือนกัน</h2>
+        <p class="section-kicker">Section 6 · ประกอบระบบและวิเคราะห์ผล</p>
+        <h2 id="debug-title">เลือกช่วงให้ถูก แล้วเรียงคำสั่งให้ครบทั้งระบบ</h2>
         <p class="section-intro">
-          มีคนเขียนโปรแกรมนี้มาก่อนเรา แล้วเจอปัญหาว่าไฟเพี้ยน
-          ส่วนนี้เราจะเอาสูตรของเขามาวางข้าง ๆ สูตรของเรา
-          ใส่ค่าเดียวกันเข้าไปทั้งคู่ แล้วดูว่าต่างกันตรงไหน
-          การหาจุดผิดแบบนี้แหละคือสิ่งที่คนเขียนโปรแกรมทำกันจริง ๆ
+          เราเห็นแล้วว่า map อย่างเดียวอาจได้ค่าเกิน 0–4
+          ตอนนี้จะตรวจว่าช่วงที่เลือกเหมาะกับมือจริงหรือไม่
+          แล้วประกอบทุกคำสั่งเป็นระบบตรวจจับความเอียงหนึ่งชุด
         </p>
       </div>
 
       <div class="debug-lab">
-        <h3>เครื่องคำนวณเปรียบเทียบสองสูตร</h3>
+        <h3>วิเคราะห์ช่วง map ก่อนประกอบโค้ดจริง</h3>
 
         <label class="slider-label" for="debug-slider">
           <span>ค่า accel ที่นำมาทดสอบ</span>
@@ -6604,16 +6756,24 @@
 
       <div class="debug-checklist">
         <article class="debug-step">
-          <strong>1. map ให้ตรงช่วงจริง</strong>
-          ใช้ −600 ถึง 600 mg เพราะตรงกับการเอียงมือปกติ
+          <strong>1. forever อ่าน X และ Y</strong>
+          รับค่าความเอียงใหม่ทุกครั้งที่มือขยับ
         </article>
         <article class="debug-step">
-          <strong>2. constrain ก่อน plot</strong>
-          ป้องกันพิกัดหลุดจากช่วงจอ LED 0–4
+          <strong>2. map ให้ตรงช่วงจริง</strong>
+          แปลง −600…600 mg เป็นพิกัด 0…4 แยกทั้งสองแกน
         </article>
         <article class="debug-step">
-          <strong>3. pause ใน forever</strong>
-          เช่น pause(50 ms) เพื่อไม่ให้ลูปสั่งจอถี่ต่อเนื่องเกินไป
+          <strong>3. constrain พิกัด</strong>
+          จำกัด x และ y ให้อยู่ในช่วงจอ LED 0–4
+        </article>
+        <article class="debug-step">
+          <strong>4. clear screen แล้ว plot(x,y)</strong>
+          ล้างจุดเดิมก่อนเปิดไฟตำแหน่งใหม่
+        </article>
+        <article class="debug-step">
+          <strong>5. pause ก่อนเริ่มรอบถัดไป</strong>
+          เว้นจังหวะสั้น ๆ เช่น 50 ms แล้ว forever จึงอ่านค่าใหม่
         </article>
       </div>
 
@@ -6667,13 +6827,26 @@
     <section class="lesson-section" id="glossary"
              aria-labelledby="glossary-title">
       <div class="section-heading">
-        <p class="section-kicker">Section 7 · Glossary</p>
-        <h2 id="glossary-title">เปิดการ์ดคำศัพท์ของนักเขียนโปรแกรม</h2>
+        <p class="section-kicker">Section 7 · สรุประบบและคำสำคัญ</p>
+        <h2 id="glossary-title">เล่าเส้นทาง Accelerometer → map → LED ให้ครบ</h2>
         <p class="section-intro">
-          คลิกการ์ดเพื่อดูคำอ่านและความหมาย
-          สำรวจอย่างน้อย 6 การ์ด โดยต้องมีคำย่ออย่างน้อย 2 รายการ
+          อ่านลำดับระบบจากซ้ายไปขวา แล้วเปิดการ์ดทบทวนอย่างน้อย 6 คำ
+          โดยให้มีคำย่ออย่างน้อย 2 รายการ
         </p>
       </div>
+
+      <ol class="sim-code-flow" aria-label="สรุปลำดับระบบตรวจจับความเอียง">
+        <li>อ่าน <span translate="no">X/Y</span></li>
+        <li><span translate="no">map</span> เป็น 0–4</li>
+        <li><span translate="no">constrain</span></li>
+        <li><span translate="no">clear screen</span></li>
+        <li><span translate="no">plot(x,y)</span></li>
+        <li>วนใน <span translate="no">forever</span></li>
+      </ol>
+      <p class="bridge">
+        ถ้าอธิบายได้ว่าแต่ละขั้นรับค่าอะไร ส่งค่าอะไรต่อ และป้องกันปัญหาใด
+        แปลว่าพร้อมทำแบบประเมินแล้ว
+      </p>
 
       <div class="glossary-toolbar">
         <div class="glossary-search">
@@ -7975,11 +8148,11 @@
     <section class="lesson-section" id="quiz"
              aria-labelledby="quiz-title">
       <div class="section-heading">
-        <p class="section-kicker">Section 8 · Self-check Quiz</p>
-        <h2 id="quiz-title">ภารกิจสุดท้าย: พร้อมควบคุม Tilt Sensor หรือยัง?</h2>
+        <p class="section-kicker">Section 8 · ประเมินความเข้าใจ</p>
+        <h2 id="quiz-title">ตรวจว่าเชื่อม Accelerometer → map → LED ได้หรือยัง</h2>
         <p class="section-intro">
-          เลือกคำตอบให้ครบก่อน ระบบจะตรวจพร้อมกันเมื่อกดสรุปคะแนน
-          ถ้ายังไม่ถูกจะได้คำใบ้ตามวิธีคิด โดยไม่เปิดคำตอบที่ถูกทันที
+          คำถามเรียงตามสิ่งที่เพิ่งเรียน: เซนเซอร์ แกน คำสั่ง map และ constrain
+          เลือกให้ครบก่อน ระบบจะตรวจพร้อมกันและให้คำใบ้เฉพาะจุดที่ยังสับสน
         </p>
       </div>
 
@@ -8046,31 +8219,38 @@
 
       <ul class="learning-summary" aria-label="สรุปสิ่งที่เรียนวันนี้ เรียงตามลำดับที่เครื่องทำงาน">
         <li>
-          <strong>1 · เครื่องอ่านความเอียง</strong>
+          <strong>1 · Accelerometer อ่าน X และ Y</strong>
           <span>
-            ชิ้นส่วนเล็ก ๆ ข้างในบอกออกมาเป็นตัวเลข หน่วยชื่อ mg
-            วางราบได้ราว 0 เอียงด้วยมือปกติได้ราว 600
+            X ใช้กับซ้าย–ขวา Y ใช้กับหน้า–หลัง
+            ค่า 0 คือกึ่งกลาง ส่วน + และ − บอกทิศตรงข้ามกัน
           </span>
         </li>
         <li>
-          <strong>2 · แปลงตัวเลขให้เข้ากับจอ</strong>
+          <strong>2 · จอ LED ใช้พิกัด 0–4</strong>
           <span>
-            จอมีช่องไฟแค่ 0 ถึง 4 เราจึงต้องเปลี่ยนตัวเลขความเอียงให้กลายเป็นเลขช่อง
-            วิธีคิดเดียวกับแปลงคะแนนเต็ม 100 เป็นเกรดเต็ม 4 — คำสั่งนี้ชื่อ map
+            forever อ่านค่าใหม่ซ้ำ ๆ, clear screen ล้างจุดเดิม
+            และ plot(x,y) เปิดไฟตำแหน่งใหม่
           </span>
         </li>
         <li>
-          <strong>3 · กันไม่ให้ไฟหลุดขอบ</strong>
+          <strong>3 · map เชื่อมค่ากับจอ</strong>
           <span>
-            ถ้าเอียงแรงจนเลขช่องเกิน 4 ไฟจะหายไปจากจอเลย
-            constrain คือคนเฝ้าขอบ ที่ดึงค่ากลับมาไว้ที่ขอบพอดี
+            map แปลงช่วง −600…600 mg ให้เป็นพิกัด 0…4
+            โดยค่ากลาง 0 ไปอยู่กลางจอที่พิกัด 2
           </span>
         </li>
         <li>
-          <strong>4 · ทำซ้ำไปเรื่อย ๆ</strong>
+          <strong>4 · constrain ป้องกันค่าหลุดขอบ</strong>
           <span>
-            เครื่องวนอ่านค่าใหม่ตลอดเวลา แล้วพักนิดหนึ่งก่อนเริ่มรอบใหม่
-            ไฟบนจอจึงขยับตามมือเราได้ทันที
+            ค่า 800 mg ทำให้ map ได้ประมาณ 4.67
+            constrain จึงจำกัดกลับมาเป็น 4 ก่อนส่งให้ plot
+          </span>
+        </li>
+        <li>
+          <strong>5 · ทุกคำสั่งทำงานเป็นระบบเดียว</strong>
+          <span>
+            อ่าน X/Y → map → constrain → clear screen → plot → pause
+            แล้ว forever เริ่มรอบใหม่เพื่อให้จุดตามมือทันที
           </span>
         </li>
       </ul>
@@ -8168,6 +8348,24 @@
       const adminSearch = document.querySelector("#admin-search");
       const adminRows = document.querySelector("#admin-student-rows");
       const adminStatus = document.querySelector("#admin-status");
+      const credentialRotationForm = document.querySelector(
+        "#credential-rotation-form"
+      );
+      const credentialNewPassword = document.querySelector(
+        "#credential-new-password"
+      );
+      const credentialConfirmPassword = document.querySelector(
+        "#credential-confirm-password"
+      );
+      const credentialConfirmAll = document.querySelector(
+        "#credential-confirm-all"
+      );
+      const credentialRotateSubmit = document.querySelector(
+        "#credential-rotate-submit"
+      );
+      const credentialRotationStatus = document.querySelector(
+        "#credential-rotation-status"
+      );
       let sessionToken = sessionStorage.getItem(SESSION_KEY) || "";
       let currentUser = null;
       let adminStudents = [];
@@ -9451,10 +9649,11 @@
 
         predictObservation.hidden = true;
         predictionEvidenceNote.textContent =
-          "ระบบจะยังไม่บอกว่าถูกหรือผิด จนกว่าจะเก็บหลักฐานทั้งสองโหมดใน Section 5";
+          "เลือกคำตอบแล้ว ระบบจะอธิบายเหตุผลทันที ข้อนี้ไม่คิดคะแนน";
         renderScoreMap(50);
 
         accelSlider.value = "0";
+        accelYSlider.value = "0";
         constrainToggle.checked = false;
         simulatorEvidence.seenUnsafe = false;
         simulatorEvidence.seenSafe = false;
@@ -9656,6 +9855,7 @@
 
       async function showAdminDashboard(user) {
         currentUser = user;
+        resetCredentialRotationForm();
         loginScreen.hidden = true;
         appShell.hidden = true;
         adminScreen.hidden = false;
@@ -10547,6 +10747,100 @@
         }
       }
 
+      function resetCredentialRotationForm() {
+        credentialRotationForm.reset();
+        credentialNewPassword.removeAttribute("aria-invalid");
+        credentialConfirmPassword.removeAttribute("aria-invalid");
+        credentialRotateSubmit.disabled = true;
+        credentialRotateSubmit.removeAttribute("aria-busy");
+        credentialRotationStatus.textContent = "";
+        delete credentialRotationStatus.dataset.tone;
+      }
+
+      function refreshCredentialRotationState() {
+        const passwordsPresent =
+          credentialNewPassword.value.length > 0 &&
+          credentialConfirmPassword.value.length > 0;
+        credentialRotateSubmit.disabled =
+          !passwordsPresent || !credentialConfirmAll.checked;
+        credentialNewPassword.removeAttribute("aria-invalid");
+        credentialConfirmPassword.removeAttribute("aria-invalid");
+        credentialRotationStatus.textContent = "";
+        delete credentialRotationStatus.dataset.tone;
+      }
+
+      async function rotateAllStudentCredentials(event) {
+        event.preventDefault();
+        const password = credentialNewPassword.value;
+        const confirmation = credentialConfirmPassword.value;
+
+        if (password.length < 4 || password.length > 128) {
+          credentialNewPassword.setAttribute("aria-invalid", "true");
+          credentialRotationStatus.dataset.tone = "error";
+          credentialRotationStatus.textContent =
+            "รหัสนักเรียนต้องยาว 4–128 ตัวอักษร";
+          credentialNewPassword.focus();
+          return;
+        }
+        if (password !== confirmation) {
+          credentialConfirmPassword.setAttribute("aria-invalid", "true");
+          credentialRotationStatus.dataset.tone = "error";
+          credentialRotationStatus.textContent = "รหัสทั้งสองช่องไม่ตรงกัน";
+          credentialConfirmPassword.focus();
+          return;
+        }
+        if (!credentialConfirmAll.checked) {
+          credentialRotationStatus.dataset.tone = "error";
+          credentialRotationStatus.textContent =
+            "กรุณายืนยันขอบเขตนักเรียนทุกบัญชีก่อนดำเนินการ";
+          credentialConfirmAll.focus();
+          return;
+        }
+
+        const payload = {
+          password,
+          scope: "all",
+          confirmAllStudents: true
+        };
+        credentialNewPassword.value = "";
+        credentialConfirmPassword.value = "";
+        setBusy(
+          credentialRotateSubmit,
+          true,
+          "กำลังหมุนเวียนรหัส...",
+          "หมุนเวียนรหัสนักเรียนทั้งหมด"
+        );
+        credentialRotationStatus.textContent =
+          "กำลังเปลี่ยนรหัสและยกเลิกเซสชันเดิม...";
+        delete credentialRotationStatus.dataset.tone;
+
+        try {
+          const result = await callServer(
+            "resetStudentPasswords",
+            sessionToken,
+            payload
+          );
+          credentialConfirmAll.checked = false;
+          credentialRotationStatus.dataset.tone = "ok";
+          credentialRotationStatus.textContent =
+            `หมุนเวียนรหัสสำเร็จ ${Number(result.count) || 0} บัญชี ` +
+            `และยกเลิกเซสชันเดิม ${Number(result.sessionsRevoked) || 0} บัญชีแล้ว`;
+        } catch (error) {
+          credentialRotationStatus.dataset.tone = "error";
+          credentialRotationStatus.textContent =
+            "หมุนเวียนรหัสไม่สำเร็จ: " + error.message;
+        } finally {
+          payload.password = "";
+          setBusy(
+            credentialRotateSubmit,
+            false,
+            "กำลังหมุนเวียนรหัส...",
+            "หมุนเวียนรหัสนักเรียนทั้งหมด"
+          );
+          credentialRotateSubmit.disabled = true;
+        }
+      }
+
       function escapeCsvCell(value) {
         let text = String(value ?? "");
         if (/^[=+\-@]/.test(text)) text = `'${text}`;
@@ -10663,6 +10957,7 @@
         sessionStorage.removeItem(SESSION_KEY);
         adminStudents = [];
         adminSearch.value = "";
+        resetCredentialRotationForm();
         showLogin("ออกจากระบบแล้ว");
         loginMessage.classList.add("is-success");
         if (tokenToRemove) {
@@ -10684,6 +10979,22 @@
 
       adminRefreshButton.addEventListener("click", () => {
         void loadAdminDashboard();
+      });
+
+      credentialNewPassword.addEventListener(
+        "input",
+        refreshCredentialRotationState
+      );
+      credentialConfirmPassword.addEventListener(
+        "input",
+        refreshCredentialRotationState
+      );
+      credentialConfirmAll.addEventListener(
+        "change",
+        refreshCredentialRotationState
+      );
+      credentialRotationForm.addEventListener("submit", (event) => {
+        void rotateAllStudentCredentials(event);
       });
 
       adminExportButton.addEventListener("click", exportAdminCsv);
@@ -11967,24 +12278,22 @@
 
       const predictMessages = {
         edge:
-          "บันทึกคำทำนายแล้ว: คุณคิดว่าระบบจะพาจุดกลับมาที่ขอบจอ " +
-          "เก็บเหตุผลนี้ไว้ แล้วไปหาหลักฐานว่ามีคำสั่งใดทำหน้าที่ดึงค่ากลับหรือไม่",
+          "ถูกต้อง: แกน X ใช้อ่านการเอียงซ้าย–ขวา " +
+          "ส่วนแกน Y ใช้อ่านหน้า–หลัง ลองดูสรุปด้านข้างก่อนเรียนขั้นถัดไป",
         missing:
-          "บันทึกคำทำนายแล้ว: คุณคิดว่าพิกัดที่ไม่มีอยู่จะทำให้ไฟหาย " +
-          "เก็บเหตุผลนี้ไว้ แล้วไปทดลองว่าผลเปลี่ยนหรือไม่เมื่อเปิดตัวช่วยจำกัดค่า",
+          "แกน Y ใช้อ่านหน้า–หลัง ถ้าต้องการซ้าย–ขวาให้เริ่มจากแกน X " +
+          "ไม่เป็นไร ข้อนี้มีไว้ตรวจพื้นฐานก่อนทดลอง",
         blink:
-          "บันทึกคำทำนายแล้ว: คุณคาดว่าจะเห็นการกระพริบ " +
-          "ตอนทดลองให้สังเกตทั้งตำแหน่งจุดและสถานะจอ แล้วค่อยตัดสินจากหลักฐาน"
+          "จำนวนไฟเป็นผลลัพธ์บนจอ ไม่ใช่ข้อมูลการเอียง " +
+          "ข้อมูลซ้าย–ขวาต้องมาจากค่า Accelerometer แกน X"
       };
 
       function revealPredictionEvidence() {
         const selected = Array.from(predictButtons).find(
           (button) => button.getAttribute("aria-pressed") === "true"
         );
-        // ทำเครื่องหมายข้อที่ตรงกับผลจริงเสมอ ไม่ใช่เฉพาะข้อที่นักเรียนเลือก
-        // เพื่อให้เห็นคำตอบที่ถูกแม้ทายผิด
         predictButtons.forEach((button) => {
-          if (button.dataset.predict === "missing") {
+          if (button.dataset.predict === "edge") {
             button.dataset.result = "correct";
           } else if (selected && button === selected) {
             button.dataset.result = "incorrect";
@@ -11994,18 +12303,15 @@
         });
         predictObservation.hidden = false;
         if (predictionEvidenceNote) {
-          // บอกผลเป็นข้อความด้วย ไม่พึ่งสีอย่างเดียว ตาม Blueprint #222
           const matched = Boolean(selected) &&
-            selected.dataset.predict === "missing";
+            selected.dataset.predict === "edge";
           predictionEvidenceNote.textContent = matched
-            ? "เก็บหลักฐานครบแล้ว คำทำนายของคุณตรงกับผลจริง คือข้อ B ไฟหายไป " +
-              "อ่านคำอธิบายด้านข้างว่าเพราะอะไร"
-            : "เก็บหลักฐานครบแล้ว ผลจริงคือข้อ B ไฟหายไป ซึ่งต่างจากที่คุณทาย " +
-              "การทายไม่ตรงเป็นเรื่องปกติ อ่านคำอธิบายด้านข้างว่าเพราะอะไร";
+            ? "ตอบถูก: แกน X ใช้กับซ้าย–ขวา อ่านสรุปด้านข้างแล้วไปต่อได้เลย"
+            : "คำตอบคือข้อ A แกน X ใช้กับซ้าย–ขวา ส่วนแกน Y ใช้กับหน้า–หลัง";
         }
       }
 
-      function renderPredictAnswer(choice, evidenceReady = false) {
+      function renderPredictAnswer(choice) {
         if (!predictMessages[choice]) return;
 
         predictButtons.forEach((button) => {
@@ -12016,8 +12322,7 @@
         });
 
         predictFeedback.textContent = predictMessages[choice];
-        predictObservation.hidden = true;
-        if (evidenceReady) revealPredictionEvidence();
+        revealPredictionEvidence();
       }
 
       async function savePredictAnswer(choice) {
@@ -12060,10 +12365,10 @@
             result.state.worksheet.tiltSimulator.completed
           );
           if (savedChoice) {
-            renderPredictAnswer(savedChoice, evidenceReady);
+            renderPredictAnswer(savedChoice);
             predictSync.textContent = evidenceReady
-              ? "เรียกคืนคำทำนายและหลักฐานที่ทดลองครบแล้ว"
-              : "เรียกคืนคำทำนายแล้ว รอเปรียบเทียบหลังทดลอง Section 5";
+              ? "เรียกคืนคำตอบเรื่องแกน X/Y แล้ว"
+              : "เรียกคืนคำตอบเรื่องแกน X/Y แล้ว";
           }
         } catch (error) {
           predictSync.textContent =
@@ -12142,7 +12447,7 @@
 
           if (!hasPrediction) {
             unpluggedSync.textContent =
-              "ทดลองได้แล้ว แต่กรุณาทำกิจกรรม Predict ใน Section 2 ก่อนบันทึก";
+              "ทดลองได้แล้ว แต่กรุณาทำกิจกรรมแกน X/Y ใน Section 2 ก่อนบันทึก";
             return;
           }
 
@@ -12324,14 +12629,20 @@
 
       const accelSlider = document.querySelector("#accel-slider");
       const accelOutput = document.querySelector("#accel-output");
+      const accelYSlider = document.querySelector("#accel-y-slider");
+      const accelYOutput = document.querySelector("#accel-y-output");
       const constrainToggle =
         document.querySelector("#constrain-toggle");
       const constrainLabel =
         document.querySelector("#constrain-label");
       const mappedOutput =
         document.querySelector("#mapped-output");
+      const mappedYOutput =
+        document.querySelector("#mapped-y-output");
       const safeOutput =
         document.querySelector("#safe-output");
+      const safeYOutput =
+        document.querySelector("#safe-y-output");
       const plotOutput =
         document.querySelector("#plot-output");
       const simStatus =
@@ -12348,6 +12659,8 @@
         document.querySelector("#safe-evidence");
       const presetButtons =
         document.querySelectorAll("[data-accel]");
+      const yPresetButtons =
+        document.querySelectorAll("[data-accel-y]");
 
       const simulatorEvidence = {
         seenUnsafe: false,
@@ -12396,8 +12709,9 @@
       }
 
       function recordSimulatorEvidence() {
-        const accel = Number(accelSlider.value);
-        if (Math.abs(accel) <= 600) return;
+        const accelX = Number(accelSlider.value);
+        const accelY = Number(accelYSlider.value);
+        if (Math.abs(accelX) <= 600 && Math.abs(accelY) <= 600) return;
 
         if (constrainToggle.checked) {
           simulatorEvidence.seenSafe = true;
@@ -12408,55 +12722,66 @@
       }
 
       function renderTiltSimulator() {
-        const accel = Number(accelSlider.value);
-        const mapped = mapAccelToLed(accel);
+        const accelX = Number(accelSlider.value);
+        const accelY = Number(accelYSlider.value);
+        const mappedX = mapAccelToLed(accelX);
+        const mappedY = mapAccelToLed(accelY);
         const constrainEnabled = constrainToggle.checked;
-        const valueForPlot = constrainEnabled
-          ? constrainNumber(mapped, LED_MIN, LED_MAX)
-          : mapped;
+        const valueForPlotX = constrainEnabled
+          ? constrainNumber(mappedX, LED_MIN, LED_MAX)
+          : mappedX;
+        const valueForPlotY = constrainEnabled
+          ? constrainNumber(mappedY, LED_MIN, LED_MAX)
+          : mappedY;
+        const outsideBefore =
+          mappedX < LED_MIN || mappedX > LED_MAX ||
+          mappedY < LED_MIN || mappedY > LED_MAX;
         const outsideDisplay =
-          valueForPlot < LED_MIN || valueForPlot > LED_MAX;
-        const plotColumn = outsideDisplay
-          ? null
-          : Math.round(valueForPlot);
+          valueForPlotX < LED_MIN || valueForPlotX > LED_MAX ||
+          valueForPlotY < LED_MIN || valueForPlotY > LED_MAX;
+        const plotColumn = outsideDisplay ? null : Math.round(valueForPlotX);
+        const plotRow = outsideDisplay ? null : Math.round(valueForPlotY);
 
-        accelOutput.textContent = `${accel} mg`;
+        accelOutput.textContent = `${accelX} mg`;
+        accelYOutput.textContent = `${accelY} mg`;
         constrainLabel.textContent =
           constrainEnabled ? "เปิด" : "ปิด";
-        mappedOutput.textContent = mapped.toFixed(2);
-        safeOutput.textContent = valueForPlot.toFixed(2);
-        plotOutput.textContent = plotColumn === null
+        mappedOutput.textContent = mappedX.toFixed(2);
+        mappedYOutput.textContent = mappedY.toFixed(2);
+        safeOutput.textContent = valueForPlotX.toFixed(2);
+        safeYOutput.textContent = valueForPlotY.toFixed(2);
+        plotOutput.textContent = outsideDisplay
           ? "นอกจอ 0–4"
-          : `x = ${plotColumn}, y = 2`;
+          : `x = ${plotColumn}, y = ${plotRow}`;
         simFormulaResult.textContent =
-          `map(${accel}) = ${mapped.toFixed(2)}`;
+          `map X(${accelX}) = ${mappedX.toFixed(2)} · ` +
+          `map Y(${accelY}) = ${mappedY.toFixed(2)}`;
 
         const simSteps = mapWorkSteps({
-          value: accel,
+          value: accelX,
           fromMin: ACCEL_MAP_MIN,
           fromMax: ACCEL_MAP_MAX,
           toMax: LED_MAX,
-          toLabel: "จอที่มีพิกัด 0 ถึง 4",
+          toLabel: "พิกัด x ที่มีช่วง 0 ถึง 4",
           unit: "mg"
         });
-        // ค่าที่หลุดขอบต้องเห็นด้วยว่าเกิดอะไรขึ้นต่อ ไม่ใช่จบแค่ตัวเลขที่เกิน
-        if (mapped < LED_MIN || mapped > LED_MAX) {
+        if (outsideBefore) {
           simSteps.push(
             constrainEnabled
               ? {
                   warning: true,
                   math:
-                    `constrain(${mapped.toFixed(2)}, ${LED_MIN}, ${LED_MAX})` +
-                    ` = ${valueForPlot.toFixed(2)}`,
+                    `constrain(x) = ${valueForPlotX.toFixed(2)}, ` +
+                    `constrain(y) = ${valueForPlotY.toFixed(2)}`,
                   meaning:
-                    `พิกัดหลุดออกนอกจอ constrain จึงดึงกลับมาไว้ที่ ` +
-                    `${valueForPlot.toFixed(2)} ไฟจึงยังติดอยู่ที่ขอบ`
+                    "พิกัดที่เกินช่วงถูกดึงกลับมาอยู่ใน 0–4 จุดจึงยังอยู่บนจอ"
                 }
               : {
                   warning: true,
-                  math: `${mapped.toFixed(2)} ไม่อยู่ในช่วง ${LED_MIN} ถึง ${LED_MAX}`,
+                  math:
+                    `x = ${mappedX.toFixed(2)}, y = ${mappedY.toFixed(2)}`,
                   meaning:
-                    "ยังไม่ได้เปิด constrain พิกัดจึงหลุดออกนอกจอ ไฟจึงหายไป"
+                    "อย่างน้อยหนึ่งแกนอยู่นอกช่วง 0–4 จุดจึงไม่มีตำแหน่งบนจอ"
                 }
           );
         }
@@ -12467,29 +12792,29 @@
           const column = index % 5;
           cell.classList.toggle(
             "is-lit",
-            row === 2 && column === plotColumn
+            row === plotRow && column === plotColumn
           );
         });
 
         if (outsideDisplay) {
           simStatus.dataset.state = "danger";
           simStatus.textContent =
-            `map() ได้ ${mapped.toFixed(2)} ซึ่งเกินพิกัด 0–4 ` +
-            "จึงเกิดอาการไฟหายหรือระบบสะดุด";
-        } else if (constrainEnabled &&
-                   (mapped < LED_MIN || mapped > LED_MAX)) {
+            `map X = ${mappedX.toFixed(2)}, map Y = ${mappedY.toFixed(2)} ` +
+            "อย่างน้อยหนึ่งค่าหลุดพิกัด 0–4 จุดจึงหายไป";
+        } else if (constrainEnabled && outsideBefore) {
           simStatus.dataset.state = "safe";
           simStatus.textContent =
-            `constrain() จำกัด ${mapped.toFixed(2)} ให้เหลือ ` +
-            `${valueForPlot.toFixed(2)} จุดไฟจึงอยู่ที่ขอบจอ`;
-        } else if (accel === 0) {
+            `constrain จำกัดพิกัดเป็น (${valueForPlotX.toFixed(2)}, ` +
+            `${valueForPlotY.toFixed(2)}) จุดจึงกลับมาอยู่ที่ขอบจอ`;
+        } else if (accelX === 0 && accelY === 0) {
           simStatus.dataset.state = "safe";
           simStatus.textContent =
-            "บอร์ดราบ: 0 mg ถูก map เป็นพิกัด 2 ตรงกลางจอ";
+            "X = 0 และ Y = 0 ถูก map เป็นพิกัด (2,2) ตรงกลางจอ";
         } else {
           simStatus.dataset.state = "safe";
           simStatus.textContent =
-            `ค่า ${mapped.toFixed(2)} ยังอยู่ในช่วงพิกัด 0–4`;
+            `พิกัด (${mappedX.toFixed(2)}, ${mappedY.toFixed(2)}) ` +
+            "ยังอยู่ในช่วง 0–4 ลองขยับอีกแกนเพื่อควบคุมจุดสองทิศ";
         }
       }
 
@@ -12514,6 +12839,7 @@
             ...(state.worksheet || {}),
             tiltSimulator: {
               accel: Number(accelSlider.value),
+              accelY: Number(accelYSlider.value),
               constrainEnabled: constrainToggle.checked,
               seenUnsafe: simulatorEvidence.seenUnsafe,
               seenSafe: simulatorEvidence.seenSafe,
@@ -12564,6 +12890,12 @@
               1023
             );
             accelSlider.value = String(savedAccel);
+            const savedAccelY = constrainNumber(
+              Number(saved.accelY) || 0,
+              -1023,
+              1023
+            );
+            accelYSlider.value = String(savedAccelY);
             constrainToggle.checked =
               Boolean(saved.constrainEnabled);
             simulatorEvidence.seenUnsafe =
@@ -12585,15 +12917,17 @@
         }
       }
 
-      accelSlider.addEventListener("input", () => {
-        renderTiltSimulator();
-        simSync.textContent = "หยุดลากเพื่อบันทึกค่าล่าสุด";
-      });
+      [accelSlider, accelYSlider].forEach((slider) => {
+        slider.addEventListener("input", () => {
+          renderTiltSimulator();
+          simSync.textContent = "หยุดลากเพื่อบันทึกค่าล่าสุด";
+        });
 
-      accelSlider.addEventListener("change", () => {
-        recordSimulatorEvidence();
-        renderTiltSimulator();
-        void saveTiltSimulator();
+        slider.addEventListener("change", () => {
+          recordSimulatorEvidence();
+          renderTiltSimulator();
+          void saveTiltSimulator();
+        });
       });
 
       constrainToggle.addEventListener("change", () => {
@@ -12605,6 +12939,15 @@
       presetButtons.forEach((button) => {
         button.addEventListener("click", () => {
           accelSlider.value = button.dataset.accel;
+          recordSimulatorEvidence();
+          renderTiltSimulator();
+          void saveTiltSimulator();
+        });
+      });
+
+      yPresetButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          accelYSlider.value = button.dataset.accelY;
           recordSimulatorEvidence();
           renderTiltSimulator();
           void saveTiltSimulator();
@@ -12735,6 +13078,7 @@
         worksheet.tiltSimulator = {
           ...(worksheet.tiltSimulator || {}),
           accel: Number(accelSlider.value),
+          accelY: Number(accelYSlider.value),
           constrainEnabled: constrainToggle.checked,
           seenUnsafe: simulatorEvidence.seenUnsafe,
           seenSafe: simulatorEvidence.seenSafe,
@@ -13414,16 +13758,16 @@
       const QUIZ_QUESTIONS = [
         {
           id: "q1",
-          question: "accelerometer บน micro:bit ใช้ตรวจวัดสิ่งใด?",
+          question: "ข้อมูลใดมาจาก Accelerometer บน micro:bit?",
           choices: [
             ["temperature", "อุณหภูมิ"],
-            ["acceleration", "ความเร่ง"],
+            ["acceleration", "การเคลื่อนไหวและการเอียงของบอร์ด"],
             ["sound", "ระดับเสียง"]
           ],
           hint:
-            "หลายคนเข้าใจว่า accelerometer เป็นเซนเซอร์วัดองศาโดยตรง ลองทบทวนว่าจริง ๆ แล้วมันวัดอะไร แล้วเราเอาค่านั้นมาบอกการเอียงได้อย่างไร",
+            "นึกถึงตอนเอียงบอร์ดแล้วค่าแกน X/Y เปลี่ยน เซนเซอร์ใดเป็นผู้ส่งตัวเลขเหล่านั้น",
           explanation:
-            "accelerometer คือเซนเซอร์วัดความเร่ง และช่วยให้โปรแกรมรับรู้การเอียง",
+            "Accelerometer ส่งค่าการเคลื่อนไหวตามแกน X/Y จึงช่วยให้โปรแกรมรับรู้การเอียง",
           misconceptions: {
             temperature:
               "อุณหภูมิต้องใช้เซนเซอร์อีกชนิดหนึ่ง ลองย้อนชื่อภาษาอังกฤษ acceleration แล้วเชื่อมกับสิ่งที่เซนเซอร์นี้วัด",
@@ -13431,74 +13775,74 @@
               "ระดับเสียงมาจากไมโครโฟน ลองแยกว่าอุปกรณ์ใดรับเสียง และอุปกรณ์ใดรับการเคลื่อนไหวของบอร์ด"
           },
           challenge: "ท้าทายต่อ: บทนี้เลือกอ่านแกนใดเพื่อควบคุมซ้าย–ขวา?",
-          reviewHref: "#mg-concept",
-          reviewLabel: "ทบทวน Section 4 · เซนเซอร์และแกน"
+          reviewHref: "#predict",
+          reviewLabel: "ทบทวน Section 2 · Accelerometer และแกน X/Y"
         },
         {
           id: "q2",
-          question: "ข้อใดแสดงความสัมพันธ์ระหว่าง mg และ g ได้ถูกต้อง?",
+          question: "ถ้าต้องการให้จุดเคลื่อนซ้าย–ขวา ควรอ่าน Accelerometer แกนใด?",
           choices: [
-            ["one", "1000 mg = 1 g"],
-            ["hundred", "100 mg = 1 g"],
-            ["equal", "1 mg = 1000 g"]
+            ["one", "แกน X"],
+            ["hundred", "แกน Y"],
+            ["equal", "อ่านจำนวน LED"]
           ],
           hint:
-            "ระวังสับสน mg ในบทนี้ไม่ใช่มิลลิกรัมที่ใช้ชั่งน้ำหนัก ลองนึกว่าบอร์ดวางราบอ่านได้ 0 mg และเอียง 90° อ่านได้ประมาณ 1000 mg",
+            "นึกถึงเส้นแนวนอนที่พาดผ่านบอร์ด ซ้ายและขวาอยู่บนแกนเดียวกัน",
           explanation:
-            "milli หมายถึงหนึ่งในพัน ดังนั้น 1000 mg จึงเท่ากับ 1 g",
+            "แกน X ใช้อ่านซ้าย–ขวา ส่วนแกน Y ใช้อ่านหน้า–หลัง",
           misconceptions: {
             hundred:
-              "คำว่า milli หมายถึงหนึ่งในพัน ไม่ใช่หนึ่งในร้อย ลองนับว่าต้องใช้หน่วยย่อยกี่ส่วนจึงรวมเป็น 1 หน่วยเต็ม",
+              "แกน Y ใช้กับหน้า–หลัง ลองนึกถึงเส้นแนวตั้งบนบอร์ด แล้วเทียบกับการเคลื่อนซ้าย–ขวา",
             equal:
-              "หน่วยย่อยควรมีขนาดเล็กกว่าหน่วยเต็ม ลองตรวจว่าความสัมพันธ์ที่เลือกทำให้ mg เล็กกว่าหรือใหญ่กว่า g"
+              "จำนวน LED เป็นผลลัพธ์ ไม่ใช่ข้อมูลการเอียง ต้องอ่านค่าจาก Accelerometer"
           },
-          challenge: "ท้าทายต่อ: 500 mg คิดเป็นกี่ g?",
-          reviewHref: "#mg-concept",
-          reviewLabel: "ทบทวน Section 4 · mg และ g"
+          challenge: "ท้าทายต่อ: ถ้าต้องการขึ้น–ลงบนจอควรเริ่มจากแกนใด?",
+          reviewHref: "#predict",
+          reviewLabel: "ทบทวน Section 2 · แกน X/Y"
         },
         {
           id: "q3",
-          question: "เมื่อแปลงคะแนน 0–100 เป็นเกรด 0–4 คะแนน 50 ได้เกรดเท่าใด?",
+          question: "คำสั่ง forever ช่วยระบบตรวจจับความเอียงอย่างไร?",
           choices: [
-            ["one", "เกรด 1"],
-            ["two", "เกรด 2"],
-            ["four", "เกรด 4"]
+            ["one", "อ่านค่าเพียงครั้งเดียวตอนเริ่ม"],
+            ["two", "อ่านค่าและอัปเดตจุดซ้ำไปเรื่อย ๆ"],
+            ["four", "ทำงานแค่ 4 รอบตามจำนวนพิกัด"]
           ],
           hint:
-            "ลองนึกถึงจุดกึ่งกลาง ถ้า 0 คะแนนได้เกรด 0 และ 100 คะแนนได้เกรด 4 แล้วคะแนนที่อยู่ตรงกลางพอดีควรได้เท่าไร",
+            "ค่า X/Y เปลี่ยนทุกครั้งที่มือขยับ โปรแกรมจึงต้องกลับมาอ่านค่าใหม่",
           explanation:
-            "50 อยู่กึ่งกลางของช่วง 0–100 จึงตรงกับ 2 ซึ่งอยู่กึ่งกลางของ 0–4",
+            "forever ทำให้โปรแกรมอ่านค่า ล้างจอ และวาดจุดใหม่ซ้ำตลอดเวลา",
           misconceptions: {
             one:
-              "คุณอาจย่อช่วงไม่ครบสัดส่วน ลองทำเครื่องหมายกึ่งกลางของเส้น 0–4 ก่อน แล้วเทียบกับ 50 ซึ่งอยู่กึ่งกลางของ 0–100",
+              "ถ้าอ่านครั้งเดียว จุดจะไม่ตามมือหลังจากค่าแรก ลองติดตามว่าค่าควรถูกอ่านใหม่เมื่อใด",
             four:
-              "เกรด 4 เป็นปลายช่วงที่ตรงกับ 100 คะแนน ลองตรวจว่า 50 อยู่ปลายช่วงหรืออยู่ตรงกลาง"
+              "พิกัด 0–4 ไม่ได้กำหนดจำนวนรอบของโปรแกรม forever จะทำซ้ำต่อเนื่อง"
           },
-          challenge: "ท้าทายต่อ: ถ้าได้ 25 คะแนน จะอยู่ที่ส่วนใดของช่วง 0–4?",
+          challenge: "ท้าทายต่อ: ในหนึ่งรอบควรล้างจอก่อนหรือหลัง plot?",
           reviewHref: "#unplugged",
-          reviewLabel: "ทบทวน Section 3 · เครื่องแปลงคะแนน"
+          reviewLabel: "ทบทวน Section 3 · forever และคำสั่งจอ"
         },
         {
           id: "q4",
-          question: "ที่ accel = 600 mg ผลของสองสูตรเป็นอย่างไร?",
+          question: "map(600, −600, 600, 0, 4) ให้พิกัดใด?",
           choices: [
-            ["both-four", "ทั้งสองสูตรได้ 4.00"],
-            ["map-four", "map() ได้ 4.00 และสูตรเดิมได้ประมาณ 4.06"],
-            ["both-two", "ทั้งสองสูตรได้ประมาณ 2"]
+            ["both-four", "พิกัด 2 ตรงกลาง"],
+            ["map-four", "พิกัด 4 ที่ขอบปลายช่วง"],
+            ["both-two", "พิกัด 6 ซึ่งเกินจอ"]
           ],
           hint:
-            "ลองแทนค่า 600 ลงในทั้งสองสูตรจริง ๆ แล้วเทียบดูว่าค่าไหนยังอยู่ในช่วง 0–4 และค่าไหนหลุดขอบออกไป",
+            "600 เป็นค่าสูงสุดของช่วงต้นทาง จึงควรตรงกับค่าสูงสุดของช่วงปลายทาง",
           explanation:
-            "map(600, −600, 600, 0, 4) ได้ 4.00 แต่ (600 + 1023) / 400 ได้ประมาณ 4.06",
+            "map จับคู่ 600 ซึ่งเป็นปลายช่วงต้นทางกับ 4 ซึ่งเป็นปลายช่วงพิกัด LED",
           misconceptions: {
             "both-four":
-              "ผลที่มองคล้าย 4 อาจไม่เท่ากับ 4 จริง ลองดูทศนิยมสองตำแหน่งและถามว่าค่าใดเกินขอบแม้เพียงเล็กน้อย",
+              "พิกัด 2 ตรงกับค่ากลาง 0 mg แต่โจทย์ใช้ 600 mg ซึ่งอยู่ปลายช่วง",
             "both-two":
-              "พิกัด 2 เป็นค่ากลางของบอร์ดราบ 0 mg แต่โจทย์นี้ใช้ 600 mg ซึ่งอยู่ปลายช่วง ลองแยกสองกรณีนี้ออกจากกัน"
+              "map ไม่ใช้เลข 600 เป็นจำนวนช่อง แต่แปลงช่วง −600…600 ให้เป็น 0…4"
           },
-          challenge: "ท้าทายต่อ: ที่ 800 mg สูตร map ให้ค่าเกินขอบหรือไม่?",
-          reviewHref: "#debug-case",
-          reviewLabel: "ทบทวน Section 6 · เปรียบเทียบสูตร"
+          challenge: "ท้าทายต่อ: ถ้าเปลี่ยนค่าเป็น 800 ผล map จะยังอยู่ใน 0–4 หรือไม่?",
+          reviewHref: "#mg-concept",
+          reviewLabel: "ทบทวน Section 4 · map ค่า Accelerometer"
         },
         {
           id: "q5",
@@ -13520,29 +13864,29 @@
           },
           challenge: "ท้าทายต่อ: ถ้า map ได้ −0.67 constrain ควรส่งค่าใดไป plot?",
           reviewHref: "#tilt-simulator",
-          reviewLabel: "ทบทวน Section 5 · เปิด–ปิด constrain"
+          reviewLabel: "ทบทวน Section 5 · เปรียบเทียบก่อน–หลัง constrain"
         },
         {
           id: "q6",
-          question: "pause(50 ms) ในลูป forever มีประโยชน์อย่างไร?",
+          question: "ทำไมควรใช้ clear screen ก่อน plot จุดตำแหน่งใหม่?",
           choices: [
-            ["stop", "หยุดโปรแกรมถาวร"],
-            ["reset", "ลบรหัสโปรแกรมทั้งหมด"],
-            ["pace", "เว้นจังหวะไม่ให้ลูปสั่งจอถี่ต่อเนื่องเกินไป"]
+            ["stop", "เพื่อหยุดโปรแกรมถาวร"],
+            ["reset", "เพื่อลบโค้ดทั้งหมด"],
+            ["pace", "เพื่อปิดจุดเดิม ไม่ให้ไฟค้างเป็นทาง"]
           ],
           hint:
-            "ลองนึกว่าถ้าไม่มี pause ลูป forever จะสั่งจอถี่แค่ไหนในหนึ่งวินาที แล้วผลที่เห็นบนจอกับการทำงานของระบบจะเป็นอย่างไร",
+            "ลองนึกว่าถ้าวาดจุดใหม่ทุกครั้งแต่ไม่ปิดจุดเก่า จอจะสะสมไฟเป็นรูปแบบใด",
           explanation:
-            "pause ทำให้ forever มีจังหวะพัก ลดการสั่งงานจอซ้ำถี่เกินไป",
+            "clear screen ปิดไฟตำแหน่งเดิมก่อน plot จุดใหม่ จึงเห็นจุดเดียวเคลื่อนตามการเอียง",
           misconceptions: {
             stop:
-              "pause หยุดเพียงชั่วคราวตามจำนวนมิลลิวินาที แล้ว forever เริ่มรอบใหม่ ลองแยกคำว่า ‘พัก’ ออกจาก ‘หยุดถาวร’",
+              "clear screen ล้างเฉพาะภาพบน LED ไม่ได้หยุด forever โปรแกรมยังทำรอบถัดไป",
             reset:
-              "การลบรหัสไม่ใช่หน้าที่ของคำสั่งเวลา ลองติดตามว่าเมื่อครบ 50 ms แล้วลูปควรทำอะไรต่อ"
+              "คำสั่งนี้ไม่ลบโค้ดหรือตัวแปร เพียงปิดไฟที่กำลังแสดงบนจอ"
           },
-          challenge: "ท้าทายต่อ: เปลี่ยน 50 เป็น 200 แล้วจุดจะตอบสนองเร็วขึ้นหรือช้าลง?",
-          reviewHref: "#coding-lab",
-          reviewLabel: "ทบทวนภาคปฏิบัติ · จังหวะ pause"
+          challenge: "ท้าทายต่อ: หลัง plot แล้ว pause(50 ms) ช่วยอะไร?",
+          reviewHref: "#unplugged",
+          reviewLabel: "ทบทวน Section 3 · clear screen และ plot"
         }
       ];
 
@@ -13937,10 +14281,14 @@
             locked: false
           };
           await callServer("saveProgress", sessionToken, state);
-          quizSync.textContent = "บันทึกคำตอบที่ทำไว้แล้ว";
+          if (!quizRoundLocked) {
+            quizSync.textContent = "บันทึกคำตอบที่ทำไว้แล้ว";
+          }
         } catch (error) {
-          quizSync.textContent =
-            "คำตอบยังอยู่บนหน้านี้ แต่บันทึกร่างไม่ได้ กรุณาตรวจอินเทอร์เน็ต";
+          if (!quizRoundLocked) {
+            quizSync.textContent =
+              "คำตอบยังอยู่บนหน้านี้ แต่บันทึกร่างไม่ได้ กรุณาตรวจอินเทอร์เน็ต";
+          }
         }
       }
 
