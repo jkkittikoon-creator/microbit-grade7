@@ -8,7 +8,3 @@
 .lesson-xy-*/
 .prod-security-rotation-*/
 .playwright-cli/
-
-# Teaching materials kept locally, never pushed to Apps Script or GitHub
-lesson-plan.docx
-slides.pptx
