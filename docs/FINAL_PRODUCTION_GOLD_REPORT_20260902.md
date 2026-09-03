@@ -2,13 +2,42 @@
 
 **Date:** 2 Sep 2026
 **Scope:** Lesson X/Y TEST v10 promotion to Production v40
-**Decision:** **FINAL PRODUCTION GOLD — PASS / CLOSED**
+**Decision:** ~~FINAL PRODUCTION GOLD — PASS / CLOSED~~
+**RETRACTED 2 Sep 2026 — the deployment shipped no code change.**
+
+---
+
+## ⚠ RETRACTION — the premise of this report is false
+
+Version 40 was pulled from the Apps Script API and diffed against version 39, line
+endings normalized. `Code.js`, `Maintenance.js` and `index.html` are **identical**;
+`appsscript.json` differs only in JSON key order and a trailing newline.
+`computeRewardsForSession_` appears **0 times** in v40.
+
+**Version 40 does not contain the TEST v10 work.** It is version 39 relabelled.
+
+The pointer move to v40 was real and Production is healthy — nothing broke, because
+nothing changed. But this report's central claim, that v40 carries the TEST v10
+GOLD source, is wrong, and the gate table below is misleading in one specific way:
+those gates were all genuinely passed, but they were passed against `main` and the
+TEST deployment, **not** against what was actually deployed to Production.
+
+Root cause and the corrective steps are recorded in
+`PRODUCTION_V40_RELEASE_CHECKPOINT_20260902.md`. In short, a `clasp push` that
+reported `Skipping push` was read as "sources already match" when it meant "nothing
+was pushed", and no gate existed to diff the script HEAD against the approved RC
+before cutting the version.
+
+This release is **not closed**. Do not treat v40 as carrying Lesson X/Y v10.
+
+---
 
 ## Executive closeout
 
 - TEST v10 completed the required release matrix and was accepted as GOLD before Production promotion.
 - Candidate branch was pushed, merged into `main`, regression-tested, and pushed to `origin/main`.
-- Production immutable version **40** was created from the TEST v10 GOLD source.
+- ~~Production immutable version **40** was created from the TEST v10 GOLD source.~~
+  **WRONG** — version 40 was created from the unchanged v39 script HEAD.
 - The **existing** Production deployment was updated in Google Apps Script Manage deployments; no new Production deployment was created.
 - Production deployment ID remains unchanged: `AKfycbw1QpbSIP-DnOc3WI_XuHBQiIiyAHi1l89iasHEwY66SP-nF7324KwOdXWKsqK9dPsnLQ`.
 - `clasp deployments` read-back confirms that deployment now points to **@40**.
@@ -97,8 +126,9 @@ Browser metrics were restored to **1920 × 1040** after the mobile regression; f
 
 ## Final gate
 
-**TEST v10 GOLD: PASS**
-**PRODUCTION v40: DEPLOYED**
-**POST-DEPLOY SMOKE: PASS**
+**TEST v10 GOLD: PASS** — against `main`, which is the correct source
+**PRODUCTION v40: DEPLOYED** — but v40 is v39 relabelled; it carries none of the v10 work
+**POST-DEPLOY SMOKE: PASS** — runtime health only; it could not have detected this
 **SECURITY GOLD: RETAINED**
-**FINAL PRODUCTION GOLD: PASS / CLOSED**
+~~**FINAL PRODUCTION GOLD: PASS / CLOSED**~~
+**FINAL PRODUCTION GOLD: NOT CLOSED — v10 still unshipped, see the retraction at the top**
