@@ -8,10 +8,17 @@
 - PRODUCTION DEPLOYMENT ID: `AKfycbw1QpbSIP-DnOc3WI_XuHBQiIiyAHi1l89iasHEwY66SP-nF7324KwOdXWKsqK9dPsnLQ`
 
 ## Current State
-_(แก้ 2 ก.ย. 2569 — สถานะเดิมที่เขียนว่าปิดงานแล้วไม่ถูกต้อง)_
+_(แก้ 12 ก.ย. 2569)_
 
-- CURRENT STATUS: **V10_NOT_SHIPPED — v40 คือ v39 ที่เปลี่ยนแค่ป้ายชื่อ**
-- CURRENT PHASE: ต้อง `clasp push --force` แล้วตัด v41 ใหม่ · Production ทำงานปกติ ไม่ต้องรีบ
+- CURRENT STATUS: **V10_NOT_SHIPPED — v41 พร้อมแล้ว รอย้าย pointer อย่างเดียว**
+- CURRENT PHASE: **ต้องรัน `update-deployment -V 41` จากเครื่องครู** · Production ยังเป็น @40 และทำงานปกติ ไม่ต้องรีบ
+
+### ความคืบหน้า 11–12 ก.ย. 2569
+- script HEAD บนคลาวด์ถูกตรวจแล้วว่าตรงกับ `main` และ RC v10 ทั้ง 4 ไฟล์ จึง **ไม่ต้อง push ซ้ำ** งาน v10 ขึ้นคลาวด์ไปแล้ว
+- **ตัดเวอร์ชัน 41 แล้ว** และดึงกลับมาเทียบยืนยันว่าเท่ากับ RC v10 ทุกไฟล์ `computeRewardsForSession_` นับได้ 4 ครั้ง
+- ตรวจวิธีการซ้ำด้วยการดึง v40 มาเทียบ ได้ 0 ครั้ง ยืนยันว่า `pull --versionNumber` แยกเวอร์ชันได้จริง
+- `update-deployment` ถูก platform safety layer บล็อก 1 ครั้ง และครูรันเองแล้วแต่ pointer ยังไม่เปลี่ยน จึง **ยังค้างอยู่ที่ขั้นนี้**
+- พบและแก้ช่องโหว่ฟังก์ชันที่เรียกได้โดยไม่ต้องล็อกอิน ดูหัวข้อ Editor-Only Guard ด้านล่าง
 - PRODUCTION VERSION: **v40 — แต่เนื้อโค้ดเท่ากับ v39 ทุกประการ ไม่มีงาน v10 อยู่เลย**
 - TEST VERSION: **v10 GOLD** — ผ่านจริง แต่ผ่านบน `main` ไม่ใช่บนของที่ deploy
 - CURRENT GOLD REPORT: `docs/FINAL_PRODUCTION_GOLD_REPORT_20260902.md` — **ถูก retract แล้ว อ่านหัวเรื่องก่อน**
@@ -187,26 +194,58 @@ Decision at final closeout:
 - `.prod-security-rotation-tests-20260829/runtime_regression_test.js`
 - `.prod-security-rotation-v38-proof-20260829/`
 
+## Editor-Only Guard — งานรอบ 12 ก.ย. 2569 (ยังไม่ deploy)
+
+สาขา `fix/editor-only-guard` · ยังไม่ merge เข้า `main` และยังไม่ขึ้น TEST
+
+**ช่องโหว่:** เว็บแอป deploy แบบ `ANYONE_ANONYMOUS` ซึ่งทำให้ `google.script.run`
+เรียกฟังก์ชันระดับบนสุดที่ชื่อไม่ลงท้ายด้วย `_` ได้ทุกตัว แม้ `index.html` จะไม่เคยเรียกก็ตาม
+`showSetupStatus()` จึงส่งรายชื่อจริงของนักเรียนทั้ง 7 คน พร้อม username และ URL
+ของสเปรดชีตกับโฟลเดอร์ Drive ให้ผู้เข้าชมที่ไม่ได้ล็อกอินได้ ขัดกับ Blueprint #184–185
+ส่วน `setupDailyBackup()` และ `runScheduledBackup()` ถูกสั่งรัว ๆ จนพื้นที่ Drive เต็มได้
+
+**สิ่งที่แก้:**
+- เพิ่ม `requireEditorContext_()` ใน `Code.gs` เทียบ active user กับ effective user
+  ผู้เข้าชมแบบไม่ล็อกอินได้อีเมลว่างจึงไม่ผ่าน · ไม่เขียน Audit ตอนปฏิเสธ เพราะจะทำให้ใครก็ถมชีต Audit ได้
+- ใส่ด่านนี้ให้ `setupSystem`, `setupAdminAccount`, `setupDailyBackup`,
+  `showSetupStatus`, `disablePasswordChangePrompt`
+- แยกเนื้อในเป็น `installDailyBackup_()` เพื่อให้ปุ่มของครูใน `enableDailyBackup(token)`
+  ซึ่งผ่าน role guard มาแล้ว ยังทำงานได้ตามปกติ
+- `runScheduledBackup` **ห้ามเปลี่ยนชื่อ** เพราะ Trigger อ้างชื่อนี้ และใช้ด่านนี้ไม่ได้
+  เพราะ session ของตัวจับเวลาไม่ใช่ผู้เปิดหน้าเว็บ จึงกันด้วย `backedUpRecently_()`
+  ช่วงห่างขั้นต่ำ 6 ชั่วโมง ซึ่งไม่กระทบการสำรองคืนละครั้ง
+- เพิ่ม `tests/editor-only-guard.test.mjs` — ผ่าน 17/17
+
+**ยังไม่ได้ทำ:** ทดสอบบน TEST deployment จริง โดยเฉพาะสองเรื่องที่ vm harness ยืนยันแทนไม่ได้
+1. ครูรันจาก Apps Script editor แล้วผ่านด่านจริง
+2. Trigger กลางคืนยังสำรองได้จริงหลังเพิ่มช่วงห่างขั้นต่ำ
+
 ## NEXT EXACT ACTION — v10 ยังไม่ถูกส่งขึ้น Production
-_(แก้ 2 ก.ย. 2569 — ของเดิมเขียนว่าไม่เหลืออะไรแล้ว ซึ่งไม่จริง)_
+_(แก้ 12 ก.ย. 2569 — ข้อ 1–2 ทำเสร็จแล้ว เหลือข้อ 4 เป็นต้นไป)_
 
 ไม่เร่งด่วน Production ทำงานปกติ แต่ยังไม่ได้ส่งงาน v10 ออกไปจริง
 
-1. **`clasp push --force`** — ต้องมี `--force` เพราะ `appsscript.json` ต่างจากบนคลาวด์
-   ถ้าใช้ `push` เปล่า ๆ มันจะขึ้น `Skipping push` แล้วข้ามงานทั้งหมดเหมือนรอบที่แล้ว
-   (ผมพยายามรันแล้วถูก platform safety layer บล็อกก่อนสั่ง เหมือนที่ `clasp deploy -i` เคยโดน)
+1. ~~`clasp push --force`~~ **ไม่ต้องทำแล้ว** — 11 ก.ย. 2569 ดึง script HEAD มาเทียบแล้ว
+   ตรงกับ repo และ RC v10 ทั้ง 4 ไฟล์ และไม่มีงานที่มีเฉพาะบนคลาวด์
+   (เตือนไว้สำหรับรอบหน้า: ต้องมี `--force` เสมอ เพราะ `appsscript.json` ต่างจากคลาวด์
+   ถ้าใช้ `push` เปล่า ๆ จะขึ้น `Skipping push` แล้วข้ามงานทั้งหมดเหมือนรอบ v40)
 
-   ก่อน push ทำ safety gate ตามกฎเดิม: pull ของจริงมาเทียบ ตรวจว่าไม่มีอะไรที่คลาวด์มีแต่ repo ไม่มี
-   ตรวจแล้วเมื่อ 2 ก.ย. 2569 — บรรทัดฝั่งคลาวด์ทั้ง 10 บรรทัดเป็นแค่ของเดิมที่ repo เขียนทับ
-   ไม่มีงานที่มีเฉพาะบนคลาวด์ จึง push ทับได้ปลอดภัย
+2. ~~เทียบ script HEAD กับ RC v10~~ **ทำแล้ว** ตรงกันทั้ง 4 ไฟล์
 
-2. **เทียบ script HEAD กับ `.lesson-xy-rc-v10-20260830/` ให้ครบทั้ง 4 ไฟล์ ก่อนตัดเวอร์ชัน**
-   นี่คือด่านที่ขาดไปรอบที่แล้ว ห้ามข้าม
-   ตรวจง่าย ๆ ว่ามี `computeRewardsForSession_` อยู่ในของที่ดึงกลับมาจริง
+3. ~~`create-version` → 41~~ **ทำแล้ว** และดึง v41 กลับมาเทียบยืนยันว่า
+   เท่ากับ RC v10 ทุกไฟล์ `computeRewardsForSession_` นับได้ 4 ครั้ง
+   (ดึง v40 มาเทียบด้วยได้ 0 ครั้ง ยืนยันว่าวิธีตรวจแยกเวอร์ชันได้จริง)
 
-3. `create-version` → **41** (v40 ใช้ไม่ได้ ทิ้งไปเลย ไม่ใช่ซอร์สที่ตั้งใจ)
+4. **← ค้างอยู่ตรงนี้** `update-deployment -V 41` ทับ deployment ID เดิม · **ห้าม `create-deployment`**
 
-4. `update-deployment -V 41` ทับ deployment ID เดิม · **ห้าม `create-deployment`**
+   ```
+   npx @google/clasp@3 update-deployment AKfycbw1QpbSIP-DnOc3WI_XuHBQiIiyAHi1l89iasHEwY66SP-nF7324KwOdXWKsqK9dPsnLQ -V 41 -d "Tilt Lab ม.1 Production v41 - TEST v10 GOLD source (Free Preview reward gating) - pull-back == RC v10 verified"
+   ```
+
+   ต้องรันจากเครื่องครูใน `D:\2569 เทอม 1\ChatGPT\ไมโครบิต ม.1`
+   หรือทำผ่าน Apps Script editor → Deploy → Manage deployments → แก้ตัวที่เป็น Production
+   เลือก Version 41 · **ห้ามกด New deployment** เพราะ URL ของนักเรียนจะเปลี่ยน
+   ตรวจผลด้วย `list-deployments` ว่าขึ้น **@41** จริง ไม่ใช่เชื่อว่าคำสั่งผ่าน
 
 5. Post-deploy smoke รอบใหม่ ต้องเพิ่มการยืนยันว่า `computeRewardsForSession_`
    อยู่ในเวอร์ชันที่ deploy จริง ไม่ใช่ตรวจแค่ว่าหน้าโหลดขึ้น
@@ -228,7 +267,7 @@ _(แก้ 2 ก.ย. 2569 — ของเดิมเขียนว่าไ
 
 ## Scheduled Continuation
 - SCHEDULED CONTINUATION: NOT_CREATED
-- REASON: Security and Lesson X/Y release work are complete; no blocked or pending release step remains.
+- REASON: เหลือขั้นตอนเดียวที่ต้องให้ครูรันเอง (`update-deployment -V 41`) ไม่มีอะไรให้รอแบบอัตโนมัติ
 
 ## Final Checkpoint Statement
-**SECURITY GOLD: CLOSED/PASS · LESSON X/Y v10 GOLD: PASS (บน `main`) · PRODUCTION v40: DEPLOYED แต่เนื้อ = v39 · FINAL PRODUCTION GOLD: ยังไม่ปิด — v10 ยังไม่ถูกส่งขึ้น Production**
+**SECURITY GOLD: CLOSED/PASS · LESSON X/Y v10 GOLD: PASS (บน `main`) · VERSION 41: สร้างและตรวจแล้วว่าเป็นซอร์ส v10 จริง · PRODUCTION: ยังชี้ @40 (เนื้อ = v39) · FINAL PRODUCTION GOLD: ยังไม่ปิด — เหลือย้าย pointer ไป v41 · EDITOR-ONLY GUARD: แก้แล้วบนสาขา รอทดสอบบน TEST**
