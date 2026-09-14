@@ -137,7 +137,8 @@ Question Bank และ Mastery
 | #100 ระบบคะแนนบทเรียน | ⚠️ | มี Summative (Quiz) และ Formative (กิจกรรมระหว่างเรียน) **ขาด** Diagnostic และ Reflection ที่เก็บเป็นคะแนน |
 | #51 Randomization | ❌ | คำถามและตัวเลือกเรียงคงที่ทุกครั้ง |
 | #50 Question Bank | ❌ | มี 6 ข้อตายตัว ไม่มีคลังข้อสอบ |
-| #52 Mastery System | ❌ | ไม่มี |
+| #52 Mastery System | ⚠️ | **เพิ่มแล้ว 14 ก.ย. 2569** `computeMastery_()` คำนวณความเข้าใจราย Objective จากคำตอบที่เก็บไว้ ตรวจใหม่กับเฉลยฝั่งเซิร์ฟเวอร์เสมอ นักเรียนเห็นว่าควรทบทวน Section ไหน ครูเห็นในหน้ารายละเอียดนักเรียน **ยังขาด** ภาพรวมทั้งห้องในแดชบอร์ด และ Mastery จากกิจกรรมอื่นนอกจากข้อสอบ |
+| #179 Objective ID | ⚠️ | **เพิ่มแล้ว 14 ก.ย. 2569** `LEARNING_OBJECTIVES` มี LO-01 ถึง LO-03 และข้อสอบทั้ง 6 ข้อผูกกับ Objective แล้ว **ยังไม่ได้เชื่อมกับตัวชี้วัดหลักสูตร** เพราะ D-003 ยังรอข้อมูลจากครู ห้ามแต่งตัวชี้วัดเอง |
 | #49 Post-test | ⚠️ | Quiz ท้ายบททำหน้าที่นี้ แต่ไม่มี Pre-test ให้เปรียบเทียบพัฒนาการ |
 | #53 Reflection | ✅ | **เพิ่มแล้วรอบ 3** Section 9 ให้เขียนสรุปและเลือกความมั่นใจ 4 ระดับตามแผนการสอน ครูอ่านได้ในหน้ารายละเอียดนักเรียน ~~เดิม~~ — `progressJson` มีช่อง `reflection: {}` และ backend รับค่าไว้แล้ว แต่**ไม่มีหน้าจอใดในเว็บให้กรอก** ทั้งที่แผนการสอนคาบที่ 2 นาที 56–60 กำหนดให้เขียนสรุป 2 ประโยคและเลือกระดับความมั่นใจ 4 ระดับ |
 | #120 ห้ามออกข้อสอบที่ไม่ได้สอน | ✅ | ทั้ง 6 ข้อตรงกับเนื้อหา Section 1–7 |
@@ -230,7 +231,7 @@ Question Bank และ Mastery
 | Blueprint | สถานะ |
 |---|---|
 | #173 Content Lifecycle & Versioning · #174 Safe Publishing · #180 Content Quality Gate · #181 Human Approval · #182–183 Content Provenance | ❌ ทั้งหมด |
-| #177–179 Curriculum Traceability / Coverage / Objective ID | ❌ ติดที่ยังไม่มีตัวชี้วัด ดู D-003 |
+| #177–178 Curriculum Traceability / Coverage | ❌ ติดที่ยังไม่มีตัวชี้วัด ดู D-003 · #179 Objective ID ทำแล้ว ดูหมวดการประเมิน |
 | #210 Feature Flags · #211 Staging Environment · #212 Academic Year Management · #213 Course Copy · #214 Class Management | ❌ |
 | #207–209 Monitoring / Health Check / Error Reporting | ❌ |
 | #216–220 AI Governance | ❌ ยังไม่มีฟีเจอร์ AI ในระบบ จึงยังไม่ต้องใช้ |

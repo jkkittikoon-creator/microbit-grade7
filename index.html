@@ -1681,6 +1681,108 @@
       font-weight: 600;
     }
 
+    /* Mastery รายจุดประสงค์ — Blueprint #52
+       สถานะต้องอ่านออกเป็นข้อความเสมอ ไม่สื่อด้วยสีอย่างเดียว ตาม #222 */
+    .quiz-mastery {
+      margin-top: 1rem;
+      padding: 0.9rem 1rem;
+      border: 2px solid var(--purple-900);
+      border-radius: 0.9rem;
+      background: #fff;
+    }
+
+    .quiz-mastery[hidden] {
+      display: none;
+    }
+
+    .quiz-mastery h4 {
+      margin: 0 0 0.6rem;
+      color: var(--purple-900);
+      font-size: 1rem;
+    }
+
+    .mastery-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .mastery-item {
+      display: grid;
+      gap: 0.3rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.7rem;
+      background: #f8fafc;
+    }
+
+    .mastery-item[data-status="strong"] {
+      background: #ecfdf5;
+    }
+
+    .mastery-item[data-status="developing"] {
+      background: #fffbeb;
+    }
+
+    .mastery-item[data-status="review"] {
+      background: #fef2f2;
+    }
+
+    .mastery-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .mastery-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .mastery-status {
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+
+    .mastery-bar {
+      height: 0.5rem;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .mastery-bar span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--purple-900);
+    }
+
+    .mastery-review {
+      min-height: 44px;
+      align-self: start;
+      padding: 0.35rem 0.8rem;
+      border: 2px solid var(--purple-900);
+      border-radius: 0.7rem;
+      background: #fff;
+      color: var(--purple-900);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .mastery-note {
+      margin: 0.6rem 0 0;
+      font-size: 0.9rem;
+    }
+
     .quiz-remediation {
       margin-top: 1rem;
       padding: 0.9rem 1rem;
@@ -8196,6 +8298,13 @@
           เลือกคำตอบให้ครบทุกข้อก่อนกดสรุปคะแนน
         </p>
       </div>
+      <div class="quiz-mastery" id="quiz-mastery" hidden
+           aria-labelledby="quiz-mastery-title">
+        <h4 id="quiz-mastery-title">เข้าใจเรื่องไหนแล้ว เรื่องไหนควรทบทวน</h4>
+        <ul class="mastery-list" id="quiz-mastery-list"></ul>
+        <p class="mastery-note" id="quiz-mastery-note"></p>
+      </div>
+
       <div class="quiz-remediation" id="quiz-remediation" hidden>
         <h4>ทบทวนเฉพาะจุดก่อนโจทย์ถัดไป</h4>
         <div id="quiz-remediation-list"></div>
@@ -9028,6 +9137,7 @@
             if (option) option.checked = true;
           }
           renderRewards(result.rewards);
+          renderMastery(result.mastery);
         } catch (error) {
           // ไม่ต้องแจ้งเตือน ปล่อยให้กรอกใหม่ได้
         }
@@ -9062,6 +9172,7 @@
             );
             const saved = await callServer("saveProgress", sessionToken, state);
             renderRewards(saved.rewards);
+            renderMastery(saved.mastery);
             reflectionSync.textContent =
               "บันทึกแล้ว ขอบคุณที่ตั้งใจสะท้อนผลนะ 🎉";
           } catch (error) {
@@ -9111,6 +9222,81 @@
           item.append(label, detail);
           shelf.appendChild(item);
         });
+      }
+
+      /**
+       * แสดง Mastery รายจุดประสงค์ — Blueprint #52
+       *
+       * ค่าทั้งหมดคำนวณจากเซิร์ฟเวอร์ หน้าเว็บมีหน้าที่แสดงอย่างเดียว
+       * ถ้ายังไม่ได้ตอบข้อสอบเลย จะไม่ขึ้นการ์ดนี้ เพราะยังไม่มีอะไรให้สรุป
+       * และไม่ควรทำให้นักเรียนรู้สึกว่าตัวเองอ่อนทั้งที่ยังไม่ได้เริ่ม
+       */
+      function renderMastery(mastery) {
+        const panel = document.querySelector("#quiz-mastery");
+        const list = document.querySelector("#quiz-mastery-list");
+        const note = document.querySelector("#quiz-mastery-note");
+        if (!panel || !list || !note) return;
+
+        const objectives = (mastery && mastery.objectives) || [];
+        const answered = objectives.some((objective) => objective.answered > 0);
+        if (!answered) {
+          panel.hidden = true;
+          list.replaceChildren();
+          return;
+        }
+
+        list.replaceChildren();
+        objectives.forEach((objective) => {
+          const item = document.createElement("li");
+          item.className = "mastery-item";
+          item.dataset.status = objective.status;
+
+          const head = document.createElement("div");
+          head.className = "mastery-head";
+
+          const title = document.createElement("span");
+          title.className = "mastery-title";
+          title.textContent = objective.title;
+
+          const status = document.createElement("span");
+          status.className = "mastery-status";
+          status.textContent =
+            objective.answered > 0
+              ? `${objective.statusLabel} · ${objective.correct}/${objective.answered} ข้อ`
+              : objective.statusLabel;
+
+          head.append(title, status);
+
+          const bar = document.createElement("div");
+          bar.className = "mastery-bar";
+          const fill = document.createElement("span");
+          fill.style.width = `${objective.percent}%`;
+          bar.appendChild(fill);
+
+          item.append(head, bar);
+
+          // เปิดทางไปทบทวนเฉพาะเรื่องที่ยังไม่แน่น ไม่ใช่ให้ไปอ่านใหม่ทั้งบท
+          if (objective.status === "review" || objective.status === "developing") {
+            const review = document.createElement("a");
+            review.className = "mastery-review";
+            review.href = `#${objective.reviewSectionId}`;
+            review.textContent =
+              `📖 ทบทวน Section ${objective.reviewSectionOrder} · ${objective.reviewSectionTitle}`;
+            item.appendChild(review);
+          }
+
+          list.appendChild(item);
+        });
+
+        const focus = (mastery.focus || [])
+          .map((id) => objectives.find((objective) => objective.id === id))
+          .filter(Boolean);
+
+        note.textContent = focus.length
+          ? `ทำได้ ${mastery.correct}/${mastery.answered} ข้อ · เรื่องที่ควรทบทวนก่อนคือ "${focus[0].title}"`
+          : `ทำได้ ${mastery.correct}/${mastery.answered} ข้อ ครบทุกจุดประสงค์แล้ว`;
+
+        panel.hidden = false;
       }
 
       function contiguousCompleted(list) {
@@ -10567,6 +10753,40 @@
             adminDetailAttempts.appendChild(reward);
           }
 
+          // Mastery รายจุดประสงค์ — Blueprint #77
+          // ครูจะได้เห็นว่านักเรียนติดเรื่องไหน ไม่ใช่เห็นแค่คะแนนรวม
+          const mastery = result.mastery || {};
+          const objectives = (mastery.objectives || []).filter(
+            (objective) => objective.answered > 0
+          );
+          if (objectives.length) {
+            const card = document.createElement("div");
+            card.className = "admin-attempt";
+            const heading = document.createElement("h4");
+            heading.textContent =
+              `🎯 ความเข้าใจรายจุดประสงค์ · ${mastery.correct}/${mastery.answered} ข้อ`;
+            card.appendChild(heading);
+
+            objectives.forEach((objective) => {
+              const line = document.createElement("p");
+              line.textContent =
+                `${objective.title} · ${objective.statusLabel} (${objective.correct}/${objective.answered} ข้อ)`;
+              card.appendChild(line);
+            });
+
+            const focus = (mastery.focus || [])
+              .map((id) => objectives.find((objective) => objective.id === id))
+              .filter(Boolean);
+            if (focus.length) {
+              const suggestion = document.createElement("p");
+              suggestion.textContent =
+                `แนะนำให้ทบทวนกับนักเรียนก่อน: ${focus[0].title} · Section ${focus[0].reviewSectionOrder} ${focus[0].reviewSectionTitle}`;
+              card.appendChild(suggestion);
+            }
+
+            adminDetailAttempts.appendChild(card);
+          }
+
           // กิจกรรมเสริมไม่บังคับ ครูจึงต้องเห็นว่าใครทำและทำได้แค่ไหน
           // เพื่อใช้ชวนคุยได้ ไม่ใช่เพื่อตัดสินว่าใครไม่ทำ ตาม Blueprint #198
           (result.optionalSteps || []).forEach((step) => {
@@ -11195,6 +11415,7 @@
 
           const saved = await callServer("saveProgress", sessionToken, state);
           renderRewards(saved.rewards);
+          renderMastery(saved.mastery);
           const canonical =
             saved.state && saved.state.worksheet && saved.state.worksheet.miniGame;
           const best = canonical ? Number(canonical.bestScore) || 0 : localBest;
@@ -11432,6 +11653,7 @@
             letter: letter
           });
           renderRewards(saved.rewards);
+          renderMastery(saved.mastery);
           missionDoneText.textContent =
             "ครูจะได้อ่านข้อความที่หนูเขียนถึงเพื่อน ขอบคุณที่คิดถึงคนที่ใช้งานจริง";
           missionDone.hidden = false;
@@ -11868,6 +12090,7 @@
         try {
           const saved = await saveCodingLab({ ...collectLabState(), completed: true });
           renderRewards(saved.rewards);
+          renderMastery(saved.mastery);
           labDoneText.textContent =
             "หนูเขียนและทดลองโค้ดจริงบน micro:bit แล้ว เก่งมากที่ลงมือทำเอง";
           labDone.hidden = false;
@@ -14333,6 +14556,7 @@
           renderQuizSummary();
           updateQuizSubmitButton();
           renderRewards(result.rewards);
+          renderMastery(result.mastery);
 
           quizRetry.hidden =
             quizAttemptCount >= QUIZ_MAX_ATTEMPTS;
@@ -14421,6 +14645,7 @@
               clearPendingQuizSubmission();
               saved = submissionResult.state && submissionResult.state.quiz;
               renderRewards(submissionResult.rewards);
+              renderMastery(submissionResult.mastery);
               restoreMessage = submissionResult.duplicate
                 ? "ตรวจคำขอที่ค้างแล้ว ระบบไม่ได้นับจำนวนครั้งซ้ำ"
                 : "ส่งคำตอบที่ค้างและบันทึกคะแนนเรียบร้อยแล้ว";

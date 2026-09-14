@@ -75,9 +75,10 @@ Two committed static harnesses under `tests/` load the real sources into a `vm` 
 ```
 node tests/preview-reward-gate.test.mjs Code.gs
 node tests/editor-only-guard.test.mjs Code.gs Maintenance.gs
+node tests/mastery.test.mjs Code.gs
 ```
 
-The first covers Free Navigation Preview reward gating only. The second covers the editor-only guard on the installer and maintenance entry points only. Neither is evidence for anything outside its own scope.
+They cover, in order: Free Navigation Preview reward gating; the editor-only guard on the installer and maintenance entry points; and per-objective Mastery computation. None is evidence for anything outside its own scope, and none covers the frontend.
 
 During development, prefer:
 

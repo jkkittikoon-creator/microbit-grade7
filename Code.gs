@@ -95,31 +95,67 @@ const QUIZ_PASS_MARK = Math.ceil(
 );
 
 /**
+ * จุดประสงค์การเรียนรู้ของบทนี้ — Blueprint #179 Objective ID
+ *
+ * ใช้จับคู่ข้อสอบกับสิ่งที่ต้องการวัด เพื่อบอกนักเรียนได้ว่า "ควรทบทวนเรื่องใด"
+ * แทนที่จะบอกแค่คะแนนรวม และเพื่อให้ครูเห็นว่าทั้งห้องติดเรื่องเดียวกันหรือไม่
+ *
+ * สำคัญ: นี่คือจุดประสงค์ของบทเรียนที่สรุปจากเนื้อหาและข้อสอบที่มีอยู่จริง
+ * **ไม่ใช่มาตรฐานหรือตัวชี้วัดของหลักสูตร** ตาม D-003 ห้ามแต่งตัวชี้วัดขึ้นเอง
+ * เมื่อครูให้ข้อมูลตัวชี้วัดจริงแล้ว ค่อยเพิ่มการเชื่อมโยงเข้ากับรายการนี้อีกชั้น
+ */
+const LEARNING_OBJECTIVES = Object.freeze([
+  Object.freeze({
+    id: 'LO-01',
+    title: 'อ่านค่าการเอียงจากเซนเซอร์ และบอกได้ว่าแกนใดคุมทิศทางใด',
+    reviewSectionId: 'predict'
+  }),
+  Object.freeze({
+    id: 'LO-02',
+    title: 'ใช้คำสั่งวนซ้ำและคำสั่งจอไฟให้จุดแสดงผลถูกตำแหน่ง',
+    reviewSectionId: 'unplugged'
+  }),
+  Object.freeze({
+    id: 'LO-03',
+    title: 'แปลงค่าการเอียงเป็นพิกัดบนจอด้วย map และ constrain',
+    reviewSectionId: 'mg-concept'
+  })
+]);
+
+/**
  * เฉลยอยู่ฝั่งเซิร์ฟเวอร์เท่านั้น — DIFF-02A
  * หน้าเว็บจะส่งเพียงรหัสตัวเลือก แล้วให้เซิร์ฟเวอร์ตรวจและคำนวณคะแนน
+ *
+ * objective บอกว่าข้อนั้นวัดจุดประสงค์ใด ใช้คำนวณ Mastery — Blueprint #52
  */
 const QUIZ_ANSWER_KEY = Object.freeze({
   q1: Object.freeze({
+    objective: 'LO-01',
     answer: 'acceleration',
     choices: Object.freeze(['temperature', 'acceleration', 'sound'])
   }),
   q2: Object.freeze({
+    objective: 'LO-01',
     answer: 'one',
     choices: Object.freeze(['one', 'hundred', 'equal'])
   }),
   q3: Object.freeze({
+    objective: 'LO-02',
     answer: 'two',
     choices: Object.freeze(['one', 'two', 'four'])
   }),
   q4: Object.freeze({
+    objective: 'LO-03',
     answer: 'map-four',
     choices: Object.freeze(['both-four', 'map-four', 'both-two'])
   }),
   q5: Object.freeze({
+    objective: 'LO-03',
     answer: 'limit',
     choices: Object.freeze(['speed', 'limit', 'lights'])
   }),
   q6: Object.freeze({
+    objective: 'LO-02',
     answer: 'pace',
     choices: Object.freeze(['stop', 'reset', 'pace'])
   })
@@ -1004,7 +1040,8 @@ function getProgress(token) {
       updatedAt: null,
       preview: true,
       previewMode: session.previewMode,
-      rewards: computeRewardsForSession_(previewState, session)
+      rewards: computeRewardsForSession_(previewState, session),
+      mastery: computeMastery_(previewState)
     };
   }
 
@@ -1015,7 +1052,8 @@ function getProgress(token) {
       ok: true,
       state: createDefaultProgress_(session),
       updatedAt: null,
-      rewards: computeRewards_(createDefaultProgress_(session))
+      rewards: computeRewards_(createDefaultProgress_(session)),
+      mastery: computeMastery_(createDefaultProgress_(session))
     };
   }
 
@@ -1032,7 +1070,8 @@ function getProgress(token) {
     ok: true,
     state: state,
     updatedAt: row.updatedAt,
-    rewards: computeRewards_(state)
+    rewards: computeRewards_(state),
+    mastery: computeMastery_(state)
   };
 }
 
@@ -1050,7 +1089,8 @@ function saveProgress(token, state) {
       state: cleanState,
       updatedAt: new Date().toISOString(),
       preview: true,
-      rewards: computeRewardsForSession_(cleanState, session)
+      rewards: computeRewardsForSession_(cleanState, session),
+      mastery: computeMastery_(cleanState)
     };
   }
 
@@ -1090,7 +1130,8 @@ function saveProgress(token, state) {
       ok: true,
       state: cleanState,
       updatedAt: updatedAt,
-      rewards: computeRewards_(cleanState)
+      rewards: computeRewards_(cleanState),
+      mastery: computeMastery_(cleanState)
     };
   } finally {
     lock.releaseLock();
@@ -1532,7 +1573,8 @@ function buildQuizSubmitResponse_(outcome, updatedAt, preview, attemptLogCreated
     results: outcome.results,
     state: outcome.state,
     updatedAt: updatedAt,
-    rewards: computeRewardsForSession_(outcome.state, session)
+    rewards: computeRewardsForSession_(outcome.state, session),
+    mastery: computeMastery_(outcome.state)
   };
 }
 
@@ -1985,6 +2027,7 @@ function getStudentDetail(token, username) {
       confidence: sanitizePlainText_(reflection.confidence, 40)
     },
     rewards: computeRewards_(state),
+    mastery: computeMastery_(state),
     updatedAt: progressRow ? progressRow.updatedAt : null
   };
 }
@@ -2891,6 +2934,93 @@ function optionalStepsStatus_(state, unlockAllOptionalSteps) {
       xpReward: step.xpReward
     };
   });
+}
+
+/**
+ * Mastery รายจุดประสงค์ — Blueprint #52
+ *
+ * คำนวณจากผลตอบข้อสอบที่เก็บไว้ในสถานะจริงเท่านั้น ไม่รับค่าจากหน้าเว็บ
+ * เป็นการคำนวณล้วน ๆ ไม่เขียนข้อมูล จึงเรียกซ้ำได้ปลอดภัย และไม่ต้องแก้ schema
+ *
+ * สถานะแต่ละจุดประสงค์มีข้อความกำกับเสมอ ไม่สื่อด้วยสีอย่างเดียว ตาม Blueprint #222
+ */
+function computeMastery_(state) {
+  const quiz = (state && state.quiz) || {};
+  // ใช้ answers เป็นแหล่งจริง แล้วตรวจใหม่กับเฉลยฝั่งเซิร์ฟเวอร์
+  // จะได้ไม่เชื่อ results ที่อาจถูกส่งมาจากหน้าเว็บ
+  const results = buildQuizResults_(quiz.answers || {});
+
+  const objectives = LEARNING_OBJECTIVES.map(function (objective) {
+    const questionIds = Object.keys(QUIZ_ANSWER_KEY).filter(function (questionId) {
+      return QUIZ_ANSWER_KEY[questionId].objective === objective.id;
+    });
+
+    let answered = 0;
+    let correct = 0;
+    questionIds.forEach(function (questionId) {
+      const result = results[questionId];
+      if (!result) return;
+      answered += 1;
+      if (result.correct) correct += 1;
+    });
+
+    const total = questionIds.length;
+    const percent = answered > 0 ? Math.round(correct / answered * 100) : 0;
+
+    let status = 'not-started';
+    let statusLabel = 'ยังไม่ได้ทำ';
+    if (answered > 0) {
+      if (percent >= 80) {
+        status = 'strong';
+        statusLabel = 'เข้าใจดีแล้ว';
+      } else if (percent >= 50) {
+        status = 'developing';
+        statusLabel = 'พอเข้าใจ ควรทบทวนอีกนิด';
+      } else {
+        status = 'review';
+        statusLabel = 'ควรทบทวน';
+      }
+    }
+
+    const reviewSection = LESSON_SECTIONS.filter(function (section) {
+      return section.id === objective.reviewSectionId;
+    })[0];
+
+    return {
+      id: objective.id,
+      title: objective.title,
+      questionCount: total,
+      answered: answered,
+      correct: correct,
+      percent: percent,
+      status: status,
+      statusLabel: statusLabel,
+      reviewSectionId: objective.reviewSectionId,
+      reviewSectionOrder: reviewSection ? reviewSection.order : null,
+      reviewSectionTitle: reviewSection ? reviewSection.title : ''
+    };
+  });
+
+  const answeredTotal = objectives.reduce(function (sum, objective) {
+    return sum + objective.answered;
+  }, 0);
+  const correctTotal = objectives.reduce(function (sum, objective) {
+    return sum + objective.correct;
+  }, 0);
+
+  return {
+    objectives: objectives,
+    answered: answeredTotal,
+    correct: correctTotal,
+    overallPercent: answeredTotal > 0
+      ? Math.round(correctTotal / answeredTotal * 100)
+      : 0,
+    // จุดประสงค์ที่ควรทบทวนก่อน เรียงจากอ่อนสุด ใช้ชี้ "ทำอะไรต่อ" ตาม Blueprint #47
+    focus: objectives
+      .filter(function (objective) { return objective.status === 'review' || objective.status === 'developing'; })
+      .sort(function (a, b) { return a.percent - b.percent; })
+      .map(function (objective) { return objective.id; })
+  };
 }
 
 function computeRewards_(state, unlockAllOptionalSteps) {
