@@ -2946,9 +2946,17 @@ function optionalStepsStatus_(state, unlockAllOptionalSteps) {
  */
 function computeMastery_(state) {
   const quiz = (state && state.quiz) || {};
-  // ใช้ answers เป็นแหล่งจริง แล้วตรวจใหม่กับเฉลยฝั่งเซิร์ฟเวอร์
-  // จะได้ไม่เชื่อ results ที่อาจถูกส่งมาจากหน้าเว็บ
-  const results = buildQuizResults_(quiz.answers || {});
+
+  // ต้องใช้ "คำตอบที่ส่งแล้ว" เท่านั้น ห้ามใช้ quiz.answers เด็ดขาด
+  // เพราะ quiz.answers เก็บคำตอบร่างที่ยังไม่ได้กดส่งด้วย
+  // ถ้าคิดจากร่าง นักเรียนจะกดเลือกแล้วดูจากการ์ดนี้ได้ทันทีว่าถูกหรือผิด
+  // กลายเป็นเครื่องเฉลย ทำให้กติกาจำกัดจำนวนครั้งไม่มีความหมาย
+  //
+  // ตรวจใหม่กับเฉลยฝั่งเซิร์ฟเวอร์เสมอ ไม่เชื่อ results ที่หน้าเว็บส่งมา
+  const submitted = Number(quiz.attempts) > 0
+    ? (quiz.lastSubmissionAnswers || {})
+    : {};
+  const results = buildQuizResults_(submitted);
 
   const objectives = LEARNING_OBJECTIVES.map(function (objective) {
     const questionIds = Object.keys(QUIZ_ANSWER_KEY).filter(function (questionId) {

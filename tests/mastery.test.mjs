@@ -1,7 +1,8 @@
 // Static regression for per-objective Mastery (Blueprint #52).
 //
-// Mastery must be derived on the server from the stored answers and the server
-// answer key — never from anything the page sends. Loads the REAL Code.gs.
+// Mastery must be derived on the server from SUBMITTED answers and the server
+// answer key — never from drafts, and never from anything the page sends.
+// Loads the REAL Code.gs.
 //   node tests/mastery.test.mjs Code.gs
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -30,7 +31,10 @@ check('every objective points at a real section',
   run(`LEARNING_OBJECTIVES.filter(o => !LESSON_SECTIONS.some(s => s.id === o.reviewSectionId)).map(o => o.id)`),
   []);
 
-const masteryOf = (answersExpr) => run(`computeMastery_({ quiz: { answers: ${answersExpr} } })`);
+// Mastery must read submitted answers only, so every fixture submits.
+const submittedState = (answersExpr) =>
+  `{ quiz: { attempts: 1, lastSubmissionId: "s1", lastSubmissionAnswers: ${answersExpr}, answers: ${answersExpr} } }`;
+const masteryOf = (answersExpr) => run(`computeMastery_(${submittedState(answersExpr)})`);
 const statusById = (mastery) => mastery.objectives.map((o) => [o.id, o.status]);
 
 // A student who has not taken the quiz has no mastery signal at all — and must
@@ -45,7 +49,7 @@ check('no answers means 0%', untouched.overallPercent, 0);
 const allCorrect = run(`(() => {
   const answers = {};
   Object.keys(QUIZ_ANSWER_KEY).forEach(id => { answers[id] = QUIZ_ANSWER_KEY[id].answer; });
-  return computeMastery_({ quiz: { answers } });
+  return computeMastery_({ quiz: { attempts: 1, lastSubmissionId: 's1', lastSubmissionAnswers: answers, answers } });
 })()`);
 check('all correct means strong everywhere',
   statusById(allCorrect), [['LO-01', 'strong'], ['LO-02', 'strong'], ['LO-03', 'strong']]);
@@ -60,7 +64,7 @@ const mixed = run(`(() => {
     const wrong = key.choices.filter(c => c !== key.answer)[0];
     answers[id] = key.objective === 'LO-03' ? wrong : key.answer;
   });
-  return computeMastery_({ quiz: { answers } });
+  return computeMastery_({ quiz: { attempts: 1, lastSubmissionId: 's1', lastSubmissionAnswers: answers, answers } });
 })()`);
 check('weak objective is flagged for review',
   statusById(mixed), [['LO-01', 'strong'], ['LO-02', 'strong'], ['LO-03', 'review']]);
@@ -72,7 +76,7 @@ const half = run(`(() => {
   const answers = {};
   answers[ids[0]] = QUIZ_ANSWER_KEY[ids[0]].answer;
   answers[ids[1]] = QUIZ_ANSWER_KEY[ids[1]].choices.filter(c => c !== QUIZ_ANSWER_KEY[ids[1]].answer)[0];
-  return computeMastery_({ quiz: { answers } });
+  return computeMastery_({ quiz: { attempts: 1, lastSubmissionId: 's1', lastSubmissionAnswers: answers, answers } });
 })()`);
 check('half right is developing', half.objectives.filter(o => o.id === 'LO-01')[0].status, 'developing');
 check('unanswered objectives stay not-started',
@@ -83,8 +87,45 @@ check('unanswered objectives stay not-started',
 check('partial answer counts only what was answered',
   half.objectives.filter(o => o.id === 'LO-01')[0].answered, 2);
 
-// The page must not be able to declare its own mastery. Only `answers` counts.
+// THE LEAK THIS GUARDS AGAINST. quiz.answers also holds answers the student has
+// only clicked, not submitted — saveProgress stores partial drafts. Grading those
+// would turn this panel into an answer checker: pick a choice, read whether the
+// objective went green, change it, and the three-attempt limit means nothing.
+// Mastery must therefore ignore drafts entirely until an attempt is submitted.
+const draftsOnly = run(`(() => {
+  const answers = {};
+  Object.keys(QUIZ_ANSWER_KEY).forEach(id => { answers[id] = QUIZ_ANSWER_KEY[id].answer; });
+  return computeMastery_({ quiz: { attempts: 0, answers } });
+})()`);
+check('a full set of correct DRAFTS reveals nothing', statusById(draftsOnly),
+  [['LO-01', 'not-started'], ['LO-02', 'not-started'], ['LO-03', 'not-started']]);
+check('drafts do not score', draftsOnly.overallPercent, 0);
+
+// Same trap on a retry: attempt 1 is submitted and graded, and while the student
+// is picking answers for attempt 2 those drafts must not move mastery at all.
+const retryDrafts = run(`(() => {
+  const submittedWrong = {};
+  const draftCorrect = {};
+  Object.keys(QUIZ_ANSWER_KEY).forEach(id => {
+    const key = QUIZ_ANSWER_KEY[id];
+    submittedWrong[id] = key.choices.filter(c => c !== key.answer)[0];
+    draftCorrect[id] = key.answer;
+  });
+  return computeMastery_({ quiz: {
+    attempts: 1, lastSubmissionId: 's1',
+    lastSubmissionAnswers: submittedWrong,
+    answers: draftCorrect
+  } });
+})()`);
+check('retry drafts cannot improve mastery', retryDrafts.overallPercent, 0);
+check('retry drafts keep the submitted standing', statusById(retryDrafts),
+  [['LO-01', 'review'], ['LO-02', 'review'], ['LO-03', 'review']]);
+
+// The page must not be able to declare its own mastery. Only submitted answers count.
 const spoofed = run(`computeMastery_({ quiz: {
+  attempts: 1,
+  lastSubmissionId: 's1',
+  lastSubmissionAnswers: {},
   answers: {},
   results: { q1: { correct: true }, q2: { correct: true } },
   bestScore: 6,
@@ -93,7 +134,8 @@ const spoofed = run(`computeMastery_({ quiz: {
 check('client-supplied results cannot create mastery', statusById(spoofed),
   [['LO-01', 'not-started'], ['LO-02', 'not-started'], ['LO-03', 'not-started']]);
 
-const spoofedAnswers = run(`computeMastery_({ quiz: { answers: { q1: 'temperature' },
+const spoofedAnswers = run(`computeMastery_({ quiz: { attempts: 1, lastSubmissionId: 's1',
+  lastSubmissionAnswers: { q1: 'temperature' }, answers: { q1: 'temperature' },
   results: { q1: { correct: true, selected: 'temperature' } } } })`);
 check('a wrong answer stays wrong even if results say otherwise',
   spoofedAnswers.objectives.filter(o => o.id === 'LO-01')[0].correct, 0);
