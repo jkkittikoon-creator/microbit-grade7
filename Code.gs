@@ -162,6 +162,74 @@ const QUIZ_ANSWER_KEY = Object.freeze({
 });
 
 /**
+ * Pre-test — Blueprint #32 วัดพื้นฐานก่อนเรียน และ #33 ใช้เลือกระดับตัวช่วย
+ *
+ * เจตนาคือ "รู้ว่านักเรียนมาถึงห้องนี้พร้อมอะไรบ้าง" ไม่ใช่การสอบเก็บคะแนน
+ * จึงทำได้ครั้งเดียว ข้ามได้ ไม่ให้ XP และไม่รวมกับคะแนน Academic ตาม #55
+ * ที่ไม่ให้ XP เพราะถ้าให้ จะจูงใจให้เดามั่วเพื่อเอารางวัล แล้วผลวัดพื้นฐานจะเพี้ยน
+ *
+ * เก็บแยกจาก LESSON_SECTIONS และ LESSON_OPTIONAL_STEPS โดยตั้งใจ
+ * เพราะ completedSections เก็บเป็น "เลขลำดับ" ถ้าแทรก Pre-test เป็น Section
+ * เลขของนักเรียนที่เรียนไปแล้วจะเลื่อนทั้งชุดและแยกไม่ออกอีกเลย
+ *
+ * เฉลยอยู่ฝั่งเซิร์ฟเวอร์เท่านั้น เหมือน QUIZ_ANSWER_KEY
+ */
+const PRETEST_ANSWER_KEY = Object.freeze({
+  p1: Object.freeze({
+    objective: 'LO-01',
+    answer: 'sensor',
+    choices: Object.freeze(['camera', 'sensor', 'microphone'])
+  }),
+  p2: Object.freeze({
+    objective: 'LO-01',
+    answer: 'axis-x',
+    choices: Object.freeze(['axis-x', 'axis-y', 'no-axis'])
+  }),
+  p3: Object.freeze({
+    objective: 'LO-02',
+    answer: 'loop',
+    choices: Object.freeze(['once', 'loop', 'button'])
+  }),
+  p4: Object.freeze({
+    objective: 'LO-02',
+    answer: 'clear',
+    choices: Object.freeze(['clear', 'brighter', 'nothing'])
+  }),
+  p5: Object.freeze({
+    objective: 'LO-03',
+    answer: 'convert',
+    choices: Object.freeze(['direct', 'convert', 'zero'])
+  })
+});
+
+const PRETEST_QUESTION_COUNT = Object.keys(PRETEST_ANSWER_KEY).length;
+
+/**
+ * เกณฑ์เลือกเส้นทางตัวช่วย — Blueprint #33
+ *
+ * ทุกเส้นทางเรียนครบทุก Section เหมือนกัน ต่างกันที่ "ตัวช่วย" เท่านั้น
+ * ไม่มีเส้นทางไหนข้าม Required Step ได้ เพราะการข้ามต้องรื้อ evidence chain
+ * ซึ่งเป็นตัวกันไม่ให้นักเรียนกดข้ามกิจกรรมสำคัญ
+ */
+const LEARNING_PATHS = Object.freeze({
+  foundation: Object.freeze({
+    id: 'foundation',
+    label: 'เริ่มจากพื้นฐาน',
+    detail: 'จะมีการ์ดพื้นฐานและคำใบ้เพิ่มให้ตั้งแต่ต้น'
+  }),
+  standard: Object.freeze({
+    id: 'standard',
+    label: 'เรียนตามปกติ',
+    detail: 'เรียนไปตามลำดับ มีคำใบ้เมื่อขอ'
+  }),
+  challenge: Object.freeze({
+    id: 'challenge',
+    label: 'เพิ่มโจทย์ท้าทาย',
+    detail: 'จะมีโจทย์วิเคราะห์เพิ่มท้ายบางหัวข้อ'
+  })
+});
+
+/**
  * หลักฐานขั้นต่ำของ Required Sections — DIFF-04A
  *
  * completedSections เป็นเพียงผลลัพธ์ที่คำนวณได้ ไม่ใช่หลักฐานในตัวเอง
@@ -1041,19 +1109,24 @@ function getProgress(token) {
       preview: true,
       previewMode: session.previewMode,
       rewards: computeRewardsForSession_(previewState, session),
-      mastery: computeMastery_(previewState)
+      mastery: computeMastery_(previewState),
+      learningPath: computeLearningPath_(previewState),
+      growth: computeGrowth_(previewState)
     };
   }
 
   const row = findProgressRow_(session.username);
 
   if (!row) {
+    const freshState = createDefaultProgress_(session);
     return {
       ok: true,
-      state: createDefaultProgress_(session),
+      state: freshState,
       updatedAt: null,
-      rewards: computeRewards_(createDefaultProgress_(session)),
-      mastery: computeMastery_(createDefaultProgress_(session))
+      rewards: computeRewards_(freshState),
+      mastery: computeMastery_(freshState),
+      learningPath: computeLearningPath_(freshState),
+      growth: computeGrowth_(freshState)
     };
   }
 
@@ -1071,7 +1144,9 @@ function getProgress(token) {
     state: state,
     updatedAt: row.updatedAt,
     rewards: computeRewards_(state),
-    mastery: computeMastery_(state)
+    mastery: computeMastery_(state),
+    learningPath: computeLearningPath_(state),
+    growth: computeGrowth_(state)
   };
 }
 
@@ -1090,7 +1165,9 @@ function saveProgress(token, state) {
       updatedAt: new Date().toISOString(),
       preview: true,
       rewards: computeRewardsForSession_(cleanState, session),
-      mastery: computeMastery_(cleanState)
+      mastery: computeMastery_(cleanState),
+      learningPath: computeLearningPath_(cleanState),
+      growth: computeGrowth_(cleanState)
     };
   }
 
@@ -1126,12 +1203,25 @@ function saveProgress(token, state) {
     const cleanState = validateProgressState_(state, session, trustedState);
     const updatedAt = writeProgressStateRow_(session.username, cleanState);
     appendAudit_(session.username, 'progress_save', 'success', 'Section ' + cleanState.currentSection);
+
+    // บันทึกผลวัดพื้นฐานเฉพาะตอนเปลี่ยนจาก "ยังไม่ทำ" เป็น "ทำแล้ว" ครั้งเดียว
+    // Pre-test แก้ไม่ได้อยู่แล้ว การเทียบสองสถานะจึงกันแถวซ้ำได้ในตัว
+    const beforePretest = (trustedState && trustedState.pretest) || null;
+    if (
+      cleanState.pretest &&
+      cleanState.pretest.taken === true &&
+      !(beforePretest && beforePretest.taken === true)
+    ) {
+      appendPretestAttemptRow_(session.username, cleanState.pretest);
+    }
     return {
       ok: true,
       state: cleanState,
       updatedAt: updatedAt,
       rewards: computeRewards_(cleanState),
-      mastery: computeMastery_(cleanState)
+      mastery: computeMastery_(cleanState),
+      learningPath: computeLearningPath_(cleanState),
+      growth: computeGrowth_(cleanState)
     };
   } finally {
     lock.releaseLock();
@@ -1509,6 +1599,42 @@ function ensureAttemptsSubmissionIdColumn_(sheet) {
   return targetColumn;
 }
 
+/**
+ * บันทึก Pre-test หนึ่งแถวลงชีต Attempts ที่มีอยู่แล้ว — ไม่ต้องแก้ schema
+ *
+ * ใช้คอลัมน์ assessment แยกจากแบบทดสอบท้ายบท ครูจึงกรองดูได้
+ * และคะแนนวัดพื้นฐานจะไม่ไปปนกับคะแนน Academic ตาม Blueprint #100
+ * เขียนครั้งเดียวตอนทำเสร็จ ถ้าเขียนไม่ได้ต้องไม่ทำให้การบันทึกความก้าวหน้าล้ม
+ */
+function appendPretestAttemptRow_(username, pretest) {
+  try {
+    const sheet = getSpreadsheet_().getSheetByName('Attempts');
+    if (!sheet) return false;
+
+    const width = Math.max(sheet.getLastColumn(), SHEET_SCHEMAS.Attempts.length);
+    const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0].map(String);
+    const data = {
+      timestamp: new Date(),
+      username: username,
+      assessment: 'pretest',
+      score: pretest.score,
+      maximumScore: pretest.total,
+      attemptNumber: 1,
+      answersJson: JSON.stringify(pretest.answers),
+      submissionId: 'pretest'
+    };
+    const rowValues = headers.map(function (header) {
+      return Object.prototype.hasOwnProperty.call(data, header) ? data[header] : '';
+    });
+    sheet.getRange(sheet.getLastRow() + 1, 1, 1, rowValues.length).setValues([rowValues]);
+    return true;
+  } catch (error) {
+    // แถวสรุปผลหายได้ แต่ความก้าวหน้าของนักเรียนต้องไม่หายตาม
+    appendAudit_(username, 'pretest_record', 'failed', safeErrorMessage_(error));
+    return false;
+  }
+}
+
 function appendQuizAttemptRow_(sheet, username, outcome) {
   const submissionColumn = ensureAttemptsSubmissionIdColumn_(sheet);
   const lastRow = sheet.getLastRow();
@@ -1574,7 +1700,9 @@ function buildQuizSubmitResponse_(outcome, updatedAt, preview, attemptLogCreated
     state: outcome.state,
     updatedAt: updatedAt,
     rewards: computeRewardsForSession_(outcome.state, session),
-    mastery: computeMastery_(outcome.state)
+    mastery: computeMastery_(outcome.state),
+    learningPath: computeLearningPath_(outcome.state),
+    growth: computeGrowth_(outcome.state)
   };
 }
 
@@ -2028,6 +2156,8 @@ function getStudentDetail(token, username) {
     },
     rewards: computeRewards_(state),
     mastery: computeMastery_(state),
+    learningPath: computeLearningPath_(state),
+    growth: computeGrowth_(state),
     updatedAt: progressRow ? progressRow.updatedAt : null
   };
 }
@@ -2936,6 +3066,208 @@ function optionalStepsStatus_(state, unlockAllOptionalSteps) {
   });
 }
 
+function createEmptyPretest_() {
+  return {
+    taken: false,
+    skipped: false,
+    answers: {},
+    score: 0,
+    total: PRETEST_QUESTION_COUNT,
+    percent: 0,
+    path: LEARNING_PATHS.standard.id,
+    takenAt: ''
+  };
+}
+
+/**
+ * ตรวจคำตอบ Pre-test ที่หน้าเว็บส่งมา รับเฉพาะรหัสตัวเลือกที่มีจริง
+ * ต้องตอบครบทุกข้อจึงจะนับ เพราะเป็นการวัดพื้นฐาน ไม่ใช่การเก็บคะแนนสะสม
+ */
+function validatePretestAnswers_(answers) {
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+    return null;
+  }
+
+  const clean = {};
+  const questionIds = Object.keys(PRETEST_ANSWER_KEY);
+  for (let index = 0; index < questionIds.length; index += 1) {
+    const questionId = questionIds[index];
+    const selected = answers[questionId];
+    if (typeof selected !== 'string') return null;
+    if (PRETEST_ANSWER_KEY[questionId].choices.indexOf(selected) < 0) return null;
+    clean[questionId] = selected;
+  }
+
+  // มีคีย์แปลกปลอมแปลว่าไม่ใช่ชุดคำตอบที่ระบบออกให้ ไม่รับ
+  if (Object.keys(answers).length !== questionIds.length) return null;
+
+  return clean;
+}
+
+function pretestPathFor_(percent) {
+  if (percent < 50) return LEARNING_PATHS.foundation.id;
+  if (percent < 80) return LEARNING_PATHS.standard.id;
+  return LEARNING_PATHS.challenge.id;
+}
+
+/**
+ * Pre-test ทำได้ครั้งเดียว — เมื่อทำหรือข้ามแล้ว ผลจะไม่เปลี่ยนอีก
+ *
+ * คะแนน เส้นทาง และเวลาที่ทำ คำนวณฝั่งเซิร์ฟเวอร์ทั้งหมด
+ * หน้าเว็บส่งได้แค่ answers กับ skipped เท่านั้น ค่าอื่นที่ส่งมาจะถูกทิ้ง
+ * มิฉะนั้นนักเรียนจะตั้งเส้นทางหรือคะแนนพื้นฐานของตัวเองได้
+ */
+function normalizePretestState_(incoming, trustedPretest) {
+  const trusted = trustedPretest &&
+    typeof trustedPretest === 'object' &&
+    !Array.isArray(trustedPretest)
+    ? trustedPretest
+    : null;
+
+  // ทำไปแล้วหรือข้ามไปแล้ว ถือเป็นข้อมูลถาวร ไม่ให้เขียนทับ
+  if (trusted && (trusted.taken === true || trusted.skipped === true)) {
+    const answers = validatePretestAnswers_(trusted.answers) || {};
+    const score = clampInteger_(trusted.score, 0, PRETEST_QUESTION_COUNT);
+    const percent = clampInteger_(trusted.percent, 0, 100);
+    return {
+      taken: trusted.taken === true,
+      skipped: trusted.skipped === true,
+      answers: answers,
+      score: score,
+      total: PRETEST_QUESTION_COUNT,
+      percent: percent,
+      path: LEARNING_PATHS[trusted.path] ? trusted.path : LEARNING_PATHS.standard.id,
+      takenAt: sanitizePlainText_(trusted.takenAt, 40)
+    };
+  }
+
+  const source = incoming && typeof incoming === 'object' && !Array.isArray(incoming)
+    ? incoming
+    : null;
+  if (!source) return createEmptyPretest_();
+
+  if (source.skipped === true) {
+    const skipped = createEmptyPretest_();
+    skipped.skipped = true;
+    skipped.takenAt = new Date().toISOString();
+    return skipped;
+  }
+
+  const answers = validatePretestAnswers_(source.answers);
+  if (!answers) return createEmptyPretest_();
+
+  let score = 0;
+  Object.keys(PRETEST_ANSWER_KEY).forEach(function (questionId) {
+    if (answers[questionId] === PRETEST_ANSWER_KEY[questionId].answer) score += 1;
+  });
+  const percent = Math.round(score / PRETEST_QUESTION_COUNT * 100);
+
+  return {
+    taken: true,
+    skipped: false,
+    answers: answers,
+    score: score,
+    total: PRETEST_QUESTION_COUNT,
+    percent: percent,
+    path: pretestPathFor_(percent),
+    takenAt: new Date().toISOString()
+  };
+}
+
+/**
+ * ผล Pre-test แยกรายจุดประสงค์ ใช้บอกว่า "มาถึงห้องนี้พร้อมอะไรบ้าง"
+ * ห้ามเฉลยคำตอบทั้งหมดก่อนเรียน ตาม Blueprint #32 จึงคืนแค่ถูกกี่ข้อต่อจุดประสงค์
+ */
+function pretestObjectiveBreakdown_(pretest) {
+  const answers = (pretest && pretest.answers) || {};
+
+  return LEARNING_OBJECTIVES.map(function (objective) {
+    const questionIds = Object.keys(PRETEST_ANSWER_KEY).filter(function (questionId) {
+      return PRETEST_ANSWER_KEY[questionId].objective === objective.id;
+    });
+
+    let correct = 0;
+    questionIds.forEach(function (questionId) {
+      if (answers[questionId] === PRETEST_ANSWER_KEY[questionId].answer) correct += 1;
+    });
+
+    return {
+      id: objective.id,
+      title: objective.title,
+      correct: correct,
+      total: questionIds.length,
+      known: questionIds.length > 0 && correct === questionIds.length
+    };
+  });
+}
+
+/**
+ * เส้นทางตัวช่วยของนักเรียนคนนี้ พร้อมเหตุผลที่ตรวจสอบได้ — Blueprint #225
+ *
+ * ครูต้องอธิบายได้เสมอว่าทำไมนักเรียนถึงได้เส้นทางนี้ ห้ามเป็นกล่องดำ
+ */
+function computeLearningPath_(state) {
+  const pretest = (state && state.pretest) || createEmptyPretest_();
+  const pathId = pretest.taken === true
+    ? (LEARNING_PATHS[pretest.path] ? pretest.path : LEARNING_PATHS.standard.id)
+    : LEARNING_PATHS.standard.id;
+  const path = LEARNING_PATHS[pathId];
+
+  let reason;
+  if (pretest.taken === true) {
+    reason = 'Pre-test ' + pretest.score + '/' + pretest.total +
+      ' (' + pretest.percent + '%)';
+  } else if (pretest.skipped === true) {
+    reason = 'ข้าม Pre-test จึงใช้เส้นทางปกติ';
+  } else {
+    reason = 'ยังไม่ได้ทำ Pre-test จึงใช้เส้นทางปกติ';
+  }
+
+  return {
+    id: path.id,
+    label: path.label,
+    detail: path.detail,
+    reason: reason,
+    pretest: {
+      taken: pretest.taken === true,
+      skipped: pretest.skipped === true,
+      score: pretest.score,
+      total: pretest.total,
+      percent: pretest.percent,
+      objectives: pretest.taken === true ? pretestObjectiveBreakdown_(pretest) : []
+    }
+  };
+}
+
+/**
+ * พัฒนาการจาก Pre-test ถึงแบบทดสอบท้ายบท — Blueprint #65
+ *
+ * เทียบเป็นเปอร์เซ็นต์ เพราะจำนวนข้อไม่เท่ากัน (5 ข้อ กับ 6 ข้อ)
+ * ต้องมีทั้งสองฝั่งจริงจึงจะเทียบ ถ้าไม่ได้ทำ Pre-test ก็ไม่มีอะไรให้เทียบ
+ */
+function computeGrowth_(state) {
+  const pretest = (state && state.pretest) || createEmptyPretest_();
+  const quiz = (state && state.quiz) || {};
+  const attempts = Number(quiz.attempts) || 0;
+
+  if (pretest.taken !== true || attempts <= 0) return null;
+
+  const bestScore = clampInteger_(quiz.bestScore, 0, APP_CONFIG.quizQuestionCount);
+  const afterPercent = Math.round(bestScore / APP_CONFIG.quizQuestionCount * 100);
+  const deltaPercent = afterPercent - pretest.percent;
+
+  return {
+    beforePercent: pretest.percent,
+    beforeScore: pretest.score,
+    beforeTotal: pretest.total,
+    afterPercent: afterPercent,
+    afterScore: bestScore,
+    afterTotal: APP_CONFIG.quizQuestionCount,
+    deltaPercent: deltaPercent,
+    improved: deltaPercent > 0
+  };
+}
+
 /**
  * Mastery รายจุดประสงค์ — Blueprint #52
  *
@@ -3242,6 +3574,7 @@ function createDefaultProgress_(session) {
     hookAnswers: {},
     worksheet: {},
     reflection: {},
+    pretest: createEmptyPretest_(),
     quiz: createEmptyQuizState_()
   };
 }
@@ -4071,6 +4404,9 @@ function validateProgressState_(state, session, trustedState) {
     hookAnswers: normalizedEvidence.hookAnswers,
     worksheet: normalizedWorksheet,
     reflection: normalizedEvidence.reflection,
+    // Pre-test อยู่นอกลำดับขั้นบังคับ จึงไม่แตะ completedSections และ currentSection
+    // ทำหรือไม่ทำก็เรียนได้เหมือนกัน ต่างแค่ระดับตัวช่วยที่ระบบเสนอให้
+    pretest: normalizePretestState_(state.pretest, trusted.pretest),
     quiz: {
       answers: draftAnswers,
       // เฉลยเปิดได้ต่อเมื่อมี attempt จริงบน server แล้วเท่านั้น
