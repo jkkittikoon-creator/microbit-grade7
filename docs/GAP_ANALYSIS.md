@@ -33,8 +33,14 @@
 ให้น้ำหนักมากที่สุด ตอนนี้นักเรียนย้อนกลับไปทบทวนได้เสมอ แต่ข้าม Required Step
 ไปข้างหน้าไม่ได้ และการบังคับอยู่ที่เซิร์ฟเวอร์ ไม่ใช่แค่ซ่อนใน UI
 
-**ช่องว่างใหญ่ที่สุดที่เหลือคือ ระบบแรงจูงใจทั้งหมด** (XP, Badge, Level, Streak,
-Celebration) ซึ่งยังไม่มีเลยแม้แต่ส่วนเดียว ทั้งที่ Blueprint ให้พื้นที่ถึง 19 หัวข้อ
+**รอบที่ 3 และ 4 ปิดช่องว่างด้านแรงจูงใจไปเป็นส่วนใหญ่แล้ว** ทั้ง Reward Engine,
+XP, Badge, Celebration และข้อความให้กำลังใจตามสถานการณ์จริง เหลือที่ยังไม่มีคือ
+Level, Streak, Goal System, Growth Message และ Persistence Bonus
+
+**ช่องว่างใหญ่ที่สุดที่เหลือคือ หมวดวงจรชีวิตเนื้อหาและปฏิบัติการ** ซึ่งยังเป็น ❌
+เกือบทั้งหมด (Versioning, Quality Gate, Monitoring, Feature Flag, Staging,
+Academic Year) ตามด้วยการประเมินที่ยังขาด Pre-test, Adaptive Learning,
+Question Bank และ Mastery
 
 | หมวด | ✅ | ⚠️ | ❌ |
 |---|---|---|---|
@@ -187,6 +193,7 @@ Celebration) ซึ่งยังไม่มีเลยแม้แต่ส�
 | Blueprint | สถานะ | รายละเอียด |
 |---|---|---|
 | #109 Security ครบ 6 ด้าน | ✅ | Authentication, Authorization, Role, Student/Teacher/Admin Access |
+| #109 ฟังก์ชันติดตั้งและดูแลระบบ | ✅ | **แก้แล้ว 12 ก.ย. 2569** เว็บแอปเปิดแบบ `ANYONE_ANONYMOUS` ทำให้ `google.script.run` เรียกฟังก์ชันระดับบนสุดที่ชื่อไม่ลงท้ายด้วย `_` ได้ทุกตัว `showSetupStatus` จึงเคยส่งรายชื่อนักเรียนจริงและ URL สเปรดชีตให้ใครก็ได้ ตอนนี้กันด้วย `requireEditorContext_()` ส่วน `runScheduledBackup` เปลี่ยนชื่อไม่ได้เพราะ Trigger อ้างอยู่ จึงกันด้วยช่วงห่างขั้นต่ำ 6 ชั่วโมงแทน |
 | #116 ห้ามนักเรียนแก้ Progress ผ่าน Client | ✅ | `validateProgressState_()` ตรวจและ clamp ทุกค่าฝั่งเซิร์ฟเวอร์ |
 | #184 Privacy by Design | ✅ | ไม่ส่ง `passwordHash` และ `salt` ออกจาก backend เลย `publicUser_()` กรองข้อมูลก่อนส่ง |
 | #185 Role-based Data Access | ✅ | นักเรียนเห็นเฉพาะข้อมูลตัวเอง |

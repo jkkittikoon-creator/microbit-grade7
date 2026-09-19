@@ -216,6 +216,8 @@ function rotateStudentPasswords_(actor, password, request) {
  * นักเรียนจะเข้าบทเรียนได้ทันทีด้วยรหัสที่ครูกำหนดให้
  */
 function disablePasswordChangePrompt() {
+  requireEditorContext_('disablePasswordChangePrompt');
+
   const sheet = getSpreadsheet_().getSheetByName('Users');
   const now = new Date();
   const changed = [];
@@ -242,6 +244,8 @@ function disablePasswordChangePrompt() {
  * Never returns a password, a stored hash, or a salt.
  */
 function showSetupStatus() {
+  requireEditorContext_('showSetupStatus');
+
   const properties = PropertiesService.getScriptProperties();
   const status = getSetupStatus_();
   const report = {

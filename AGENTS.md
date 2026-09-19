@@ -68,7 +68,18 @@ For this repository, use `search -> relevant files -> minimal diff`: inspect onl
 
 ## Validation strategy
 
-No full-system reproducible automated test harness is currently verified. A narrow security-specific isolated harness exists at `.prod-security-rotation-tests-20260829/runtime_regression_test.js` and was verified 13/13 for the Production v38 credential-rotation/session-revocation scope only. Do not generalize that harness to unrelated lesson or product behavior. During development, prefer:
+No full-system reproducible automated test harness is currently verified. A narrow security-specific isolated harness exists at `.prod-security-rotation-tests-20260829/runtime_regression_test.js` and was verified 13/13 for the Production v38 credential-rotation/session-revocation scope only. Do not generalize that harness to unrelated lesson or product behavior.
+
+Two committed static harnesses under `tests/` load the real sources into a `vm` context. Each takes its sources as arguments — `node --test` does not run them:
+
+```
+node tests/preview-reward-gate.test.mjs Code.gs
+node tests/editor-only-guard.test.mjs Code.gs Maintenance.gs
+```
+
+The first covers Free Navigation Preview reward gating only. The second covers the editor-only guard on the installer and maintenance entry points only. Neither is evidence for anything outside its own scope.
+
+During development, prefer:
 
 1. Targeted static inspection
 2. Targeted functional validation

@@ -60,6 +60,10 @@ const APP_CONFIG = Object.freeze({
   backupKeepDays: 14,
   // ชั่วโมงที่ให้สำรองอัตโนมัติ ตั้งเป็นตอนดึกเพื่อไม่ชนเวลาเรียน
   backupHour: 1,
+  // เวลาที่สำรองล่าสุด ใช้กันการสั่งสำรองรัว ๆ จนพื้นที่ Drive เต็ม
+  lastBackupProperty: 'TILT_LAB_LAST_BACKUP_AT',
+  // ตัวจับเวลาทำงานวันละครั้ง ช่วงห่างขั้นต่ำนี้จึงไม่กระทบการสำรองตามกำหนด
+  minBackupIntervalHours: 6,
   initialPasswordProperty: 'INITIAL_STUDENT_PASSWORD'
 });
 
@@ -392,6 +396,8 @@ function createBackup_(actor) {
   const copy = DriveApp.getFileById(spreadsheetId)
     .makeCopy('Tilt Lab สำรอง ' + stamp, folder);
 
+  properties.setProperty(APP_CONFIG.lastBackupProperty, new Date().toISOString());
+
   const removed = pruneOldBackups_(folder);
 
   appendAudit_(
@@ -443,9 +449,37 @@ function pruneOldBackups_(folder) {
   return removed;
 }
 
-/** จุดเข้าของตัวจับเวลาอัตโนมัติ ห้ามเปลี่ยนชื่อ เพราะ Trigger อ้างชื่อนี้ */
+/**
+ * บอกว่าเพิ่งสำรองไปเมื่อไม่นานมานี้หรือยัง
+ * ตัวจับเวลาทำงานวันละครั้ง จึงไม่เคยติดเงื่อนไขนี้
+ * แต่ถ้ามีใครสั่งสำรองรัว ๆ จากหน้าเว็บ จะถูกกันไว้ไม่ให้ถมพื้นที่ Drive
+ */
+function backedUpRecently_() {
+  try {
+    const last = PropertiesService.getScriptProperties()
+      .getProperty(APP_CONFIG.lastBackupProperty);
+    if (!last) return false;
+
+    const elapsed = new Date().getTime() - new Date(last).getTime();
+    if (!isFinite(elapsed) || elapsed < 0) return false;
+
+    return elapsed < APP_CONFIG.minBackupIntervalHours * 60 * 60 * 1000;
+  } catch (error) {
+    // อ่านค่าไม่ได้ก็ต้องยอมให้สำรอง ดีกว่าปล่อยให้ตัวจับเวลาเงียบหาย
+    return false;
+  }
+}
+
+/**
+ * จุดเข้าของตัวจับเวลาอัตโนมัติ ห้ามเปลี่ยนชื่อ เพราะ Trigger อ้างชื่อนี้
+ *
+ * ชื่อนี้เปลี่ยนไม่ได้ จึงกันด้วย requireEditorContext_ ไม่ได้เช่นกัน
+ * เพราะ Session ของตัวจับเวลาไม่ใช่ผู้ใช้ที่กำลังเปิดหน้าเว็บ
+ * ด่านของฟังก์ชันนี้จึงเป็นช่วงห่างขั้นต่ำระหว่างการสำรองแทน
+ */
 function runScheduledBackup() {
   try {
+    if (backedUpRecently_()) return;
     createBackup_('ระบบอัตโนมัติ');
   } catch (error) {
     // ตัวจับเวลาล้มเหลวต้องเห็นใน Audit ไม่ใช่เงียบหายไป
@@ -458,6 +492,16 @@ function runScheduledBackup() {
  * เรียกซ้ำได้ปลอดภัย เพราะลบตัวเดิมก่อนสร้างใหม่เสมอ จึงไม่ซ้อนกัน
  */
 function setupDailyBackup() {
+  requireEditorContext_('setupDailyBackup');
+  return installDailyBackup_();
+}
+
+/**
+ * เนื้อในของการตั้งตัวจับเวลา แยกไว้ให้เรียกได้สองทาง
+ * ครูกดจากหน้าเว็บผ่าน enableDailyBackup ซึ่งผ่าน role guard มาแล้ว
+ * หรือรันจาก Apps Script editor ผ่าน setupDailyBackup
+ */
+function installDailyBackup_() {
   ScriptApp.getProjectTriggers().forEach(function (trigger) {
     if (trigger.getHandlerFunction() === 'runScheduledBackup') {
       ScriptApp.deleteTrigger(trigger);
@@ -530,7 +574,7 @@ function backupNow(token) {
 /** ครูเปิดการสำรองอัตโนมัติจากหน้าเว็บ โดยไม่ต้องเข้า Apps Script */
 function enableDailyBackup(token) {
   const session = requireRole_(token, 'admin');
-  const result = setupDailyBackup();
+  const result = installDailyBackup_();
   appendAudit_(
     session.username,
     'backup_schedule',
@@ -712,6 +756,8 @@ function getPublicConfig() {
  * and the seven student records. It is safe to run again after completion.
  */
 function setupSystem() {
+  requireEditorContext_('setupSystem');
+
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -771,6 +817,8 @@ function setupSystem() {
  * The plaintext password is removed immediately after its salted hash is stored.
  */
 function setupAdminAccount() {
+  requireEditorContext_('setupAdminAccount');
+
   const properties = PropertiesService.getScriptProperties();
   const password = String(
     properties.getProperty(APP_CONFIG.adminPasswordProperty) || ''
@@ -2688,6 +2736,43 @@ function requireRole_(token, role) {
     throw new Error('ไม่มีสิทธิ์เข้าถึงข้อมูลส่วนนี้');
   }
   return session;
+}
+
+/**
+ * ด่านกันการเรียกฟังก์ชันสำหรับผู้ดูแลจากหน้าเว็บ
+ *
+ * เว็บแอปนี้เปิดแบบ ANYONE_ANONYMOUS ซึ่งทำให้ google.script.run เรียกได้
+ * ทุกฟังก์ชันระดับบนสุดที่ชื่อไม่ลงท้ายด้วย _ แม้หน้าเว็บจะไม่ได้เรียกเองก็ตาม
+ * ฟังก์ชันติดตั้งและฟังก์ชันดูแลระบบจึงต้องกันไว้ด้วยตัวเอง
+ *
+ * วิธีกันคือเทียบผู้ใช้ที่กำลังเปิดหน้ากับเจ้าของสคริปต์
+ * ผู้เข้าชมแบบไม่ล็อกอินจะได้อีเมลว่าง จึงไม่ผ่านด่านนี้
+ * ส่วนครูที่รันจาก Apps Script editor จะได้อีเมลเดียวกันทั้งสองค่า
+ */
+function requireEditorContext_(functionName) {
+  let activeEmail = '';
+  let effectiveEmail = '';
+
+  try {
+    activeEmail = String(Session.getActiveUser().getEmail() || '');
+  } catch (error) {
+    activeEmail = '';
+  }
+
+  try {
+    effectiveEmail = String(Session.getEffectiveUser().getEmail() || '');
+  } catch (error) {
+    effectiveEmail = '';
+  }
+
+  if (!activeEmail || !effectiveEmail || activeEmail !== effectiveEmail) {
+    // ไม่เขียนลง Audit เพราะผู้เรียกยังไม่ผ่านการยืนยันตัวตน
+    // ถ้าเขียน ใครก็ทำให้ชีต Audit บวมได้โดยไม่ต้องล็อกอิน
+    console.error('editor_guard denied: ' + String(functionName || ''));
+    throw new Error('ฟังก์ชันนี้เรียกได้จาก Apps Script editor เท่านั้น');
+  }
+
+  return effectiveEmail;
 }
 
 function publicUser_(user) {
