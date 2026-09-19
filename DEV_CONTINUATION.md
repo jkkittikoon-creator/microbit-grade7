@@ -8,25 +8,65 @@
 - PRODUCTION DEPLOYMENT ID: `AKfycbw1QpbSIP-DnOc3WI_XuHBQiIiyAHi1l89iasHEwY66SP-nF7324KwOdXWKsqK9dPsnLQ`
 
 ## Current State
-_(แก้ 12 ก.ย. 2569)_
+_(แก้ 20 ก.ย. 2569)_
 
-- CURRENT STATUS: **V10_NOT_SHIPPED — v41 พร้อมแล้ว รอย้าย pointer อย่างเดียว**
-- CURRENT PHASE: **ต้องรัน `update-deployment -V 41` จากเครื่องครู** · Production ยังเป็น @40 และทำงานปกติ ไม่ต้องรีบ
+- CURRENT STATUS: **V10_SHIPPED — Production ชี้ @41 และตรวจแล้วว่าเป็นซอร์ส v10 จริง**
+- CURRENT PHASE: งาน v10 ปิดแล้ว · รอบถัดไปคือ TEST v11 ที่รอครูทดสอบ
 - TEST: **@11 รอครูทดสอบ** — Editor-only guard + Mastery + Pre-test ดูหัวข้อ TEST v11
+
+## Production v41 — ปิดงาน v10 แล้ว (20 ก.ย. 2569)
+
+| รายการ | ค่า |
+|---|---|
+| Deployment pointer | **@41** (deployment ID เดิม URL นักเรียนไม่เปลี่ยน) |
+| Description | `Tilt Lab m1 Production v41 - TEST v10 GOLD source` |
+| ซอร์ส | เท่ากับ RC v10 ทั้ง 4 ไฟล์ |
+
+**หลักฐานหลัง deploy** — ดึงเวอร์ชันที่ใช้งานจริงกลับมาตรวจ ไม่ใช่ตรวจแค่ว่าหน้าเปิดได้:
+- `Code.js` `Maintenance.js` `index.html` `appsscript.json` **ตรงกับ RC v10 ทุกไฟล์**
+- `computeRewardsForSession_` นับได้ **4 ครั้ง** (ใน v40 นับได้ 0 — นี่คือความต่างที่พิสูจน์ว่ารอบนี้ส่งของจริง)
+- `requireEditorContext_` นับได้ **0 ครั้ง** ยืนยันว่างานความปลอดภัยรอบใหม่ยัง**ไม่ได้**อยู่บน Production ตามที่ตั้งใจ
+- หน้า `/exec` โหลดสำเร็จ title ถูกต้อง iframe ของแอปขึ้นปกติ ไม่มี console error
+
+**ยังไม่ได้ทดสอบ:** การใช้งานแบบล็อกอินจริงบน Production (นักเรียน/ครู/Preview)
+agent กรอกรหัสผ่านไม่ได้ และอ่านเนื้อหาใน iframe ข้ามโดเมนไม่ได้
+แนะนำให้ครูล็อกอินเช็กสักรอบว่า Free Navigation Preview เปิดกิจกรรมเสริมให้พรีวิวได้แล้วจริง
+ซึ่งคือบั๊กที่ v10 ตั้งใจแก้มาตั้งแต่ต้น
+
+**Rollback:** ใช้ deployment ID เดิมชี้กลับไป v40 ได้ (แต่ v40 เนื้อเท่ากับ v39)
+
+### สาเหตุที่คำสั่งล้มเหลวหลายรอบก่อนหน้า
+ไม่ใช่เรื่อง clasp และไม่ใช่เรื่องสิทธิ์ Google เลย
+PowerShell ตั้ง ExecutionPolicy ห้ามรันสคริปต์ `.ps1` ทั้งระบบ
+คำสั่งจึงตายที่ `npx.ps1` ตั้งแต่ยังไม่ทันเรียก clasp และไม่มีอะไรถูกส่งไป Google
+
+```
+npx : File C:\Program Files\nodejs\npx.ps1 cannot be loaded because running scripts is disabled on this system.
+```
+
+**ทางแก้ที่ใช้ และควรใช้ต่อไป: เรียก `npx.cmd` แทน `npx`** ซึ่งข้ามตัวสคริปต์ `.ps1`
+โดยไม่ต้องลดค่าความปลอดภัยของเครื่อง
+
+```
+npx.cmd @google/clasp@3 update-deployment -V <n> -d "<คำอธิบาย>" <deploymentId>
+```
+
+บทเรียน: ถ้ารันคำสั่งแล้ว pointer ไม่ขยับ ให้สงสัย shell ก่อนสงสัย clasp
+และเก็บข้อความ error มาดูเสมอ อย่าเดาจากผลลัพธ์ปลายทางอย่างเดียว
 
 ### ความคืบหน้า 11–12 ก.ย. 2569
 - script HEAD บนคลาวด์ถูกตรวจแล้วว่าตรงกับ `main` และ RC v10 ทั้ง 4 ไฟล์ จึง **ไม่ต้อง push ซ้ำ** งาน v10 ขึ้นคลาวด์ไปแล้ว
 - **ตัดเวอร์ชัน 41 แล้ว** และดึงกลับมาเทียบยืนยันว่าเท่ากับ RC v10 ทุกไฟล์ `computeRewardsForSession_` นับได้ 4 ครั้ง
 - ตรวจวิธีการซ้ำด้วยการดึง v40 มาเทียบ ได้ 0 ครั้ง ยืนยันว่า `pull --versionNumber` แยกเวอร์ชันได้จริง
-- `update-deployment` ถูก platform safety layer บล็อก 1 ครั้ง และครูรันเองแล้วแต่ pointer ยังไม่เปลี่ยน จึง **ยังค้างอยู่ที่ขั้นนี้**
+- `update-deployment` ค้างอยู่หลายวัน สาเหตุจริงคือ PowerShell ExecutionPolicy ไม่ใช่ clasp · แก้ด้วย `npx.cmd` แล้วสำเร็จ 20 ก.ย. 2569
 - พบและแก้ช่องโหว่ฟังก์ชันที่เรียกได้โดยไม่ต้องล็อกอิน ดูหัวข้อ Editor-Only Guard ด้านล่าง
-- PRODUCTION VERSION: **v40 — แต่เนื้อโค้ดเท่ากับ v39 ทุกประการ ไม่มีงาน v10 อยู่เลย**
+- PRODUCTION VERSION: **v41 — ตรงกับ RC v10 ทุกไฟล์** (ของเดิม v40 เท่ากับ v39 จึงถูกทิ้งไป)
 - TEST VERSION: **v10 GOLD** — ผ่านจริง แต่ผ่านบน `main` ไม่ใช่บนของที่ deploy
 - CURRENT GOLD REPORT: `docs/FINAL_PRODUCTION_GOLD_REPORT_20260902.md` — **ถูก retract แล้ว อ่านหัวเรื่องก่อน**
 - CORRECTION OF RECORD: `docs/PRODUCTION_V40_RELEASE_CHECKPOINT_20260902.md` — อ่านส่วน CORRECTION ก่อนเชื่ออย่างอื่น
 - FINAL SECURITY REPORT: `docs/FINAL_SECURITY_GOLD_REPORT_20260829.md` — ยังใช้ได้ ไม่กระทบ
 - PRODUCTION CREDENTIAL/SESSION BLOCKER: **CLOSED**
-- USER ACTION REQUIRED FOR RELEASE CLOSEOUT: **YES** — ดู NEXT EXACT ACTION
+- USER ACTION REQUIRED FOR RELEASE CLOSEOUT: **NO** สำหรับ v10 · ที่เหลือคือทดสอบ TEST v11
 
 ### หลักฐาน
 ดึง v39 กับ v40 จาก Apps Script API มาเทียบกันโดยตรง (normalize CRLF/LF แล้ว)
@@ -283,37 +323,26 @@ google.script.run
 1. ครูรันจาก Apps Script editor แล้วผ่านด่านจริง
 2. Trigger กลางคืนยังสำรองได้จริงหลังเพิ่มช่วงห่างขั้นต่ำ
 
-## NEXT EXACT ACTION — v10 ยังไม่ถูกส่งขึ้น Production
-_(แก้ 12 ก.ย. 2569 — ข้อ 1–2 ทำเสร็จแล้ว เหลือข้อ 4 เป็นต้นไป)_
+## NEXT EXACT ACTION
+_(แก้ 20 ก.ย. 2569 — งาน v10 ปิดแล้ว ขั้นตอน 1–6 ของรอบนั้นทำครบ)_
 
-ไม่เร่งด่วน Production ทำงานปกติ แต่ยังไม่ได้ส่งงาน v10 ออกไปจริง
+**รอบ v10 บน Production: จบแล้ว** pointer ชี้ @41 และตรวจซอร์สหลัง deploy แล้ว ดูหัวข้อ Production v41
 
-1. ~~`clasp push --force`~~ **ไม่ต้องทำแล้ว** — 11 ก.ย. 2569 ดึง script HEAD มาเทียบแล้ว
-   ตรงกับ repo และ RC v10 ทั้ง 4 ไฟล์ และไม่มีงานที่มีเฉพาะบนคลาวด์
-   (เตือนไว้สำหรับรอบหน้า: ต้องมี `--force` เสมอ เพราะ `appsscript.json` ต่างจากคลาวด์
-   ถ้าใช้ `push` เปล่า ๆ จะขึ้น `Skipping push` แล้วข้ามงานทั้งหมดเหมือนรอบ v40)
+สิ่งที่ค้างตอนนี้คือรอบถัดไป:
 
-2. ~~เทียบ script HEAD กับ RC v10~~ **ทำแล้ว** ตรงกันทั้ง 4 ไฟล์
+1. **ครูทดสอบ TEST v11 ตามรายการ 15 ข้อ** ในหัวข้อ TEST v11
+   ข้อที่ขาดไม่ได้คือ ด่าน editor-only ปฏิเสธคนที่ไม่ล็อกอินจริง
+   ครูรันจาก editor ได้จริง trigger สำรองกลางคืนยังทำงาน
+   และการ์ด Mastery ต้องไม่โผล่ตอนที่ยังไม่กดส่งข้อสอบ
 
-3. ~~`create-version` → 41~~ **ทำแล้ว** และดึง v41 กลับมาเทียบยืนยันว่า
-   เท่ากับ RC v10 ทุกไฟล์ `computeRewardsForSession_` นับได้ 4 ครั้ง
-   (ดึง v40 มาเทียบด้วยได้ 0 ครั้ง ยืนยันว่าวิธีตรวจแยกเวอร์ชันได้จริง)
+2. ผ่านแล้วค่อย merge `fix/editor-only-guard` แล้วตามด้วย `feat/mastery-objectives` เข้า `main`
+   (สาขาหลังต่อยอดจากสาขาแรก ต้องเรียงลำดับนี้)
 
-4. **← ค้างอยู่ตรงนี้** `update-deployment -V 41` ทับ deployment ID เดิม · **ห้าม `create-deployment`**
+3. ตัดเวอร์ชัน Production ใหม่จาก `main` แล้วย้าย pointer ด้วย `npx.cmd`
+   ตรวจหลัง deploy ด้วยการดึงเวอร์ชันจริงกลับมาเทียบ ห้ามตรวจแค่ว่าหน้าเปิดได้
 
-   ```
-   npx @google/clasp@3 update-deployment AKfycbw1QpbSIP-DnOc3WI_XuHBQiIiyAHi1l89iasHEwY66SP-nF7324KwOdXWKsqK9dPsnLQ -V 41 -d "Tilt Lab ม.1 Production v41 - TEST v10 GOLD source (Free Preview reward gating) - pull-back == RC v10 verified"
-   ```
-
-   ต้องรันจากเครื่องครูใน `D:\2569 เทอม 1\ChatGPT\ไมโครบิต ม.1`
-   หรือทำผ่าน Apps Script editor → Deploy → Manage deployments → แก้ตัวที่เป็น Production
-   เลือก Version 41 · **ห้ามกด New deployment** เพราะ URL ของนักเรียนจะเปลี่ยน
-   ตรวจผลด้วย `list-deployments` ว่าขึ้น **@41** จริง ไม่ใช่เชื่อว่าคำสั่งผ่าน
-
-5. Post-deploy smoke รอบใหม่ ต้องเพิ่มการยืนยันว่า `computeRewardsForSession_`
-   อยู่ในเวอร์ชันที่ deploy จริง ไม่ใช่ตรวจแค่ว่าหน้าโหลดขึ้น
-
-6. แก้ deployment description ให้ตรงกับของที่ส่งจริง
+4. แนะนำให้ครูล็อกอิน Production สักรอบเพื่อยืนยันว่า Free Navigation Preview
+   เปิดกิจกรรมเสริมให้พรีวิวได้แล้ว ซึ่งคือบั๊กที่ v10 ตั้งใจแก้
 
 งานที่อยู่นอกขอบเขตนี้:
 - Git-history remediation ของหลักฐาน credential เดิม ต้องขออนุมัติแยกเพราะเป็นงานทำลายล้าง
@@ -323,14 +352,14 @@ _(แก้ 12 ก.ย. 2569 — ข้อ 1–2 ทำเสร็จแล้�
 - Never record or reproduce credentials, password hashes, salts, or session tokens.
 - Never use the historical credential again.
 - Do not show unredacted Git history/diff containing the historical value.
-- Preserve hardened Admin rotation + session-epoch behavior and Production v40 controls in future releases.
+- Preserve hardened Admin rotation + session-epoch behavior and Production v41 controls in future releases.
 - Do not alter Production data without explicit authority.
 - Do not commit, push, merge, rewrite history, or deploy unless explicitly authorized for that exact action.
 - Do not fold lesson X/Y changes into a security-only release without a new scope decision.
 
 ## Scheduled Continuation
 - SCHEDULED CONTINUATION: NOT_CREATED
-- REASON: เหลือขั้นตอนเดียวที่ต้องให้ครูรันเอง (`update-deployment -V 41`) ไม่มีอะไรให้รอแบบอัตโนมัติ
+- REASON: รอครูทดสอบ TEST v11 ด้วยมือ ไม่มีอะไรให้รอแบบอัตโนมัติ
 
 ## Final Checkpoint Statement
-**SECURITY GOLD: CLOSED/PASS · LESSON X/Y v10 GOLD: PASS (บน `main`) · VERSION 41: สร้างและตรวจแล้วว่าเป็นซอร์ส v10 จริง · PRODUCTION: ยังชี้ @40 (เนื้อ = v39) · FINAL PRODUCTION GOLD: ยังไม่ปิด — เหลือย้าย pointer ไป v41 · EDITOR-ONLY GUARD: แก้แล้วบนสาขา รอทดสอบบน TEST**
+**SECURITY GOLD: CLOSED/PASS · LESSON X/Y v10: SHIPPED — Production ชี้ @41 และตรวจซอร์สหลัง deploy แล้ว · FINAL PRODUCTION GOLD: ปิดในขอบเขตที่ตรวจได้ (ยังขาดการทดสอบแบบล็อกอินบน Production) · TEST v11: Editor-only guard + Mastery + Pre-test รอครูทดสอบ**
