@@ -12,6 +12,7 @@ _(แก้ 12 ก.ย. 2569)_
 
 - CURRENT STATUS: **V10_NOT_SHIPPED — v41 พร้อมแล้ว รอย้าย pointer อย่างเดียว**
 - CURRENT PHASE: **ต้องรัน `update-deployment -V 41` จากเครื่องครู** · Production ยังเป็น @40 และทำงานปกติ ไม่ต้องรีบ
+- TEST: **@11 รอครูทดสอบ** — Editor-only guard + Mastery + Pre-test ดูหัวข้อ TEST v11
 
 ### ความคืบหน้า 11–12 ก.ย. 2569
 - script HEAD บนคลาวด์ถูกตรวจแล้วว่าตรงกับ `main` และ RC v10 ทั้ง 4 ไฟล์ จึง **ไม่ต้อง push ซ้ำ** งาน v10 ขึ้นคลาวด์ไปแล้ว
@@ -194,9 +195,71 @@ Decision at final closeout:
 - `.prod-security-rotation-tests-20260829/runtime_regression_test.js`
 - `.prod-security-rotation-v38-proof-20260829/`
 
-## Editor-Only Guard — งานรอบ 12 ก.ย. 2569 (ยังไม่ deploy)
+## TEST v11 — งานใหม่ขึ้น TEST แล้ว รอครูทดสอบ (20 ก.ย. 2569)
 
-สาขา `fix/editor-only-guard` · ยังไม่ merge เข้า `main` และยังไม่ขึ้น TEST
+**TEST deployment `AKfycbxte4a1…T9eZnp3w` ชี้ @11 แล้ว** · Production ไม่เกี่ยว ยังเป็น @40
+
+| รายการ | ค่า |
+|---|---|
+| TEST script ID | `1YrGEQzk2LMSvxfCKOI9l6TbbrXe9ZGrVvAKSEvmzDVG8zrySgfSuy4jE` |
+| TEST deployment ID | `AKfycbxte4a1tsywbJmLEV64C3pLbdOY0aiabVSedSYWAsr467Whx883aZvvBeeXI_T9eZnp3w` |
+| ซอร์ส | สาขา `feat/mastery-objectives` @ `4f030f5` (รวม `fix/editor-only-guard` แล้ว) |
+| มีอะไรบ้าง | Editor-only guard · Mastery รายจุดประสงค์ · Pre-test + เส้นทางตัวช่วย + Growth |
+
+**ตรวจแล้วก่อนและหลังส่ง:**
+- ก่อน push ดึง TEST HEAD มาเทียบแล้ว ตรงกับ RC v10 ทุกไฟล์ ไม่มีงานที่อยู่บนคลาวด์อย่างเดียว
+- หลัง push ดึงกลับมาเทียบ ทั้ง 3 ไฟล์ตรงกับสาขา และ marker นับได้ตามที่บันทึกไว้ก่อน push:
+  `requireEditorContext_` 5 · `computeMastery_` 8 · `normalizePretestState_` 2
+- ดึง version 11 ที่ตัดแล้วมาเทียบซ้ำ ตรงกับสาขาทุกไฟล์
+
+**ที่ยังตรวจไม่ได้:** หน้าแอปอยู่ใน iframe ของ Google คนละโดเมน
+เครื่องมือของ agent รัน JavaScript หรืออ่านเนื้อหาข้าม iframe ไม่ได้
+และการทดสอบแบบล็อกอินต้องใช้รหัสผ่าน ซึ่ง agent ห้ามกรอก ส่วนนี้ครูต้องทำเอง
+
+### รายการทดสอบสำหรับครู บน TEST URL
+
+**ความปลอดภัย** — เปิดหน้าต่างไม่ระบุตัวตน (ไม่ล็อกอิน Google) เปิด TEST URL
+กด F12 → Console → ที่ dropdown บริบทด้านบนเลือก `userCodeAppPanel` แล้ววาง:
+
+```js
+google.script.run
+  .withSuccessHandler(() => console.log('ALLOWED — ด่านไม่ทำงาน ห้ามปล่อยขึ้น Production'))
+  .withFailureHandler((e) => console.log('DENIED:', e.message))
+  .showSetupStatus();
+```
+
+ต้องได้ `DENIED: ฟังก์ชันนี้เรียกได้จาก Apps Script editor เท่านั้น`
+(ตัวที่สำเร็จจงใจไม่พิมพ์ข้อมูลออกมา กันรายชื่อนักเรียนหลุดลง Console)
+
+1. [ ] ไม่ล็อกอิน เรียก `showSetupStatus` → **DENIED**
+2. [ ] เปิดโปรเจกต์ TEST ใน Apps Script editor รัน `showSetupStatus` → **ทำงานได้** มีผลใน Execution log
+3. [ ] ล็อกอินครู กดปุ่มเปิดการสำรองอัตโนมัติ → ยังทำงานได้
+4. [ ] เช้าวันถัดไป มีสำเนาใหม่ในโฟลเดอร์สำรอง → trigger กลางคืนยังทำงาน
+
+**Pre-test** — ใช้บัญชีทดสอบ
+5. [ ] นักเรียนใหม่เห็นการ์ด "ลองเช็กพื้นฐาน" ก่อน Section 1
+6. [ ] ตอบครบ 5 ข้อแล้วส่ง → เห็นผล แยกรายเรื่อง และเส้นทาง · **ไม่มีการเฉลยคำตอบ**
+7. [ ] รีโหลดหน้า → การ์ดคำถามไม่กลับมา ผลยังอยู่ ทำซ้ำไม่ได้
+8. [ ] อีกบัญชีกด "ข้าม" → เข้าเรียนได้ปกติ ไม่มีการ์ดผล
+9. [ ] บัญชีที่เรียนค้างไว้ก่อนมี Pre-test → **อยู่ Section เดิม ความก้าวหน้าไม่หาย**
+
+**Mastery**
+10. [ ] ในแบบทดสอบ เลือกคำตอบแต่ **ยังไม่กดส่ง** → การ์ด Mastery **ต้องไม่โผล่** (บั๊กเครื่องเฉลยที่แก้ไปแล้ว)
+11. [ ] กดส่ง → การ์ดโผล่ มีลิงก์ทบทวน Section เฉพาะเรื่องที่ยังไม่แน่น
+12. [ ] บัญชีที่ทำ Pre-test แล้วทำแบบทดสอบ → เห็นบรรทัดพัฒนาการ
+
+**ครู**
+13. [ ] รายละเอียดนักเรียน → เห็นเส้นทางพร้อมเหตุผล เช่น `Pre-test 3/5 (60%)` · พัฒนาการ · Mastery
+14. [ ] Teacher Preview ทั้ง normal และ free → ทำ Pre-test ได้ และไม่ไปเขียนทับข้อมูลนักเรียน
+
+**อุปกรณ์**
+15. [ ] มือถือ 375px ไม่มีอะไรล้นจอ · คอมพิวเตอร์ปกติ
+
+ผ่านครบแล้วบอก agent ให้ merge สองสาขาเข้า `main` แล้วเตรียม release Production ตามขั้นตอนเดิม
+
+## Editor-Only Guard — งานรอบ 12 ก.ย. 2569
+
+สาขา `fix/editor-only-guard` · ยังไม่ merge เข้า `main` · **ขึ้น TEST แล้วใน v11** ดูหัวข้อ TEST v11
 
 **ช่องโหว่:** เว็บแอป deploy แบบ `ANYONE_ANONYMOUS` ซึ่งทำให้ `google.script.run`
 เรียกฟังก์ชันระดับบนสุดที่ชื่อไม่ลงท้ายด้วย `_` ได้ทุกตัว แม้ `index.html` จะไม่เคยเรียกก็ตาม
