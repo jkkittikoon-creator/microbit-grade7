@@ -1681,6 +1681,230 @@
       font-weight: 600;
     }
 
+    /* Pre-test — Blueprint #32
+       หน้าตาต่างจาก Section ปกติ เพื่อให้เห็นชัดว่าไม่ใช่ขั้นบังคับของบทเรียน */
+    .pretest-card,
+    .pretest-result {
+      margin: 1.5rem auto;
+      max-width: 52rem;
+      padding: 1.2rem 1.3rem;
+      border: 2px dashed var(--purple-900);
+      border-radius: 1rem;
+      background: #fdfdff;
+    }
+
+    .pretest-card[hidden],
+    .pretest-result[hidden] {
+      display: none;
+    }
+
+    .pretest-list {
+      display: grid;
+      gap: 0.9rem;
+      margin-top: 0.8rem;
+    }
+
+    .pretest-question {
+      border: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    .pretest-question legend {
+      margin-bottom: 0.45rem;
+      font-size: 0.98rem;
+      font-weight: 700;
+    }
+
+    .pretest-options {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .pretest-option {
+      min-height: 44px;
+      padding: 0.5rem 0.8rem;
+      border: 2px solid #cbd5f5;
+      border-radius: 0.7rem;
+      background: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.92rem;
+      text-align: left;
+    }
+
+    .pretest-option[aria-pressed="true"] {
+      border-color: var(--purple-900);
+      background: #ede9fe;
+      font-weight: 700;
+    }
+
+    .pretest-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+
+    .pretest-submit,
+    .pretest-skip {
+      min-height: 44px;
+      padding: 0.5rem 1.1rem;
+      border-radius: 0.7rem;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .pretest-submit {
+      border: 2px solid var(--purple-900);
+      background: var(--purple-900);
+      color: #fff;
+    }
+
+    .pretest-submit:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .pretest-skip {
+      border: 2px solid #cbd5f5;
+      background: #fff;
+      color: var(--purple-900);
+    }
+
+    .pretest-sync {
+      margin: 0.6rem 0 0;
+      font-size: 0.88rem;
+    }
+
+    .pretest-breakdown {
+      margin: 0.6rem 0 0;
+      padding-left: 1.1rem;
+      display: grid;
+      gap: 0.3rem;
+      font-size: 0.92rem;
+    }
+
+    .pretest-path {
+      margin: 0.7rem 0 0;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .growth-note {
+      margin: 0.5rem 0 0;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--purple-900);
+    }
+
+    .growth-note[hidden] {
+      display: none;
+    }
+
+    /* Mastery รายจุดประสงค์ — Blueprint #52
+       สถานะต้องอ่านออกเป็นข้อความเสมอ ไม่สื่อด้วยสีอย่างเดียว ตาม #222 */
+    .quiz-mastery {
+      margin-top: 1rem;
+      padding: 0.9rem 1rem;
+      border: 2px solid var(--purple-900);
+      border-radius: 0.9rem;
+      background: #fff;
+    }
+
+    .quiz-mastery[hidden] {
+      display: none;
+    }
+
+    .quiz-mastery h4 {
+      margin: 0 0 0.6rem;
+      color: var(--purple-900);
+      font-size: 1rem;
+    }
+
+    .mastery-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .mastery-item {
+      display: grid;
+      gap: 0.3rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.7rem;
+      background: #f8fafc;
+    }
+
+    .mastery-item[data-status="strong"] {
+      background: #ecfdf5;
+    }
+
+    .mastery-item[data-status="developing"] {
+      background: #fffbeb;
+    }
+
+    .mastery-item[data-status="review"] {
+      background: #fef2f2;
+    }
+
+    .mastery-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .mastery-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .mastery-status {
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+
+    .mastery-bar {
+      height: 0.5rem;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .mastery-bar span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--purple-900);
+    }
+
+    .mastery-review {
+      min-height: 44px;
+      align-self: start;
+      padding: 0.35rem 0.8rem;
+      border: 2px solid var(--purple-900);
+      border-radius: 0.7rem;
+      background: #fff;
+      color: var(--purple-900);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .mastery-note {
+      margin: 0.6rem 0 0;
+      font-size: 0.9rem;
+    }
+
     .quiz-remediation {
       margin-top: 1rem;
       padding: 0.9rem 1rem;
@@ -5614,6 +5838,41 @@
       </ol>
     </nav>
 
+    <!-- Pre-test — Blueprint #32 วัดพื้นฐานก่อนเรียน
+         อยู่นอกลำดับ Section โดยตั้งใจ ทำหรือข้ามก็เรียนได้เหมือนกัน
+         ผลใช้เลือกระดับตัวช่วยเท่านั้น ไม่ใช่คะแนนเก็บ -->
+    <section class="pretest-card" id="pretest" aria-labelledby="pretest-title" hidden>
+      <div class="section-heading">
+        <p class="section-kicker">ก่อนเริ่มเรียน · ไม่มีคะแนนเก็บ</p>
+        <h2 id="pretest-title">ลองเช็กพื้นฐานกันก่อนสั้น ๆ</h2>
+        <p class="section-intro">
+          5 ข้อ ไม่ต้องกังวลถ้ายังไม่รู้ เพราะทั้งหมดนี้คือสิ่งที่เรากำลังจะเรียนกัน
+          ระบบใช้ผลนี้เลือกว่าจะช่วยเรามากน้อยแค่ไหน แล้วตอนจบจะได้เห็นว่าเราเก่งขึ้นเท่าไร
+        </p>
+      </div>
+
+      <div class="pretest-list" id="pretest-list"></div>
+
+      <div class="pretest-actions">
+        <button class="pretest-submit" id="pretest-submit" type="button" disabled>
+          ตอบให้ครบ 5 ข้อ
+        </button>
+        <button class="pretest-skip" id="pretest-skip" type="button">
+          ข้ามไปเริ่มเรียนเลย
+        </button>
+      </div>
+
+      <p class="pretest-sync" id="pretest-sync" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="pretest-result" id="pretest-result"
+             aria-labelledby="pretest-result-title" hidden>
+      <h3 id="pretest-result-title">ผลการเช็กพื้นฐาน</h3>
+      <p id="pretest-result-score"></p>
+      <ul class="pretest-breakdown" id="pretest-breakdown"></ul>
+      <p class="pretest-path" id="pretest-path"></p>
+    </section>
+
     <section class="lesson-section" id="hook" aria-labelledby="hook-title">
       <div class="section-heading">
         <p class="section-kicker">Section 1 · ชวนสังเกต</p>
@@ -8195,7 +8454,15 @@
         <p id="quiz-result-message">
           เลือกคำตอบให้ครบทุกข้อก่อนกดสรุปคะแนน
         </p>
+        <p class="growth-note" id="growth-note" hidden></p>
       </div>
+      <div class="quiz-mastery" id="quiz-mastery" hidden
+           aria-labelledby="quiz-mastery-title">
+        <h4 id="quiz-mastery-title">เข้าใจเรื่องไหนแล้ว เรื่องไหนควรทบทวน</h4>
+        <ul class="mastery-list" id="quiz-mastery-list"></ul>
+        <p class="mastery-note" id="quiz-mastery-note"></p>
+      </div>
+
       <div class="quiz-remediation" id="quiz-remediation" hidden>
         <h4>ทบทวนเฉพาะจุดก่อนโจทย์ถัดไป</h4>
         <div id="quiz-remediation-list"></div>
@@ -9027,7 +9294,7 @@
             );
             if (option) option.checked = true;
           }
-          renderRewards(result.rewards);
+          applyProgressExtras(result);
         } catch (error) {
           // ไม่ต้องแจ้งเตือน ปล่อยให้กรอกใหม่ได้
         }
@@ -9061,7 +9328,7 @@
               new Set([...(state.completedSections || []), 9])
             );
             const saved = await callServer("saveProgress", sessionToken, state);
-            renderRewards(saved.rewards);
+            applyProgressExtras(saved);
             reflectionSync.textContent =
               "บันทึกแล้ว ขอบคุณที่ตั้งใจสะท้อนผลนะ 🎉";
           } catch (error) {
@@ -9111,6 +9378,324 @@
           item.append(label, detail);
           shelf.appendChild(item);
         });
+      }
+
+      /**
+       * อัปเดตทุกอย่างที่เซิร์ฟเวอร์คำนวณมาให้ จากคำตอบเดียว
+       *
+       * getProgress, saveProgress และ submitQuizAttemptV2 คืนชุดเดียวกันทั้งหมด
+       * รวมไว้ที่เดียวเพื่อไม่ให้ต้องไล่เพิ่มทีละจุดเวลามีของใหม่ แล้วตกหล่นบางจุด
+       */
+      function applyProgressExtras(response) {
+        if (!response) return;
+        renderRewards(response.rewards);
+        renderMastery(response.mastery);
+        applyLearningPath(response.learningPath);
+        applyPretestState(response.state, response.learningPath);
+        renderGrowth(response.growth);
+      }
+
+      /**
+       * Pre-test — Blueprint #32
+       *
+       * คำถามอยู่ที่หน้าเว็บได้ แต่ "เฉลย" อยู่ฝั่งเซิร์ฟเวอร์เท่านั้น
+       * หน้าเว็บจึงไม่รู้ว่าข้อไหนถูก และบอกนักเรียนก่อนเรียนไม่ได้แม้อยากบอก
+       */
+      const PRETEST_QUESTIONS = [
+        {
+          id: "p1",
+          question: "micro:bit รู้ได้อย่างไรว่าตอนนี้เรากำลังเอียงมันอยู่?",
+          choices: [
+            ["camera", "มีกล้องคอยมองว่าเอียงหรือยัง"],
+            ["sensor", "มีตัวตรวจจับการเคลื่อนไหวอยู่ข้างใน"],
+            ["microphone", "ฟังเสียงตอนเราขยับ"]
+          ]
+        },
+        {
+          id: "p2",
+          question: "ถ้าอยากรู้ว่าเอียงไปทางซ้ายหรือขวา ควรดูค่าอะไร?",
+          choices: [
+            ["axis-x", "ค่าตามแนวนอน (แกน X)"],
+            ["axis-y", "ค่าตามแนวตั้ง (แกน Y)"],
+            ["no-axis", "ไม่ต้องดูค่าอะไร บอกได้เลย"]
+          ]
+        },
+        {
+          id: "p3",
+          question: "อยากให้โปรแกรมคอยดูการเอียงตลอดเวลา ต้องเขียนแบบไหน?",
+          choices: [
+            ["once", "สั่งอ่านค่าครั้งเดียวตอนเริ่ม"],
+            ["loop", "ให้ทำซ้ำวนไปเรื่อย ๆ"],
+            ["button", "ให้กดปุ่มทุกครั้งที่อยากอ่านค่า"]
+          ]
+        },
+        {
+          id: "p4",
+          question: "ก่อนวาดจุดใหม่บนจอไฟ ควรทำอะไรก่อน?",
+          choices: [
+            ["clear", "ลบจุดเดิมออกก่อน"],
+            ["brighter", "เพิ่มความสว่างให้จอ"],
+            ["nothing", "ไม่ต้องทำอะไร วาดทับได้เลย"]
+          ]
+        },
+        {
+          id: "p5",
+          question:
+            "ค่าจากตัวตรวจจับมีตั้งแต่ −600 ถึง 600 แต่จอมีแค่ช่อง 0 ถึง 4 ต้องทำอย่างไร?",
+          choices: [
+            ["direct", "ใช้ค่าที่อ่านได้ไปวาดตรง ๆ"],
+            ["convert", "แปลงช่วงค่าให้พอดีกับช่องบนจอก่อน"],
+            ["zero", "ถ้าเกิน 4 ให้ใช้ 0 แทน"]
+          ]
+        }
+      ];
+
+      const pretestChoices = {};
+
+      function updatePretestSubmit() {
+        const submit = document.querySelector("#pretest-submit");
+        if (!submit) return;
+        const answered = Object.keys(pretestChoices).length;
+        const complete = answered === PRETEST_QUESTIONS.length;
+        submit.disabled = !complete;
+        submit.textContent = complete
+          ? "ส่งคำตอบ"
+          : `ตอบให้ครบ ${PRETEST_QUESTIONS.length} ข้อ (ตอบแล้ว ${answered})`;
+      }
+
+      function renderPretestQuestions() {
+        const list = document.querySelector("#pretest-list");
+        if (!list) return;
+        list.replaceChildren();
+
+        PRETEST_QUESTIONS.forEach((question, index) => {
+          const fieldset = document.createElement("fieldset");
+          fieldset.className = "pretest-question";
+          fieldset.dataset.pretestQuestion = question.id;
+
+          const legend = document.createElement("legend");
+          legend.textContent = `${index + 1}. ${question.question}`;
+
+          const options = document.createElement("div");
+          options.className = "pretest-options";
+
+          question.choices.forEach(([value, label]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "pretest-option";
+            button.dataset.pretestChoice = value;
+            button.setAttribute("aria-pressed", "false");
+            button.textContent = label;
+            button.addEventListener("click", () => {
+              pretestChoices[question.id] = value;
+              options.querySelectorAll(".pretest-option").forEach((option) => {
+                option.setAttribute(
+                  "aria-pressed",
+                  option.dataset.pretestChoice === value ? "true" : "false"
+                );
+              });
+              updatePretestSubmit();
+            });
+            options.appendChild(button);
+          });
+
+          fieldset.append(legend, options);
+          list.appendChild(fieldset);
+        });
+
+        updatePretestSubmit();
+      }
+
+      /**
+       * ส่งผล Pre-test ผ่าน saveProgress ตัวเดิม
+       * ส่งไปแค่ answers หรือ skipped เท่านั้น คะแนนและเส้นทางเซิร์ฟเวอร์เป็นคนคิด
+       */
+      async function submitPretest(payload) {
+        const sync = document.querySelector("#pretest-sync");
+        const submit = document.querySelector("#pretest-submit");
+        const skip = document.querySelector("#pretest-skip");
+        if (submit) submit.disabled = true;
+        if (skip) skip.disabled = true;
+        if (sync) sync.textContent = "กำลังบันทึก...";
+
+        try {
+          const result = await callServer("getProgress", sessionToken);
+          const state = result.state;
+          // ห้ามแตะลำดับขั้นบังคับ Pre-test อยู่นอกลำดับ
+          state.pretest = payload;
+          const saved = await callServer("saveProgress", sessionToken, state);
+          if (sync) sync.textContent = "";
+          applyProgressExtras(saved);
+        } catch (error) {
+          if (sync) {
+            sync.textContent =
+              "บันทึกไม่สำเร็จ ลองอีกครั้ง หรือกดข้ามไปเริ่มเรียนก่อนก็ได้";
+          }
+          if (skip) skip.disabled = false;
+          updatePretestSubmit();
+        }
+      }
+
+      /**
+       * แสดงผล Pre-test และเส้นทางตัวช่วย
+       * ห้ามเฉลยคำตอบทั้งหมดก่อนเรียน ตาม #32 จึงบอกแค่ว่าแต่ละเรื่องพร้อมแค่ไหน
+       */
+      function applyPretestState(state, learningPath) {
+        const card = document.querySelector("#pretest");
+        const result = document.querySelector("#pretest-result");
+        if (!card || !result) return;
+
+        const pretest = (state && state.pretest) || {};
+        const done = pretest.taken === true || pretest.skipped === true;
+
+        card.hidden = done;
+        if (!done) {
+          // วาดคำถามครั้งเดียวพอ ถ้าวาดใหม่ทุกครั้งที่หน้าอัปเดต
+          // ตัวเลือกที่นักเรียนกดไว้จะถูกล้างกลางคัน ทั้งที่ยังไม่ได้ส่ง
+          const list = document.querySelector("#pretest-list");
+          if (list && !list.childElementCount) renderPretestQuestions();
+          result.hidden = true;
+          return;
+        }
+
+        // ข้าม Pre-test ก็ไม่ต้องมีอะไรให้สรุป เข้าเรียนได้เลย
+        if (pretest.taken !== true) {
+          result.hidden = true;
+          return;
+        }
+
+        const path = learningPath || {};
+        const score = document.querySelector("#pretest-result-score");
+        if (score) {
+          score.textContent =
+            `ทำได้ ${pretest.score}/${pretest.total} ข้อ · นี่คือจุดเริ่มต้นของเรา ไม่ใช่คะแนนเก็บ`;
+        }
+
+        const breakdown = document.querySelector("#pretest-breakdown");
+        if (breakdown) {
+          breakdown.replaceChildren();
+          ((path.pretest && path.pretest.objectives) || []).forEach((objective) => {
+            const item = document.createElement("li");
+            item.textContent = objective.known
+              ? `${objective.title} — พื้นฐานแน่นแล้ว`
+              : `${objective.title} — เดี๋ยวเราจะเรียนเรื่องนี้กัน`;
+            breakdown.appendChild(item);
+          });
+        }
+
+        const pathNote = document.querySelector("#pretest-path");
+        if (pathNote && path.label) {
+          pathNote.textContent = `เส้นทางที่ระบบเลือกให้: ${path.label} · ${path.detail}`;
+        }
+
+        result.hidden = false;
+      }
+
+      /**
+       * เส้นทางตัวช่วย — Blueprint #33
+       * ทุกเส้นทางเรียนครบทุก Section เหมือนกัน ต่างกันที่ตัวช่วยที่เปิดให้
+       */
+      function applyLearningPath(learningPath) {
+        const path = (learningPath && learningPath.id) || "standard";
+        document.body.dataset.learningPath = path;
+      }
+
+      /**
+       * Growth Message — Blueprint #65 เทียบพัฒนาการของตัวเอง ไม่เทียบกับเพื่อน
+       *
+       * เขียนลงช่องของตัวเอง ไม่ไปต่อท้ายข้อความให้กำลังใจ
+       * เพราะการต่อท้ายจะทำให้ข้อความซ้ำขึ้นเรื่อย ๆ ทุกครั้งที่หน้าอัปเดต
+       * และตั้งค่าใหม่ทั้งก้อนทุกครั้ง เรียกซ้ำกี่รอบผลก็เหมือนเดิม
+       */
+      function renderGrowth(growth) {
+        const note = document.querySelector("#growth-note");
+        if (!note) return;
+
+        if (!growth) {
+          note.hidden = true;
+          note.textContent = "";
+          return;
+        }
+
+        note.textContent = growth.improved
+          ? `📈 จากตอนเช็กพื้นฐาน ${growth.beforePercent}% มาเป็น ${growth.afterPercent}% พัฒนาขึ้น ${growth.deltaPercent}%`
+          : `ตอนเช็กพื้นฐานได้ ${growth.beforePercent}% ตอนนี้ได้ ${growth.afterPercent}% · ยังทำได้อีก ลองทบทวนจุดที่พลาดแล้วลองใหม่`;
+        note.hidden = false;
+      }
+
+      /**
+       * แสดง Mastery รายจุดประสงค์ — Blueprint #52
+       *
+       * ค่าทั้งหมดคำนวณจากเซิร์ฟเวอร์ หน้าเว็บมีหน้าที่แสดงอย่างเดียว
+       * ถ้ายังไม่ได้ตอบข้อสอบเลย จะไม่ขึ้นการ์ดนี้ เพราะยังไม่มีอะไรให้สรุป
+       * และไม่ควรทำให้นักเรียนรู้สึกว่าตัวเองอ่อนทั้งที่ยังไม่ได้เริ่ม
+       */
+      function renderMastery(mastery) {
+        const panel = document.querySelector("#quiz-mastery");
+        const list = document.querySelector("#quiz-mastery-list");
+        const note = document.querySelector("#quiz-mastery-note");
+        if (!panel || !list || !note) return;
+
+        const objectives = (mastery && mastery.objectives) || [];
+        const answered = objectives.some((objective) => objective.answered > 0);
+        if (!answered) {
+          panel.hidden = true;
+          list.replaceChildren();
+          return;
+        }
+
+        list.replaceChildren();
+        objectives.forEach((objective) => {
+          const item = document.createElement("li");
+          item.className = "mastery-item";
+          item.dataset.status = objective.status;
+
+          const head = document.createElement("div");
+          head.className = "mastery-head";
+
+          const title = document.createElement("span");
+          title.className = "mastery-title";
+          title.textContent = objective.title;
+
+          const status = document.createElement("span");
+          status.className = "mastery-status";
+          status.textContent =
+            objective.answered > 0
+              ? `${objective.statusLabel} · ${objective.correct}/${objective.answered} ข้อ`
+              : objective.statusLabel;
+
+          head.append(title, status);
+
+          const bar = document.createElement("div");
+          bar.className = "mastery-bar";
+          const fill = document.createElement("span");
+          fill.style.width = `${objective.percent}%`;
+          bar.appendChild(fill);
+
+          item.append(head, bar);
+
+          // เปิดทางไปทบทวนเฉพาะเรื่องที่ยังไม่แน่น ไม่ใช่ให้ไปอ่านใหม่ทั้งบท
+          if (objective.status === "review" || objective.status === "developing") {
+            const review = document.createElement("a");
+            review.className = "mastery-review";
+            review.href = `#${objective.reviewSectionId}`;
+            review.textContent =
+              `📖 ทบทวน Section ${objective.reviewSectionOrder} · ${objective.reviewSectionTitle}`;
+            item.appendChild(review);
+          }
+
+          list.appendChild(item);
+        });
+
+        const focus = (mastery.focus || [])
+          .map((id) => objectives.find((objective) => objective.id === id))
+          .filter(Boolean);
+
+        note.textContent = focus.length
+          ? `ทำได้ ${mastery.correct}/${mastery.answered} ข้อ · เรื่องที่ควรทบทวนก่อนคือ "${focus[0].title}"`
+          : `ทำได้ ${mastery.correct}/${mastery.answered} ข้อ ครบทุกจุดประสงค์แล้ว`;
+
+        panel.hidden = false;
       }
 
       function contiguousCompleted(list) {
@@ -9441,6 +10026,8 @@
           const result = await callServer("getProgress", sessionToken);
           const state = await healProgressGaps(result.state);
           applyLessonNavigationState(state, result.rewards);
+          // ตรงนี้คือจุดที่ทุกคนต้องผ่านตอนเข้าบทเรียน การ์ด Pre-test จึงโผล่จากที่นี่
+          applyProgressExtras(result);
         } catch (error) {
           // ถ้าดึงไม่ได้ ปล่อยสถานะเดิมไว้ ดีกว่าล็อกผิดจนเรียนต่อไม่ได้
         }
@@ -10567,6 +11154,59 @@
             adminDetailAttempts.appendChild(reward);
           }
 
+          // Pre-test และเส้นทางตัวช่วย — Blueprint #77 และ #225
+          // ครูต้องอธิบายได้ว่าทำไมนักเรียนคนนี้ได้เส้นทางนี้ จึงแสดงเหตุผลไว้ด้วย
+          const learningPath = result.learningPath;
+          if (learningPath) {
+            const line = document.createElement("p");
+            line.textContent =
+              `🧭 เส้นทาง: ${learningPath.label} · ${learningPath.reason}`;
+            adminDetailAttempts.appendChild(line);
+          }
+
+          // พัฒนาการจากก่อนเรียนถึงหลังเรียน — Blueprint #65
+          if (result.growth) {
+            const line = document.createElement("p");
+            line.textContent = result.growth.improved
+              ? `📈 พัฒนาการ: ${result.growth.beforePercent}% → ${result.growth.afterPercent}% (+${result.growth.deltaPercent}%)`
+              : `📊 ก่อนเรียน ${result.growth.beforePercent}% · หลังเรียน ${result.growth.afterPercent}%`;
+            adminDetailAttempts.appendChild(line);
+          }
+
+          // Mastery รายจุดประสงค์ — Blueprint #77
+          // ครูจะได้เห็นว่านักเรียนติดเรื่องไหน ไม่ใช่เห็นแค่คะแนนรวม
+          const mastery = result.mastery || {};
+          const objectives = (mastery.objectives || []).filter(
+            (objective) => objective.answered > 0
+          );
+          if (objectives.length) {
+            const card = document.createElement("div");
+            card.className = "admin-attempt";
+            const heading = document.createElement("h4");
+            heading.textContent =
+              `🎯 ความเข้าใจรายจุดประสงค์ · ${mastery.correct}/${mastery.answered} ข้อ`;
+            card.appendChild(heading);
+
+            objectives.forEach((objective) => {
+              const line = document.createElement("p");
+              line.textContent =
+                `${objective.title} · ${objective.statusLabel} (${objective.correct}/${objective.answered} ข้อ)`;
+              card.appendChild(line);
+            });
+
+            const focus = (mastery.focus || [])
+              .map((id) => objectives.find((objective) => objective.id === id))
+              .filter(Boolean);
+            if (focus.length) {
+              const suggestion = document.createElement("p");
+              suggestion.textContent =
+                `แนะนำให้ทบทวนกับนักเรียนก่อน: ${focus[0].title} · Section ${focus[0].reviewSectionOrder} ${focus[0].reviewSectionTitle}`;
+              card.appendChild(suggestion);
+            }
+
+            adminDetailAttempts.appendChild(card);
+          }
+
           // กิจกรรมเสริมไม่บังคับ ครูจึงต้องเห็นว่าใครทำและทำได้แค่ไหน
           // เพื่อใช้ชวนคุยได้ ไม่ใช่เพื่อตัดสินว่าใครไม่ทำ ตาม Blueprint #198
           (result.optionalSteps || []).forEach((step) => {
@@ -11194,7 +11834,7 @@
           };
 
           const saved = await callServer("saveProgress", sessionToken, state);
-          renderRewards(saved.rewards);
+          applyProgressExtras(saved);
           const canonical =
             saved.state && saved.state.worksheet && saved.state.worksheet.miniGame;
           const best = canonical ? Number(canonical.bestScore) || 0 : localBest;
@@ -11431,7 +12071,7 @@
             completed: true,
             letter: letter
           });
-          renderRewards(saved.rewards);
+          applyProgressExtras(saved);
           missionDoneText.textContent =
             "ครูจะได้อ่านข้อความที่หนูเขียนถึงเพื่อน ขอบคุณที่คิดถึงคนที่ใช้งานจริง";
           missionDone.hidden = false;
@@ -11867,7 +12507,7 @@
         labSync.textContent = "กำลังบันทึกภาคปฏิบัติ...";
         try {
           const saved = await saveCodingLab({ ...collectLabState(), completed: true });
-          renderRewards(saved.rewards);
+          applyProgressExtras(saved);
           labDoneText.textContent =
             "หนูเขียนและทดลองโค้ดจริงบน micro:bit แล้ว เก่งมากที่ลงมือทำเอง";
           labDone.hidden = false;
@@ -14332,7 +14972,7 @@
           });
           renderQuizSummary();
           updateQuizSubmitButton();
-          renderRewards(result.rewards);
+          applyProgressExtras(result);
 
           quizRetry.hidden =
             quizAttemptCount >= QUIZ_MAX_ATTEMPTS;
@@ -14420,7 +15060,7 @@
               );
               clearPendingQuizSubmission();
               saved = submissionResult.state && submissionResult.state.quiz;
-              renderRewards(submissionResult.rewards);
+              applyProgressExtras(submissionResult);
               restoreMessage = submissionResult.duplicate
                 ? "ตรวจคำขอที่ค้างแล้ว ระบบไม่ได้นับจำนวนครั้งซ้ำ"
                 : "ส่งคำตอบที่ค้างและบันทึกคะแนนเรียบร้อยแล้ว";
@@ -14490,6 +15130,21 @@
             "ยังเรียกคืนแบบทดสอบไม่ได้ ลองรีเฟรชหน้านี้อีกครั้ง " +
             "คำตอบที่ส่งไปแล้วยังอยู่ครบ";
         }
+      }
+
+      const pretestSubmit = document.querySelector("#pretest-submit");
+      const pretestSkip = document.querySelector("#pretest-skip");
+
+      if (pretestSubmit) {
+        pretestSubmit.addEventListener("click", () => {
+          void submitPretest({ answers: { ...pretestChoices } });
+        });
+      }
+
+      if (pretestSkip) {
+        pretestSkip.addEventListener("click", () => {
+          void submitPretest({ skipped: true });
+        });
       }
 
       quizSubmit.addEventListener("click", () => {
