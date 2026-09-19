@@ -11,8 +11,8 @@
 _(แก้ 20 ก.ย. 2569)_
 
 - CURRENT STATUS: **V10_SHIPPED — Production ชี้ @41 และตรวจแล้วว่าเป็นซอร์ส v10 จริง**
-- CURRENT PHASE: งาน v10 ปิดแล้ว · รอบถัดไปคือ TEST v11 ที่รอครูทดสอบ
-- TEST: **@11 รอครูทดสอบ** — Editor-only guard + Mastery + Pre-test ดูหัวข้อ TEST v11
+- CURRENT PHASE: TEST v11 ผ่านและ merge เข้า `main` แล้ว · รอตัดสินใจว่าจะปล่อยขึ้น Production เมื่อไร
+- TEST: **@11 ครูทดสอบผ่านหมดแล้ว** และ merge เข้า `main` เรียบร้อย · ดูหัวข้อ TEST v11
 
 ## Production v41 — ปิดงาน v10 แล้ว (20 ก.ย. 2569)
 
@@ -66,7 +66,7 @@ npx.cmd @google/clasp@3 update-deployment -V <n> -d "<คำอธิบาย>"
 - CORRECTION OF RECORD: `docs/PRODUCTION_V40_RELEASE_CHECKPOINT_20260902.md` — อ่านส่วน CORRECTION ก่อนเชื่ออย่างอื่น
 - FINAL SECURITY REPORT: `docs/FINAL_SECURITY_GOLD_REPORT_20260829.md` — ยังใช้ได้ ไม่กระทบ
 - PRODUCTION CREDENTIAL/SESSION BLOCKER: **CLOSED**
-- USER ACTION REQUIRED FOR RELEASE CLOSEOUT: **NO** สำหรับ v10 · ที่เหลือคือทดสอบ TEST v11
+- USER ACTION REQUIRED FOR RELEASE CLOSEOUT: **NO** สำหรับ v10 · รอบ v11 รอคำสั่ง deploy จากครู
 
 ### หลักฐาน
 ดึง v39 กับ v40 จาก Apps Script API มาเทียบกันโดยตรง (normalize CRLF/LF แล้ว)
@@ -235,7 +235,14 @@ Decision at final closeout:
 - `.prod-security-rotation-tests-20260829/runtime_regression_test.js`
 - `.prod-security-rotation-v38-proof-20260829/`
 
-## TEST v11 — งานใหม่ขึ้น TEST แล้ว รอครูทดสอบ (20 ก.ย. 2569)
+## TEST v11 — ทดสอบผ่านและ merge แล้ว (20 ก.ย. 2569)
+
+**ครูยืนยันว่าทดสอบผ่านหมดทุกข้อ** และ merge เข้า `main` แล้วตามลำดับ
+`fix/editor-only-guard` → `feat/mastery-objectives`
+หลัง merge รันเทสต์ทั้ง 4 ชุดบน `main` ผ่านครบ 90 ข้อ และ syntax ทั้งเซิร์ฟเวอร์กับหน้าเว็บผ่าน
+**ยังไม่ได้ deploy ขึ้น Production** ซึ่งยังชี้ @41 ตามเดิม
+
+รายการทดสอบด้านล่างเก็บไว้เป็นแบบสำหรับรอบถัดไป
 
 **TEST deployment `AKfycbxte4a1…T9eZnp3w` ชี้ @11 แล้ว** · Production ไม่เกี่ยว ยังเป็น @40
 
@@ -324,25 +331,29 @@ google.script.run
 2. Trigger กลางคืนยังสำรองได้จริงหลังเพิ่มช่วงห่างขั้นต่ำ
 
 ## NEXT EXACT ACTION
-_(แก้ 20 ก.ย. 2569 — งาน v10 ปิดแล้ว ขั้นตอน 1–6 ของรอบนั้นทำครบ)_
+_(แก้ 20 ก.ย. 2569 — TEST v11 ผ่านและ merge แล้ว)_
 
-**รอบ v10 บน Production: จบแล้ว** pointer ชี้ @41 และตรวจซอร์สหลัง deploy แล้ว ดูหัวข้อ Production v41
+**`main` ตอนนี้มีครบทั้ง v10 ที่อยู่บน Production แล้ว บวก editor-only guard, Mastery, Pre-test**
+เทสต์ทั้ง 4 ชุดบน `main` ผ่าน 90 ข้อ · Production ยังชี้ @41 ซึ่งยังไม่มีสามอย่างหลัง
 
-สิ่งที่ค้างตอนนี้คือรอบถัดไป:
+ขั้นตอนปล่อยรอบถัดไป ทำเมื่อครูสั่ง ไม่ทำเอง:
 
-1. **ครูทดสอบ TEST v11 ตามรายการ 15 ข้อ** ในหัวข้อ TEST v11
-   ข้อที่ขาดไม่ได้คือ ด่าน editor-only ปฏิเสธคนที่ไม่ล็อกอินจริง
-   ครูรันจาก editor ได้จริง trigger สำรองกลางคืนยังทำงาน
-   และการ์ด Mastery ต้องไม่โผล่ตอนที่ยังไม่กดส่งข้อสอบ
+1. **ตรวจก่อน push** — pull Production script HEAD มาเทียบ ให้แน่ใจว่าไม่มีงานที่มีเฉพาะบนคลาวด์
+   จดจำนวน marker ไว้ก่อน: `requireEditorContext_` 5 · `computeMastery_` 8 · `normalizePretestState_` 2
 
-2. ผ่านแล้วค่อย merge `fix/editor-only-guard` แล้วตามด้วย `feat/mastery-objectives` เข้า `main`
-   (สาขาหลังต่อยอดจากสาขาแรก ต้องเรียงลำดับนี้)
+2. `npx.cmd @google/clasp@3 push --force` จากโฟลเดอร์โปรเจกต์
+   **ต้องมี `--force`** ไม่งั้นขึ้น `Skipping push` แล้วไม่ส่งอะไรเลย เหมือนที่เกิดกับ v40
 
-3. ตัดเวอร์ชัน Production ใหม่จาก `main` แล้วย้าย pointer ด้วย `npx.cmd`
-   ตรวจหลัง deploy ด้วยการดึงเวอร์ชันจริงกลับมาเทียบ ห้ามตรวจแค่ว่าหน้าเปิดได้
+3. **ดึงกลับมาเทียบและนับ marker ซ้ำ** ห้ามเชื่อข้อความที่ push ตอบกลับ
 
-4. แนะนำให้ครูล็อกอิน Production สักรอบเพื่อยืนยันว่า Free Navigation Preview
-   เปิดกิจกรรมเสริมให้พรีวิวได้แล้ว ซึ่งคือบั๊กที่ v10 ตั้งใจแก้
+4. `create-version` แล้ว `update-deployment -V <n>` ทับ deployment ID เดิม
+   **ห้าม `create-deployment`** เพราะ URL นักเรียนจะเปลี่ยน
+
+5. ดึงเวอร์ชันที่ deploy จริงมาเทียบกับ `main` และนับ marker อีกรอบ
+   จากนั้นให้ครูล็อกอินตรวจการใช้งานจริง เพราะ agent กรอกรหัสผ่านไม่ได้
+
+6. เรื่องที่ยังค้างและไม่อยู่ในรอบนี้: การ์ด Foundation และโจทย์ Challenge
+   เป็นงานเขียนเนื้อหา ต้องให้ครูตรวจก่อนตาม Blueprint #181
 
 งานที่อยู่นอกขอบเขตนี้:
 - Git-history remediation ของหลักฐาน credential เดิม ต้องขออนุมัติแยกเพราะเป็นงานทำลายล้าง
