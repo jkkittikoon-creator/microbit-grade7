@@ -10,9 +10,34 @@
 ## Current State
 _(แก้ 20 ก.ย. 2569)_
 
-- CURRENT STATUS: **V10_SHIPPED — Production ชี้ @41 และตรวจแล้วว่าเป็นซอร์ส v10 จริง**
-- CURRENT PHASE: TEST v11 ผ่านและ merge เข้า `main` แล้ว · รอตัดสินใจว่าจะปล่อยขึ้น Production เมื่อไร
-- TEST: **@11 ครูทดสอบผ่านหมดแล้ว** และ merge เข้า `main` เรียบร้อย · ดูหัวข้อ TEST v11
+- CURRENT STATUS: **V11_SHIPPED — Production ชี้ @42 ตรงกับ `main` ทุกไฟล์**
+- CURRENT PHASE: ปล่อย v42 ขึ้น Production แล้ว 20 ก.ย. 2569 · รอครูตรวจการใช้งานแบบล็อกอิน
+- TEST: **@11** ทดสอบผ่านแล้ว · ซอร์สเดียวกันอยู่บน Production v42 แล้ว
+
+## Production v42 — Editor-only guard + Mastery + Pre-test (20 ก.ย. 2569)
+
+| รายการ | ค่า |
+|---|---|
+| Deployment pointer | **@42** · deployment ID เดิม URL นักเรียนไม่เปลี่ยน |
+| Description | `Tilt Lab m1 Production v42 - editor-only guard + mastery per objective + pre-test/adaptive path - TEST v11 regression passed` |
+| ซอร์ส | `main` @ `4bca302` |
+
+**ทำตามลำดับด่านครบ ไม่ข้ามขั้นไหน:**
+1. ดึง Production HEAD มาเทียบก่อน push — บรรทัดที่มีเฉพาะฝั่งคลาวด์ 16 บรรทัด ตรวจแล้วเป็นรูปเดิมของโค้ดที่เราตั้งใจแก้ ไม่ใช่งานที่ครูแก้บนคลาวด์
+2. จด marker ไว้ก่อน push แล้ว `push --force`
+3. ดึงกลับมาเทียบ — ทั้ง 4 ไฟล์ landed · marker ตรงทุกตัว
+4. `create-version` → 42 · ดึง v42 กลับมาเทียบกับ `main` ตรงทุกไฟล์
+5. `update-deployment -V 42` ทับ deployment ID เดิม · อ่านกลับยืนยัน **@42**
+6. หน้า `/exec` โหลดสำเร็จ title ถูก iframe ขึ้นปกติ ไม่มี console error
+
+**Marker บน v42:** `requireEditorContext_` 5 · `computeMastery_` 8 · `normalizePretestState_` 2 · `computeRewardsForSession_` 4
+
+**ยังต้องให้ครูตรวจ** (agent กรอกรหัสผ่านและอ่านใน iframe ข้ามโดเมนไม่ได้):
+- ล็อกอินเป็นนักเรียนจริง ดูว่าการ์ด Pre-test ขึ้นก่อน Section 1 และนักเรียนที่เรียนค้างไว้ยังอยู่ Section เดิม
+- เช้าวันถัดไป ตรวจว่ามีไฟล์สำรองใหม่ในโฟลเดอร์ ยืนยันว่า trigger กลางคืนยังทำงานหลังใส่ช่วงห่างขั้นต่ำ 6 ชั่วโมง
+- เรียก `showSetupStatus` แบบไม่ล็อกอินบน Production ต้องถูกปฏิเสธ
+
+**Rollback:** ชี้ deployment ID เดิมกลับไป **v41** ซึ่งเป็นซอร์ส v10 ที่ใช้งานได้จริง
 
 ## Production v41 — ปิดงาน v10 แล้ว (20 ก.ย. 2569)
 
@@ -331,29 +356,23 @@ google.script.run
 2. Trigger กลางคืนยังสำรองได้จริงหลังเพิ่มช่วงห่างขั้นต่ำ
 
 ## NEXT EXACT ACTION
-_(แก้ 20 ก.ย. 2569 — TEST v11 ผ่านและ merge แล้ว)_
+_(แก้ 20 ก.ย. 2569 — ปล่อย v42 ขึ้น Production แล้ว)_
 
-**`main` ตอนนี้มีครบทั้ง v10 ที่อยู่บน Production แล้ว บวก editor-only guard, Mastery, Pre-test**
-เทสต์ทั้ง 4 ชุดบน `main` ผ่าน 90 ข้อ · Production ยังชี้ @41 ซึ่งยังไม่มีสามอย่างหลัง
+ไม่มีงาน deploy ค้าง `main` `origin/main` และ Production v42 เป็นซอร์สเดียวกันทั้งหมด
 
-ขั้นตอนปล่อยรอบถัดไป ทำเมื่อครูสั่ง ไม่ทำเอง:
+เหลือเฉพาะการตรวจที่ agent ทำแทนไม่ได้:
 
-1. **ตรวจก่อน push** — pull Production script HEAD มาเทียบ ให้แน่ใจว่าไม่มีงานที่มีเฉพาะบนคลาวด์
-   จดจำนวน marker ไว้ก่อน: `requireEditorContext_` 5 · `computeMastery_` 8 · `normalizePretestState_` 2
+1. **ครูล็อกอิน Production ตรวจการใช้งานจริง** — การ์ด Pre-test ขึ้นก่อน Section 1
+   นักเรียนที่เรียนค้างไว้ยังอยู่ Section เดิม และการ์ด Mastery ไม่โผล่ตอนยังไม่กดส่งข้อสอบ
+2. **เช้าวันถัดไป ตรวจไฟล์สำรอง** ว่ามีสำเนาใหม่ ยืนยันว่า trigger กลางคืนยังทำงาน
+3. **เรียก `showSetupStatus` แบบไม่ล็อกอิน** บน Production ต้องถูกปฏิเสธ
 
-2. `npx.cmd @google/clasp@3 push --force` จากโฟลเดอร์โปรเจกต์
-   **ต้องมี `--force`** ไม่งั้นขึ้น `Skipping push` แล้วไม่ส่งอะไรเลย เหมือนที่เกิดกับ v40
+ถ้าข้อใดไม่ผ่าน ชี้ deployment ID เดิมกลับไป **v41** ได้ทันที
 
-3. **ดึงกลับมาเทียบและนับ marker ซ้ำ** ห้ามเชื่อข้อความที่ push ตอบกลับ
-
-4. `create-version` แล้ว `update-deployment -V <n>` ทับ deployment ID เดิม
-   **ห้าม `create-deployment`** เพราะ URL นักเรียนจะเปลี่ยน
-
-5. ดึงเวอร์ชันที่ deploy จริงมาเทียบกับ `main` และนับ marker อีกรอบ
-   จากนั้นให้ครูล็อกอินตรวจการใช้งานจริง เพราะ agent กรอกรหัสผ่านไม่ได้
-
-6. เรื่องที่ยังค้างและไม่อยู่ในรอบนี้: การ์ด Foundation และโจทย์ Challenge
-   เป็นงานเขียนเนื้อหา ต้องให้ครูตรวจก่อนตาม Blueprint #181
+งานพัฒนาที่ยังค้าง ไม่เกี่ยวกับ release นี้:
+- การ์ด Foundation และโจทย์ Challenge ที่เส้นทาง foundation/challenge ควรเปิดให้
+  เป็นงานเขียนเนื้อหา ต้องให้ครูตรวจก่อนตาม Blueprint #181
+- ช่องว่าง Blueprint ที่เหลือ: Question Bank, Randomization, Content Lifecycle, Monitoring
 
 งานที่อยู่นอกขอบเขตนี้:
 - Git-history remediation ของหลักฐาน credential เดิม ต้องขออนุมัติแยกเพราะเป็นงานทำลายล้าง
@@ -373,4 +392,4 @@ _(แก้ 20 ก.ย. 2569 — TEST v11 ผ่านและ merge แล้�
 - REASON: รอครูทดสอบ TEST v11 ด้วยมือ ไม่มีอะไรให้รอแบบอัตโนมัติ
 
 ## Final Checkpoint Statement
-**SECURITY GOLD: CLOSED/PASS · LESSON X/Y v10: SHIPPED — Production ชี้ @41 และตรวจซอร์สหลัง deploy แล้ว · FINAL PRODUCTION GOLD: ปิดในขอบเขตที่ตรวจได้ (ยังขาดการทดสอบแบบล็อกอินบน Production) · TEST v11: Editor-only guard + Mastery + Pre-test รอครูทดสอบ**
+**SECURITY GOLD: CLOSED/PASS · PRODUCTION v42: SHIPPED — editor-only guard + Mastery + Pre-test ตรวจซอร์สหลัง deploy แล้ว ตรงกับ `main` ทุกไฟล์ · ยังขาดการทดสอบแบบล็อกอินบน Production ซึ่งครูต้องทำเอง**
