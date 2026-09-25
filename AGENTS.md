@@ -51,6 +51,7 @@ For this repository, use `search -> relevant files -> minimal diff`: inspect onl
 - **D-001:** Teachers use the `admin` role. Do not add a `teacher` role automatically. “Teacher workflow” and Teacher Preview remain product workflows, not a separate authorization role.
 - **D-002:** Preserve the current student password/PIN policy and the rule that students cannot change it themselves unless the user explicitly authorizes a reviewed change.
 - **D-003:** Do not invent curriculum standards, indicators, codes, or other authoritative curriculum data. Wait for a verified source.
+- **D-004:** The nightly backup trigger was switched off by the teacher on 25 Sep 2026. Absence of daily backup files is intended, not a regression — do not report it as one, and do not switch it back on without asking. The backup code and the teacher's enable button are untouched and still work.
 
 ## Learning and UX
 
