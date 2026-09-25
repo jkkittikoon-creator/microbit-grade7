@@ -96,7 +96,7 @@ CLAUDE.md → Testing (Teacher View, Teacher Preview)
 
 ## D-004 · ปิดการสำรองข้อมูลอัตโนมัติรายคืน
 
-**สถานะ:** ครูสั่งปิด 25 ก.ย. 2569 · รอยืนยันว่า trigger ถูกลบจริง
+**สถานะ:** ปิดแล้ว 25 ก.ย. 2569 · ยืนยันแล้วว่าหน้า Triggers ขึ้น "กำลังแสดง 0 ทริกเกอร์"
 
 **Blueprint ที่เกี่ยวข้อง:** #205 Backup · #206 Restore Test · #229 Production Readiness (หมวด Data)
 
@@ -104,7 +104,10 @@ CLAUDE.md → Testing (Teacher View, Teacher Preview)
 Apps Script ของ Production ระบบจึงไม่สำเนาสเปรดชีตไปเก็บใน Drive ทุกคืนอีกต่อไป
 
 ลบผ่านหน้า Apps Script editor → Triggers เท่านั้น เพราะ trigger ไม่มีใน Apps Script API
-และ clasp สั่งลบไม่ได้ agent จึงทำแทนไม่ได้ด้วยข้อจำกัดทางเทคนิค ไม่ใช่เรื่องสิทธิ์
+และ clasp สั่งลบไม่ได้ · ครั้งนี้ agent ลบให้โดยควบคุม Chrome ที่ครูล็อกอินไว้
+ตามคำสั่งของครู แล้วรีโหลดหน้ายืนยันว่าเหลือ 0 ทริกเกอร์
+
+ก่อนลบ trigger ตัวนี้เรียกใช้ล่าสุดเมื่อ 25 ก.ย. 2569 01:01:13 อัตราข้อผิดพลาด 0%
 
 **โค้ดไม่ได้ถูกแก้:** `runScheduledBackup()`, `createBackup_()`, `installDailyBackup_()`
 และปุ่มเปิดการสำรองในหน้าครูยังอยู่ครบและทำงานได้เหมือนเดิม
